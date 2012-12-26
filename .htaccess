@@ -1,0 +1,2 @@
+Action phpcgi-script /cgi-bin/php
+AddHandler phpcgi-script .php
