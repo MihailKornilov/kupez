@@ -21,7 +21,7 @@ if(count($spisok)>0)
 	$send=count($spisok)." users\n\n";
 	foreach($spisok as $sp)
 		{
-		$zayav=$VK->QRow("select count(id) from zayav where category=1 and status=1 and vk_day_active>='".strftime("%Y-%m-%d",time())."' and dtime_add>'".$sp->enter_last."'");
+		$zayav=$VK->QRow("select count(id) from zayav where category=1 and status=1 and active_day>='".strftime("%Y-%m-%d",time())."' and dtime_add>'".$sp->enter_last."'");
 		if($zayav>0)
 			{
 			if($zayav>999) $zayav=999;

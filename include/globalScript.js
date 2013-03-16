@@ -1,4 +1,6 @@
-var G = {};
+var G = {
+    js_time:(new Date()).getTime()
+};
 G.months = {1:'Январь',2:'Февраль',3:'Март',4:'Апрель',5:'Май',6:'Июнь',7:'Июль',8:'Август',9:'Сентябрь',10:'Октябрь',11:'Ноябрь',12:'Декабрь'};
 
 
@@ -195,7 +197,7 @@ function CalendarClose(){ $("#calendar").remove(); }
 
 
 /* КОНТАКТОВСКИЙ СЕЛЕКТ */
-$.fn.vkSel = function(OBJ){
+$.fn.vkSel = function (OBJ) {
   var ID=this.attr('id');      /* получение id=#имени. */
 
   var OBJ = $.extend({
@@ -214,33 +216,31 @@ $.fn.vkSel = function(OBJ){
   },OBJ);
 
   /* создаём новый select */
-  if(OBJ.create==1 || $("#vkSel_"+ID).length==0)
-    {
+  if (OBJ.create == 1 || $("#vkSel_" + ID).length == 0) {
     vkSelCreate();
-    if(OBJ.url)
-      {
+    if (OBJ.url) {
       goURL('',1);
-      if($("#"+ID).val()==0)
-        $("#vkSel_"+ID+" INPUT:first").val(OBJ.msg).addClass('pusto');
-      }
-    if(OBJ.vkfunc)
-      {
-      OBJ.vkfunc('');
-      if($("#"+ID).val()==0)
+      if ($("#"+ID).val() == 0) {
         $("#vkSel_"+ID+" INPUT:first").val(OBJ.msg).addClass('pusto');
       }
     }
+    if (OBJ.vkfunc) {
+      //OBJ.vkfunc('');
+      if ($("#"+ID).val() == 0) {
+        $("#vkSel_"+ID+" INPUT:first").val(OBJ.msg).addClass('pusto');
+      }
+    }
+  }
 
   if(!OBJ.url) getSpisok(OBJ.spisok);    /* наполняем выпадающий список, если он не берётся из url */
 
-  function vkSelCreate()
-    {
+  function vkSelCreate() {
     $("#vkSel_"+ID).remove();    /* удаление select если существует */
 
     var TDADD='', MI=29;
     if(OBJ.funcAdd) { TDADD="<TD class=tdAdd>&nbsp;"; MI=47; }
 
-    var RO=''; if(OBJ.ro==1) RO='cursor:pointer readonly';    /* если ro=1, значит INPUT только для чтения */
+    var RO=''; if (OBJ.ro==1) RO='cursor:pointer readonly';    /* если ro=1, значит INPUT только для чтения */
 
     var HTML="<DIV class=vkSel style=width:"+OBJ.width+"px; id=vkSel_"+ID+">";
     HTML+="<TABLE cellpadding=0 cellspacing=0 class=selTab>";
@@ -250,24 +250,23 @@ $.fn.vkSel = function(OBJ){
     $("#"+ID).after(HTML);
     if(OBJ.bottom>0) $("#vkSel_"+ID).css('margin-bottom',OBJ.bottom+'px');
 
-    var RSLT=$("#vkSel_"+ID+" .vkSelRes");
+    var RSLT = $("#vkSel_"+ID+" .vkSelRes");
 
     /* функция добавления нового значения */
-    if(OBJ.funcAdd) $("#vkSel_"+ID+" .tdAdd").click(function(){ OBJ.funcAdd(); });
+    if(OBJ.funcAdd) $("#vkSel_"+ID+" .tdAdd").click(OBJ.funcAdd);
 
     /* подсветка треугольничка при наведении */
     $("#vkSel_"+ID).hover(function(){ $(this).find('.tdRight').css('background-color','#E1E8ED'); },function(){ if(RSLT.is(":hidden")) $(this).find('.tdRight').css('background-color','#FFF'); });
 
     /* раскрытие списка при нажатии на треугольник */
-    $("#vkSel_"+ID+" .tdRight").click(function(event){
-      if(RSLT.is(":hidden"))
-        {
+    $("#vkSel_"+ID+" .tdRight").click(function (event) {
+      if (RSLT.is(":hidden")) {
         vkSelHide(ID);
         event.stopPropagation();
         RSLT.show();
-        if(OBJ.vkfunc) OBJ.vkfunc('');
-        }
-      });
+        //if (OBJ.vkfunc) OBJ.vkfunc('');
+      }
+    });
 
     /* манипуляции с INPUT - click, focus, blur, keyup */
     if(!OBJ.ro)
@@ -275,13 +274,12 @@ $.fn.vkSel = function(OBJ){
         'click focus':function(event){
           vkSelHide(ID);
           event.stopPropagation();
-          if($("#"+ID).val()==0)
-            {
+          if ($("#"+ID).val() == 0) {
             $(this).val('').removeClass('pusto'); /* если значение HIDDEN INPUT нулевое, делаем ввод черными символами */
-            if(OBJ.vkfunc) OBJ.vkfunc('');
-            }
+            //if (OBJ.vkfunc) OBJ.vkfunc('');
+          }
           RSLT.show();
-          },
+        },
         blur:function(){ if(!$(this).val() || $("#"+ID).val()==0) $(this).val(OBJ.msg).addClass('pusto'); },
         keyup:function(){
           $("#"+ID).val(0); /* если что-то начинаем вводить - ставим HIDDEN INPUT в ноль */
@@ -299,8 +297,7 @@ $.fn.vkSel = function(OBJ){
           RSLT.show();
           }
         });
-
-    }
+  } // end vkSelCreate
 
   /* загрузка списка при вводе данных в поле INPUT */
   function goURL(VAL,UP){
@@ -366,7 +363,8 @@ $.fn.vkSel = function(OBJ){
       });
     }
 
-}
+  return $(this);
+};
 
 // установка значения в селекте автоматически
 $.fn.vkSelSet = function(OBJ){
@@ -633,7 +631,7 @@ $.fn.linkMenu = function(OBJ){
   }
 
 /* ВЫПАДАЮЩЕЕ МЕНЮ ПО ССЫЛКЕ - УСТАНОВКА ЗНАЧЕНИЯ*/
-$.fn.linkMenuSet = function(VAL){
+$.fn.linkMenuSet = function (VAL) {
   var DD=this.find('DD');
   var HTML;
   var COLOR;
@@ -653,7 +651,7 @@ $.fn.linkMenuSet = function(VAL){
   this.find('A:last').html(HTML).css('color',COLOR);
   this.find('DT:first').html(HTML).css('color',COLOR);
   this.find('INPUT:first').val(VAL);
-  }
+};
 
 
 
@@ -664,41 +662,38 @@ $.fn.linkMenuSet = function(VAL){
 
 
 
-// ЧЕКБОКС
+// чекбокс
 $.fn.myCheck = function(OBJ){
   var ID=$(this).attr('id');
-  if(!$("#check_"+ID).length)
-    {
+  if (!$("#check_"+ID).length) {
     var OBJ = $.extend({
       name:'',
       value:0,
       func:''
-      },OBJ);
+    },OBJ);
 
-    var HID=this;
+    var HID = $(this);
 
     // устанавливаем в INPUT значение, если оно не равно 0 или 1
-    var V=HID.val();
-    if(V!='0' && V!='1')
+    var V = HID.val();
+    if(V != '0' && V != '1')
       HID.val(OBJ.value);
-    else OBJ.value=V;
+    else OBJ.value = V;
 
-    var HTML="<SPAN id=check_"+ID+" class=check"+OBJ.value+"><DIV>"+OBJ.name+"</DIV></SPAN>";
-    HID.after(HTML);
-
+    HID.after("<DIV id=check_"+ID+" class=check"+OBJ.value+">"+OBJ.name+"</DIV>");
 
     HID.next().click(function(){
       var VAL=HID.val();
       HID.val(VAL==0?1:0)
       $(this).attr('class','check'+(VAL==0?'1':'0'))
       if(OBJ.func) OBJ.func(HID.attr('id'));
-      });
-    }
+    });
   }
+};
 $.fn.myCheckVal = function(VAL){
-  if(!VAL) VAL=0;
-  this.val(VAL).next().attr('class','check'+VAL);
-  }
+  if (!VAL) VAL = 0;
+  $(this).val(VAL).next().attr('class','check'+VAL);
+};
 
 
 
@@ -770,7 +765,7 @@ $.fn.alertShow = function(OBJ) {
   if ($("#alert").length > 0) { $("#alert").remove(); }
   var HTML="<DIV id=alert>";
 
-    HTML+="<TABLE cellpadding=0 cellspacing=0 id=table>";
+    HTML+="<TABLE cellpadding=0 cellspacing=0 id=table style=width:"+(OBJ.width>0?OBJ.width+'px':'auto')+">";
     if(OBJ.ugol=='top') HTML+="<TR><TD class=UGT><DIV>&nbsp;</DIV>";
     HTML+="<TR>";
     if(OBJ.ugol=='left') HTML+="<TD class=UGL><DIV>&nbsp;</DIV>";
@@ -778,7 +773,7 @@ $.fn.alertShow = function(OBJ) {
     HTML+="<TD>";
       HTML+="<TABLE cellpadding=0 cellspacing=0>";
       HTML+="<TR><TD class=LR1><TD class=LR2><TD class=RAM>";
-      HTML+="<DIV class=txt"+(OBJ.width>0?' style=max-width:'+OBJ.width+'px':'')+">"+OBJ.txt+"</DIV>";
+      HTML+="<DIV class=txt>"+OBJ.txt+"</DIV>";
       HTML+="<TD class=LR2><TD class=LR1>";
       HTML+="<TR><TD colspan=5 class=BOT1>";
       HTML+="<TR><TD colspan=5 class=BOT2>";
@@ -794,9 +789,9 @@ $.fn.alertShow = function(OBJ) {
   var NTOP=OBJ.top, NLEFT=OBJ.left;
   switch (OBJ.ugol) {
   case 'top':    OBJ.top+=15; this.find('.UGT DIV').css('margin-left',OBJ.otstup+'px'); break;
-  case 'bottom':  OBJ.top-=15; this.find('.UGB DIV').css('margin-left',OBJ.otstup+'px'); break;
-  case 'left':      OBJ.left+=25; break;
-  case 'right':    OBJ.left-=25; break;
+  case 'bottom':  OBJ.top-=15; this.find('.UGB DIV').css('margin-left',OBJ.otstup + 'px'); break;
+  case 'left':      OBJ.left+=25; this.find('.UGL DIV').css('margin-top',OBJ.otstup + 'px'); break;
+  case 'right':    OBJ.left-=25; this.find('.UGR DIV').css('margin-top',OBJ.otstup + 'px'); break;
   }
 
   var TAB = $("#alert #table");
@@ -805,7 +800,7 @@ $.fn.alertShow = function(OBJ) {
     TAB
       .css({top:OBJ.top,left:OBJ.left})
       .animate({top:NTOP,left:NLEFT,opacity:'show'},250);
-    aHide(OBJ.delayHide);
+    aHide();
   },OBJ.delayShow);
 
   $("#alert").mouseenter(function (){
@@ -816,50 +811,13 @@ $.fn.alertShow = function(OBJ) {
   $("#alert").mouseleave(function () { aHide(2000); });
 
   function aHide(dh) {
-    window.delay = setTimeout(function () {
-      $("#alert").animate({opacity:0},2000,function(){ $(this).remove(); });
-    },dh);
-  }
-}
-
-
-
-
-
-
-/* АВТОМАТИЧЕСКОЕ ИЗМЕНЕНИЕ ВЫСОТЫ TEXTAREA */
-$.fn.textareaResize = function(OBJ){
-  var OBJ = $.extend({
-    func:'',
-    minH:55,
-    first:1    // делать ли первый запуск функции resize()
-    },OBJ);
-
-  var TH=this;
-  TH.css('resize','none').css('overflow','hidden');
-
-
-  if(OBJ.first==1) resize();
-
-  TH.keyup(function(){ resize(); if(OBJ.func) OBJ.func(); });
-
-  function resize()
-    {
-    if(TH[0].scrollHeight>OBJ.minH)
-      {
-      if($.browser.opera) TH.css('height',OBJ.minH+'px');
-      var H=TH[0].scrollHeight;
-      if($.browser.opera) H-=6;
-      TH.css('height',H+'px');
-      }
-    else TH.css('height',OBJ.minH+'px');
-    frameBodyHeightSet();
+    if (OBJ.delayHide > 0) {
+      window.delay = setTimeout(function () {
+        $("#alert").animate({opacity:0},2000,function(){ $(this).remove(); });
+      },OBJ.delayHide);
     }
   }
-
-
-
-
+}
 
 
 
@@ -936,7 +894,7 @@ $.fn.vkComment = function(OBJ){
           frameBodyHeightSet();
           }
         }
-      }).textareaResize({minH:26,first:0});
+      }).autosize({callback:frameBodyHeightSet});
 
     THIS.find("#add BUTTON").click(commAdd);
     commCount(res[0].count);
@@ -1061,7 +1019,7 @@ $.fn.vkComment = function(OBJ){
             frameBodyHeightSet();
             }
           })
-        .textareaResize({minH:26});
+        .autosize({callback:frameBodyHeightSet});
       $("#unit"+ID+" BUTTON").click(function(){ commDopAdd($(this)); });
       }
     }
@@ -1114,7 +1072,7 @@ $.fn.vkComment = function(OBJ){
           frameBodyHeightSet();
           }
         }
-      }).textareaResize({minH:26,first:0});
+      }).autosize({callback:frameBodyHeightSet});
     $("#unit"+ID+" BUTTON").click(function(){ commDopAdd($(this)); });
     frameBodyHeightSet();
     }
@@ -1256,15 +1214,13 @@ function getCookie(name)
 
 
 //МАТОВЫЙ ФОН
-function opFonSet()
-  {
-  if($("#opFon").length==0)
-    {
+function opFonSet() {
+  if ($("#opFon").length == 0) {
     $("#frameBody").after("<DIV id=opFon></DIV>");
-    var H=document.getElementById('frameBody').offsetHeight
+    var H = document.getElementById('frameBody').offsetHeight
     $("#opFon").css('height',H);
-    }
   }
+}
 //ВЫВОД НА ЭКРАН ДИАЛОГА
 function dialogShow(obj) {
   var obj = $.extend({
@@ -1275,19 +1231,22 @@ function dialogShow(obj) {
     cancel:'',    /* функция, которая выполняется при нажатии кнопки отмена */
     top:100,    /* отступ сверху с учётом скрола */
     focus:'',    /* установка фокуса на указанный элемент в виде #focus */
-    butSubmit:'Внести'
-    },obj);
+    butSubmit:'Внести',
+    butCancel:'Отмена'
+  },obj);
   opFonSet();
-  var HTML="<DIV id=dialog style=width:"+obj.width+"px;><H1><DIV><A href='javascript:'>&nbsp;</A>"+obj.head+"</DIV></H1>";
+  var HTML="<DIV id=dialog style=width:"+obj.width+"px;><H1><DIV class=head><DIV class=img_del></DIV>"+obj.head+"</DIV></H1>";
   HTML+="<H2>"+obj.content+"</H2>";
-  HTML+="<H3><CENTER><DIV class=vkButton><BUTTON id=butDialog onclick=null>"+obj.butSubmit+"</BUTTON></DIV><DIV class=vkCancel><BUTTON>Отмена</BUTTON></DIV></CENTER></H3></DIV>";
+  HTML+="<H3><CENTER><DIV class=vkButton><BUTTON id=butDialog onclick=null>"+obj.butSubmit+"</BUTTON></DIV>";
+  if (obj.butCancel) { HTML+="<DIV class=vkCancel><BUTTON>" + obj.butCancel + "</BUTTON></DIV>"; }
+  HTML+="</CENTER></H3></DIV>";
   $("#frameBody").after(HTML);
-  var LEFT=313-(obj.width/2);
+  var LEFT = 313 - (obj.width / 2);
   $("#dialog")
     .css('top',$(window).scrollTop()+vkScroll+obj.top)
     .css('left',LEFT)
     .show()
-    .find("H1:first A").click(dialogHide).end()
+    .find(".img_del").click(dialogHide).end()
     .find(".vkCancel:first BUTTON").click(dialogHide).end()
     .find(".vkButton:first BUTTON").click(obj.submit);
   if(obj.cancel) {
@@ -1306,11 +1265,10 @@ function dialogHide() {
 
 
 // СООБЩЕНИЕ О РЕЗУЛЬТАТЕ ВЫПОЛНЕННЫХ ДЕЙСТВИЙ
-function vkMsgOk(MSG)
-  {
+function vkMsgOk(MSG) {
   if($("#vkMsgOk").length>0) $("#vkMsgOk").remove();
   $("BODY").append("<DIV id=vkMsgOk>"+MSG+"</DIV>");
-  $("#vkMsgOk").css('top',$(this).scrollTop()+200+vkScroll).delay(1200).fadeOut(400,function(){ $(this).remove(); });
+  $("#vkMsgOk").css('top',$(this).scrollTop()+200+vkScroll).delay(1200).fadeOut(400, function () { $(this).remove(); });
   }
 
 
@@ -1319,22 +1277,50 @@ function vkMsgOk(MSG)
 
 
 // ПРОСМОТР ФОТОГРАФИИ
-function fotoShow(NAME) {
-  var HTML="<DIV>";
-  HTML+="<TABLE cellspacing=0 cellpadding=0><TR><TD class=fHead>Просмотр фотографии<TD class=close><A href='javascript:' onclick=fotoClose();>закрыть</A></TABLE>";
-  HTML+="<CENTER onclick=fotoClose();><IMG SRC=/files/images/"+NAME+"b.jpg></CENTER>";
-  HTML+"</DIV>";
+function fotoShow(file) {
+  var arr = file.split('_');
+  var len = arr.length;
+
+  // ведение счётчика фотографий и получение ссылок через замыкание
+  var n = 0;
+  var image = function () {
+    if (n == len) { n = 0; }
+    n++;
+    return arr[n - 1];
+  };
+
+  var getn = function () { return n; };
+
+  var view = len == 1 ? 'Просмотр фотографии' : "Фотография <B>1</B> из " + len;
+
+  var HTML="<DIV><TABLE cellspacing=0 cellpadding=0><TR><TD class=fHead>" + view + "<TD class=close><A>закрыть</A></TABLE>";
+  HTML+="<CENTER><IMG SRC=" + image() + "b.jpg></CENTER></DIV>";
+
   opFonSet();
+
   $("#opFon").after("<DIV id=fotoShow>"+HTML+"</DIV>");
-  if(vkScroll<70) vkScroll=0; else vkScroll-=70;
-  $("#fotoShow").css('top',$(window).scrollTop()+6+vkScroll);
+
+  if(vkScroll < 70) vkScroll=0; else vkScroll -= 70;
+
+  // закрытие просмотра
+  var close = function () {
+      $('#opFon').remove();
+      $('#fotoShow').remove();
+      frameBodyHeightSet();
+    };
+
+  $("#fotoShow")
+    .css('top', $(window).scrollTop() + 6 + vkScroll)
+    .find('A:first').click(close);
+
+  // перелистывание фотографий
+  $("#fotoShow CENTER:first").click(len == 1? close : function () {
+    $(this).find('IMG:first').attr('src',image() + "b.jpg");
+    $("#fotoShow B:first").html(getn());
+  });
+
   frameBodyHeightSet(650);
-  }
-function fotoClose() {
-  $('#opFon').remove();
-  $('#fotoShow').remove();
-  frameBodyHeightSet();
-  }
+}
 
 
 
@@ -1342,7 +1328,7 @@ function fotoClose() {
 
 
 // ВЫВОД ПОДСКАЗОК
-function hintTxt(txt,id) {
+function hintTxt(txt, id) {
   var html = "<DIV id=hint>";
   html += "<H3><DIV class=img_del onclick=hintHide();></DIV>Подсказка:</H3>";
   html += txt;
@@ -1385,3 +1371,283 @@ function op(OBJ) {
 	}
   document.getElementById('op').innerHTML = txt;
 }
+
+
+
+
+
+
+
+
+
+
+// вывод списка 2013-01-29 18:03
+(function () {
+  var Spisok = function () {};
+
+  // подготовка к выводу списка после загрузки страницы
+  Spisok.prototype.create = function (obj) {
+    if (!obj) { var obj = {}; }
+
+
+    // ---== общие переменные ==---
+    this.view = obj.view || (function () { throw new Error("Не указано место для результата: view"); })();
+    this.view_prev = this.view;     // сохранение изначального места вывода списка
+    this.start = 0; // начало чтения списка
+    this.limit = obj.limit || 0;             // количество выводимых элементов списка. 0 - неограниченно
+    this.result = obj.result || '';        // результат в верхней строке
+    this.ends = obj.ends || '';         // список окончаний в виде {'$end':['1', '2-3', '0,5-20']};
+    this.result_view = obj.result_view || null; // место для результата о количестве полученных элементов в верхней строке
+    this.result_dop = obj.result_dop || ''; // дополнительная информация для результата в верхней строке
+    this.next_txt = obj.next_txt || "Показать ещё..."; // текст, который показывается на ссылке продолжения списка
+    this.continued = 0; // продолжался список или нет
+    this.nofind = obj.nofind || "Запрос не дал результатов";
+    this.callback = obj.callback || null; // функция, выполняемая после вывода списка
+
+
+    // ---== url - переменные ==---
+    this.url = obj.url ? obj.url + "?" + G.values : null ; // адрес, по которому будет получаться список
+    this.cache_spisok = obj.cache_spisok || null; // если список был сохранён в кеше, тогда сначала вывод его
+    this.imgup = obj.imgup || null; // место для картинки ожидания загрузки
+    this.imgPlace = this.imgup;
+    this.values = obj.values || {}; // список дополнительных переменных, отправляемых при запросе
+    this.data = null;       // результат, полученный из url-запроса
+    this.preload = null;  // массив с продолжения списка, чтобы не ожидать загрузки
+    this.a = obj.a || null; // вывод готовой ссылки в верхней части экрана
+    this.cache = []; // кеширование результатов
+    this.key = ''; // содержимое ключа массива кеша. Если ключ совпал, то кеш по этому ключу будет обновлён
+
+    // ---== json - переменные ==---
+    this.json = obj.json || null; // готовый список элементов, если нет url
+
+    this.print();
+  };
+
+  
+  // составление элемента списка
+  Spisok.prototype.unit = function (sp) { return sp.id; };
+
+  // выполняемая условия перед выводо списка при json
+  Spisok.prototype.condition = function () {};
+
+
+
+  // очередная печать списка при изменении условий
+  Spisok.prototype.print = function (obj) {
+    // если список не продолжался, то сбрасывается стартовая позиция
+    if (this.continued == 0) { this.start = 0; } else { this.continued = 0; }
+
+    if (this.json) {
+      if (obj) {
+        for (var k in obj) { this.values[k] = obj[k]; }
+        this.condition(this.values);
+      }
+      json(this);
+    } else if (this.url) {
+      url(this, obj);
+    } else {
+      throw new Error("Отсутствует выбор вывода списка: url или json");
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+  // подготовка к выводу списка из url
+  function url(t, obj) {
+    // рисование ожидания загрузки, если требуется
+    if (typeof t.imgup == 'string') { t.imgPlace = $(t.imgup); } // если указана строка, перевод в объект. Нужно, если место для картинки меняется
+    if (t.imgPlace) {
+      t.imgPlace.find(".imgUpSpisok").remove();
+      t.imgPlace.append("<IMG src=/img/upload.gif class=imgUpSpisok>");
+    }
+
+    // обновление дополнительных переменных, если необходимо
+    if (typeof obj == 'object') {
+      for (var k in obj) {
+        t.values[k] = obj[k];
+      }
+    }
+
+    // составление url из дополнительных переменных
+    var val = '';
+    for (var k in t.values) { val += "&" + k + "=" + t.values[k]; }
+    if (t.preload) { t.start += t.limit; }
+    val += "&start=" + t.start;
+    val += "&limit=" + t.limit;
+
+    if (t.a) { $("BODY").find("#urla").remove().end().prepend("<A href='" + t.url + val + "' id=urla>" + t.url + val + "</A>"); } // показ полного url-запроса
+
+    var key = encodeURIComponent(val).replace(/%/g,'');
+
+    if (t.cache[key] && t.key != key) {
+      if (!t.preload) { t.key = key; } // если не предзагрузка, то обновление ключа массива кеша
+      getted(t, t.cache[key]);
+    } else {
+      $.getJSON(t.url + val, function (data) {
+        t.data = data;
+        if (!t.preload) { t.key = key; }
+        t.cache[key] = data;
+        getted(t, data);
+      });
+    }
+
+    function getted(t, data) {
+      if (t.preload) {
+        t.preload = null;
+        $("#ajaxNext")
+          .html(t.next_txt)
+          .click(function () { t.view = $(this).parent(); url_print(t, data); });
+      } else { url_print(t, data); }
+    }
+  } // end url
+
+
+
+
+
+
+  // вывод списка
+  function url_print(t, data) {
+    var len = data.spisok.length;
+    if (len > 0) {
+      var html = html_create(t, data.spisok);
+
+      if (data.next == 1) { html += "<DIV><DIV id=ajaxNext><IMG SRC=/img/upload.gif></DIV></DIV>"; }
+
+      t.view.html(html);
+      t.view = t.view_prev;
+
+      t.cache_spisok = null; // обнуление кеша, если был
+
+      if (data.next == 1) {
+        t.preload = 1;
+        url(t);
+      }
+    } else { t.view.html("<DIV class=findEmpty>" + t.nofind + "</DIV>"); }
+
+    // удаление картинки ожидания загрузки
+    if (t.imgPlace) { t.imgPlace.find(".imgUpSpisok").remove(); }
+ 
+    print_result(t, data.all);
+    if (t.callback) { t.callback(data.spisok); }
+
+    frameBodyHeightSet();
+  }
+
+
+
+
+
+
+
+  function html_create(t, data) {
+    var html = '';
+    for(var n = 0; n < data.length; n++) {
+      var sp = data[n];
+      sp.num = n + t.start;  // добавление в массив порядкового номера элемента списка
+      html += "<DIV class=unit id=unit_" + sp.id + ">" + t.unit(sp) + "</DIV>";
+    }
+    return html;
+  }
+
+
+
+
+
+
+
+  // подготовка к выводу списка из json
+  function json(t) {
+    var all = t.json.length;
+    var len = 0;
+    var data = [];
+    var next = 0;
+    if(t.limit > 0) {
+      len = t.start + t.limit;
+      if (len > all) { len = all; } else { next = 1; }
+      for (var n = t.start; n < len; data.push(t.json[n]), n++);
+    } else {
+      len = all;
+      data = t.json;
+    }
+  print(t, data, next, all);
+  }
+
+
+
+
+  // вывод списка
+  function print(t, data, next, all) {
+    var len = data.length;
+    if (len > 0) {
+      var html = html_create(t, data);
+      if (next == 1) { html += "<DIV><DIV id=ajaxNext>" + t.next_txt + "</DIV></DIV>"; }
+
+      t.view.html(html);
+      t.view = t.view_prev;
+
+      if (next == 1) {
+        $("#ajaxNext").click(function () {
+          t.view = $(this).parent();
+          t.start += t.limit;
+          t.continued = 1;
+          t.print();
+        });
+      }
+    } else { t.view.html("<DIV class=findEmpty>" + t.nofind + "</DIV>"); }
+
+    print_result(t, all);
+    if (t.callback) { t.callback(data); }
+
+    frameBodyHeightSet();
+  }
+
+
+
+
+  // вывод результата в верхней строке
+  function print_result(t, all) {
+    if (t.result_view && t.result) {
+      var result;
+      if (all > 0) {
+        result = t.result.replace("$count", all);
+        if (t.ends) {
+          for (var k in t.ends) { result = result.replace(k, end(all, t.ends[k])); }
+        }
+      } else { result = t.nofind; }
+    t.result_view.html(result + t.result_dop);
+    }
+  }
+
+
+
+
+  // формирование окончаний
+  function end(count, arr) {
+    if (arr.length == 2) { arr.push(arr[1]); } // если в массиве всего 2 элемента, то увеличение его, копируя второй элемент в третий
+    var send = arr[2];
+    if(Math.floor(count / 10 % 10) != 1) {
+      switch(count % 10) {
+      case 1: send = arr[0]; break;
+      case 2: send = arr[1]; break;
+      case 3: send = arr[1]; break;
+      case 4: send = arr[1]; break;
+      }
+    }
+    return send;
+  }
+
+
+
+  G.spisok = new Spisok();
+})();
+
+
+

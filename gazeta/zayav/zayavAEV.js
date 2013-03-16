@@ -252,8 +252,7 @@ $.fn.gnGet = function(OBJ){
 
 
 
-function setZayav()
-	{
+function setZayav() {
 	$("#summa_manual").myCheckVal(0);
 	$("#summa").val(0).css('background-color','#FFF').attr('readonly',true);
 	$("#sumSkidka").hide();
@@ -289,7 +288,7 @@ function setZayav()
 						}
 					}
 				});
-			$("#txt").textareaResize({func:calcSummaOb,minH:39,first:0});
+			$("#txt").autosize({callback:frameBodyHeightSet}).keyup(calcSummaOb);
 			$("#nomer").gnGet({category:CAT,func:calcSummaOb});
 			break;
 

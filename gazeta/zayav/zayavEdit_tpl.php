@@ -34,7 +34,7 @@ size_y='".$_POST['size_y']."',
 skidka_id=".$_POST['skidka'].",
 skidka_razmer=".($skRazmer?$skRazmer:0).",
 summa='".$summa."',
-vk_day_active='".$day_active."',
+active_day='".$day_active."',
 file='".$_POST['file']."'
 where id=".$_POST['zayav_id_rek']);
 
@@ -84,7 +84,7 @@ telefon='".$_POST['telefon']."',
 adres='".$_POST['adres']."',
 summa_manual=".$_POST['summa_manual'].",
 summa=".round($_POST['summa']+$prevSum,2).",
-vk_day_active='".$day_active."',
+active_day='".$day_active."',
 file='".$_POST['file']."',
 dop='".$dop."'
 where id=".$_POST['zayav_id_txt']);
@@ -126,7 +126,7 @@ if($_POST['zayav_id_poz_st'])
 		$day_active=$VK->QRow("select day_end from gazeta_nomer where general_nomer=".$gnpol[0]." limit 1");
 	else $day_active='0000-00-00';
 
-	$VK->Query("update zayav set summa=".round($_POST['summa'],2).",vk_day_active='".$day_active."',file='".$_POST['file']."' where id=".$_POST['zayav_id_poz_st']);
+	$VK->Query("update zayav set summa=".round($_POST['summa'],2).",active_day='".$day_active."',file='".$_POST['file']."' where id=".$_POST['zayav_id_poz_st']);
 
 	setClientBalans($zayav->client_id);
 

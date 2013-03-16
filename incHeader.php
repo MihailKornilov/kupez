@@ -7,6 +7,7 @@
 <SCRIPT type="text/javascript" src="/include/jquery-ui-1.8.18.custom.min.js"></SCRIPT>
 <SCRIPT type="text/javascript" src="/include/xd_connection.js"></SCRIPT>
 <SCRIPT type="text/javascript" src="/include/globalScript.js?<?php echo $G->script_style; ?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/include/G_values.js?<?php echo $G->g_values; ?>"></SCRIPT>
 <TITLE> Приложение 2881875 Газета Купецъ </TITLE>
 </HEAD>
 
@@ -21,9 +22,15 @@ if (document.domain == 'kupez') {
   }
 }
 
+G.domen = "<?php echo $DOMEN; ?>";
 G.values = "<?php echo $VALUES; ?>";
 G.zayavMn = ['Объявления','Реклама','Поздравления','Статьи'];
-
+G.vk = {
+  viewer_id:<?php echo $vkUser['viewer_id']; ?>,
+  first_name:"<?php echo $vkUser['first_name']; ?>",
+  last_name:"<?php echo $vkUser['last_name']; ?>",
+  city:"<?php echo $vkUser['city']; ?>"
+};
 
 var zayavCategory = ['Объявление','Реклама','Поздравление','Статья'];
 var zayavCategoryVk = [

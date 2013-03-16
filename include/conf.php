@@ -1,10 +1,11 @@
 <?php
+define('TIME', microtime(true));
 $T = getTime();
+
 
 /* LOCALHOST */
 if($_SERVER["SERVER_NAME"] == 'kupez') {
-  ini_set('display_errors',1);
-  error_reporting(E_ALL);
+  ini_set('display_errors',1); error_reporting(E_ALL);
   $mysql=array(
     'host' => '127.0.0.1',
     'user' => 'root',
@@ -14,7 +15,7 @@ if($_SERVER["SERVER_NAME"] == 'kupez') {
   );
 
   $PATH_FILES = "c:/www/kupez/files/";
-  $DOMEN = '';
+  $domain = 'http://kupez';
   $_GET['viewer_id'] = 982006;
 }
 /* END LOCALHOST */
@@ -29,18 +30,17 @@ if($_SERVER["SERVER_NAME"] == 'kupez.nyandoma.ru') {
     'names' => 'cp1251'
   );
   $PATH_FILES = "/home/httpd/vhosts/nyandoma.ru/subdomains/kupez/httpdocs/files/";
-  $DOMEN = "http://kupez.nyandoma.ru";
+  $domain = "http://kupez.nyandoma.ru";
 }
 
 
-$HOST = $DOMEN."/index.php?";
-$VALUES = "viewer_id=".$_GET['viewer_id'];
-$VALUES .= "&api_id=2881875";
-$VALUES .= "&auth_key=".$_GET['auth_key'];
-$URL = $HOST.$VALUES;
-
-// назначение суперадминистраторов
-$SA[982006] = 1; // Корнилов Михаил
+$values = "viewer_id=".$_GET['viewer_id']
+    .'&api_id=2881875'
+    ."&auth_key=".(isset($_GET['auth_key']) ? $_GET['auth_key'] : '');
+define('DOMAIN', $domain);
+define('VALUES', $values);
+define('URL', DOMAIN.'/index.php?'.VALUES);
+define('SA', 982006); // назначение суперадминистраторов
 
 /* ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ, ВЫБОР МАСТЕРСКОЙ И ЗАГРУЗКА ДАННЫХ СОТРУДНИКА */
 header('P3P: CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"'); // ВКЛЮЧАЕТ РАБОТУ КУКОВ В ie ЧЕРЕЗ ФРЕЙМ
@@ -48,7 +48,11 @@ require_once('class_MysqlDB.php');
 
 $VK = new MysqlDB($mysql['host'],$mysql['user'],$mysql['pass'],$mysql['database'],$mysql['names']);
 
-$G = $VK->QueryObjectOne("select * from setup_global limit 1");
+$G = $VK->QueryObjectOne("SELECT * FROM `setup_global` LIMIT 1");
+define('JS_VERSION', $G->script_style);
+define('CSS_VERSION', $G->script_style);
+define('G_VALUES_VERSION', $G->g_values);
+
 
 $zayavCategory = array(
   1 => 'Объявление',
@@ -96,8 +100,7 @@ function curTime () { return strftime("%Y-%m-%d %H:%M:%S",time()); }
 
 
 
-$MonthFull=array
-  (
+$MonthFull = array(
   1=>'января',
   2=>'февраля',
   3=>'марта',
@@ -119,10 +122,9 @@ $MonthFull=array
   '07'=>'июля',
   '08'=>'августа',
   '09'=>'сентября'
-  );
+);
 
-$MonthCut=array
-  (
+$MonthCut = array(
   1=>'янв',
   2=>'фев',
   3=>'мар',
@@ -144,10 +146,10 @@ $MonthCut=array
   '07'=>'июл',
   '08'=>'авг',
   '09'=>'сен'
-  );
+);
 
 
-$WeekName=array(
+$WeekName = array(
   1=>'пн',
   2=>'вт',
   3=>'ср',
@@ -155,39 +157,40 @@ $WeekName=array(
   5=>'пт',
   6=>'сб',
   0=>'вс'
-  );
+);
 
-function FullData($value,$cut=0,$week=0,$yYear=0)
-  {
+function FullData($value, $cut = 0, $week = 0, $yYear = 0) {
   // 14 апреля 2010
   global $MonthFull,$MonthCut,$WeekName;
   $d=explode("-",$value);
   if($yYear) if($d[0]==strftime("%Y",time())) $d[0]=''; // если eYear!=0, а также год совпадает с текущим, то не отображаем его
   return ($week!=0?$WeekName[date('w',strtotime($value))].". ":'').abs($d[2])." ".($cut==0?$MonthFull[$d[1]]:$MonthCut[$d[1]])." ".$d[0];
-  }
+}
 
-function FullDataTime($value,$cut=0)
-  {
+function FullDataTime($value, $cut = 0) {
   // 14 апреля 2010 в 12:45
   global $MonthFull,$MonthCut;
   $arr=explode(" ",$value);
   $d=explode("-",$arr[0]);
   $t=explode(":",$arr[1]);
   return abs($d[2])." ".($cut==0?$MonthFull[$d[1]]:$MonthCut[$d[1]]).(date('Y')==$d[0]?'':' '.$d[0])." в ".$t[0].":".$t[1];
-  }
+}
 
 // получение списка для select. Пример: "select id,name from table"
-function vkSelGetJson($q)
-  {
+function vkSelGetJson($q) {
   global $VK;
-  $spisok=$VK->QueryRowArray($q);
-  if(count($spisok))
-    foreach($spisok as $n=>$sp) {
-      $send[$n]->uid = $sp[0];
-      $send[$n]->title = utf8($sp[1]);
-      }
-  return json_encode($send);
+  $send = array();
+  $spisok = $VK->QueryRowArray($q);
+  if (count($spisok) > 0) {
+    foreach($spisok as $sp) {
+      array_push($send, array(
+        'uid' => $sp[0],
+        'title' => utf8($sp[1])
+      ));
+    }
   }
+  return json_encode($send);
+}
 
 
 // текущее время в миллисекундах
@@ -201,7 +204,7 @@ function getTime($start = 0) {
   // обновление количества объявлений для рубрики
 function rubrikaCountUpdate($rub) {
   global $VK;
-  $count = $VK->QRow("select count(id) from zayav where rubrika=".$rub." and status=1 and category=1 and vk_day_active>='".strftime("%Y-%m-%d",time())."'");
+  $count = $VK->QRow("select count(id) from zayav where rubrika=".$rub." and status=1 and category=1 and active_day>='".strftime("%Y-%m-%d",time())."'");
   $VK->Query("update setup_rubrika set ob_count=".$count." where id=".$rub);
   xcache_unset('rubrikaCount');
   xcache_unset('obSpisokFirst');

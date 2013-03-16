@@ -13,7 +13,7 @@ if($_GET['viewer_id']==982006)
 	foreach($spisok as $sp)
 		{
 		$gnLast=$VK->QRow("select general_nomer from gazeta_nomer_pub where zayav_id=".$sp->id." order by general_nomer desc limit 1");
-		if($gnDay[$gnLast]) $VK->Query("update zayav set vk_day_active='".$gnDay[$gnLast]."' where id=".$sp->id);
+		if($gnDay[$gnLast]) $VK->Query("update zayav set active_day='".$gnDay[$gnLast]."' where id=".$sp->id);
 		echo $sp->id." = ".$gnDay[$gnLast]."<BR>";
 		}
 	}
@@ -80,6 +80,7 @@ skidka_id,
 skidka_razmer,
 skidka_sum,
 file,
+whence,
 viewer_id_add
 ) values (
 ".$_POST['client_id'].",
@@ -99,6 +100,7 @@ viewer_id_add
 ".$skRazmer.",
 '".$_POST['skidka_sum']."',
 '".$_POST['file']."',
+'kupez',
 ".$_GET['viewer_id'].")");
 	
 	$gnInputArr=explode(',',$_POST['gn_input']);
@@ -152,7 +154,7 @@ viewer_id_add
 	if($_POST['note']) $VK->Query("insert into vk_comment (table_name,table_id,txt,viewer_id_add) values ('zayav',".$idLast.",'".textFormat($_POST['note'])."',".$_GET['viewer_id'].")");
 
 	$day_active=$VK->QRow("select day_end from gazeta_nomer where general_nomer=".$gnpol[0]." limit 1");
-	$VK->Query("update zayav set vk_day_active='".$day_active."' where id=".$idLast);
+	$VK->Query("update zayav set active_day='".$day_active."' where id=".$idLast);
 
 	header("Location:".$URL."&my_page=zayavView&id=".$idLast);
 	}
@@ -208,7 +210,7 @@ $(document).ready(function(){
 			}
 		}});
 
-	$("#note").textareaResize({minH:26,first:0});
+	$("#note").autosize({callback:frameBodyHeightSet});
 
 	$("#oplata").myRadio({spisok:[{uid:1,title:'да'},{uid:0,title:'нет'}]});
 

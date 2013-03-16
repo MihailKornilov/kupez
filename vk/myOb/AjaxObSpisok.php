@@ -1,124 +1,146 @@
 <?php
-function zayavEnd($count)
-	{
-	$ost=$count%10;
-	$ost10=$count/10%10;
+/*
+ * ¬озвращает Ajax результат со списком объ€влений
+ * дл€ редактировани€ дл€ отдельного пользовател€
+ * его личных объ€влений.
+ * “акже все объ€влени€ дл€ администратора.
+*/
 
-	if($ost10==1) return 'й';
-	else
-		switch($ost)
-			{
-			case '1': return 'е';
-			case '2': return '€';
-			case '3': return '€';
-			case '4': return '€';
-			default: return 'й';
-			}
-	}
 
-function activeEnd($count)
-	{
-	$ost=$count%10;
-	$ost10=$count/10%10;
+function zayavEnd($count) {
+  $ost=$count%10;
+  $ost10=$count/10%10;
 
-	if($ost10==1) return 'ых';
-	else
-		switch($ost)
-			{
-			case '1': return 'ое';
-			default: return 'ых';
-			}
-	}
+  if($ost10==1) return 'й';
+  else
+    switch($ost) {
+      case '1': return 'е';
+      case '2': return '€';
+      case '3': return '€';
+      case '4': return '€';
+      default: return 'й';
+      }
+  }
 
-function dayEnd($count)
-	{
-	$ost=$count%10;
-	$ost10=$count/10%10;
+function activeEnd($count) {
+  $ost=$count%10;
+  $ost10=$count/10%10;
 
-	if($ost10==1) return ' дней';
-	else
-		switch($ost)
-			{
-			case '1': return ' день';
-			case '2': return ' дн€';
-			case '3': return ' дн€';
-			case '4': return ' дн€';
-			default: return ' дней';
-			}
-	}
+  if($ost10==1) return 'ых';
+  else
+    switch($ost) {
+      case '1': return 'ое';
+      default: return 'ых';
+      }
+  }
 
-function ostEnd($count)
-	{
-	$ost=$count%10;
-	$ost10=$count/10%10;
-	if($ost10==1) return 'ось ';
-	else
-		if($ost==1) return 'с€ ';
-		else return 'ось ';
-	}
+function dayEnd($count) {
+  $ost=$count%10;
+  $ost10=$count/10%10;
+
+  if($ost10==1) return ' дней';
+  else
+    switch($ost) {
+      case '1': return ' день';
+      case '2': return ' дн€';
+      case '3': return ' дн€';
+      case '4': return ' дн€';
+      default: return ' дней';
+      }
+  }
+
+function ostEnd($count) {
+  $ost=$count%10;
+  $ost10=$count/10%10;
+  if($ost10==1) return 'ось ';
+  else
+    if($ost==1) return 'с€ ';
+    else return 'ось ';
+}
 
 require_once('../../include/AjaxHeader.php');
 
-$find="where status=1 and category=1 and vk_srok>0 and viewer_id_add=".$_GET['viewer_id'];
-if($VK->QRow("select count(id) from zayav ".$find)==0)
-	{
-	$send[0]->result=iconv("WINDOWS-1251","UTF-8","¬ы ещЄ не размещали объ€влений");
-	$send[0]->count=0;
-	}
-else
-	{
-	if($_GET['menu']==1)
-		{
-		$find.=" and vk_day_active>='".strftime("%Y-%m-%d",time())."'";
-		$active=" активн";
-		}
-	if($_GET['menu']==2)
-		{
-		$find.=" and vk_day_active<'".strftime("%Y-%m-%d",time())."'";
-		$archive=" в архиве";
-		}
-	$send[0]->count=$VK->QRow("select count(id) from zayav ".$find);
-	if($send[0]->count>0)
-		$send[0]->result=iconv("WINDOWS-1251","UTF-8","” ¬ас ".$send[0]->count.$active.($active?activeEnd($send[0]->count):'')." объ€влени".zayavEnd($send[0]->count).$archive);
-	else $send[0]->result=iconv("WINDOWS-1251","UTF-8","ќбъ€влений не найдено");
-	}
-$send[0]->page=0;
-$send[0]->viewer_id=$_GET['viewer_id'];
+$find = "where status=1 and category=1 and whence='vk'";
 
-$vkUs=$VK->QueryObjectOne("select first_name,last_name from vk_user where viewer_id=".$_GET['viewer_id']." limit 1");
+// если выводитс€ список объ€влений дл€ пользовател€, то его им€ не показываетс€
+if ($_GET['type'] == 'local') {
+  $find .= " and viewer_id_add=".$_GET['viewer_id'];
+  $where = "” ¬ас ";
+} else { $where = ''; }
 
-$CP=50;
-$spisok=$VK->QueryObjectArray("select * from zayav ".$find." order by id desc limit ".(($_GET['page']-1)*$CP).",".$CP);
-if(count($spisok)>0)
-	{
-	$rubrika=$VK->QueryPtPArray("select id,name from setup_rubrika");
-	$podrubrika=$VK->QueryPtPArray("select id,name from setup_pod_rubrika");
-	foreach($spisok as $n=>$sp)
-		{
-		$send[$n]->id=$sp->id;
-		$send[$n]->txt=iconv("WINDOWS-1251","UTF-8",substr($sp->txt,0,70).(strlen($sp->txt)>95?'...':''));
-		$send[$n]->rub=iconv("WINDOWS-1251","UTF-8",$rubrika[$sp->rubrika]);
-		$send[$n]->podrub=iconv("WINDOWS-1251","UTF-8",$podrubrika[$sp->podrubrika]);
-		$send[$n]->telefon=iconv("WINDOWS-1251","UTF-8",$sp->telefon);
-		$send[$n]->adres=iconv("WINDOWS-1251","UTF-8",$sp->adres);
-		$send[$n]->file=$sp->file;
-		$send[$n]->dtime=iconv("WINDOWS-1251","UTF-8",FullDataTime($sp->dtime_add));
-		if($sp->vk_viewer_id_show==1) $send[$n]->vk_name=iconv("WINDOWS-1251","UTF-8",$vkUs->first_name." ".$vkUs->last_name);
-		$srok=strtotime($sp->vk_day_active)-time()+86400;
-		if($srok>0)
-			{
-			$send[$n]->active=1;
-			$day=ceil($srok/86400);
-			$send[$n]->day_last=iconv("WINDOWS-1251","UTF-8","ќстал".ostEnd($day).$day.dayEnd($day));
-			}	
-		}
-	if(count($spisok)==$CP)
-		{
-		$count=$VK->QNumRows("select id from zayav ".$find." limit ".($_GET['page']*$CP).",".$CP);
-		$_GET['page']++;
-		if($count>0) $send[0]->page=$_GET['page'];
-		}
-	}
+// показ объ€влений дл€ выбранного пользовател€ (администрирование)
+if (isset($_GET['viewer_id_add'])) {
+  $find .= " and viewer_id_add=".$_GET['viewer_id_add'];
+}
+
+if($VK->QRow("select count(id) from zayav ".$find) == 0) {
+  $send->result = utf8("¬ы ещЄ не размещали объ€влений");
+  $send->count = 0;
+} else {
+  if ($_GET['menu'] == 1) {
+    $find.=" and active_day>='".strftime("%Y-%m-%d",time())."'";
+    $active=" активн";
+  }
+  if ($_GET['menu'] == 2) {
+    $find .= " and active_day<'".strftime("%Y-%m-%d",time())."'";
+    $archive = " в архиве";
+  }
+  $send->count = $VK->QRow("select count(id) from zayav ".$find);
+  if ($send->count > 0)
+    $send->result = utf8($where.$send->count.(isset($active)?$active.activeEnd($send->count):'')." объ€влени".zayavEnd($send->count).(isset($archive)?$archive:''));
+  }
+
+$send->page = 0;
+$send->spisok = array();
+
+$maxCount = 20;
+$spisok=$VK->QueryObjectArray("select * from zayav ".$find." order by id desc limit ".(($_GET['page']-1)*$maxCount).",".$maxCount);
+if (count($spisok) > 0) {
+  $ids = '0';
+  foreach ($spisok as $sp) { $ids .= ",".$sp->viewer_id_add; }
+  if ($ids != '0') {
+    $vkUsers = $VK->QueryObjectArray("select viewer_id,first_name,last_name from vk_user where viewer_id in (".$ids.")");
+    foreach ($vkUsers as $us) {
+      $vkName[$us->viewer_id] = utf8($us->first_name." ".$us->last_name);
+    }
+  }
+
+  foreach($spisok as $sp) {
+    if (!isset($vkName[$sp->viewer_id_add])) { $vkName[$sp->viewer_id_add] = ''; }
+    $srok = strtotime($sp->active_day)-time()+86400;
+    $active = 0;
+    $day_last = 0;
+    if($srok > 0) {
+      $active = 1;
+      $day = floor($srok / 86400);
+      $day_last = utf8("ќстал".ostEnd($day).$day.dayEnd($day));
+    }
+    array_push($send->spisok, array(
+      'id' => $sp->id,
+      'rubrika' => $sp->rubrika,
+      'podrubrika' => $sp->podrubrika,
+      'txt' => utf8($sp->txt),
+      'telefon' => utf8($sp->telefon),
+      'adres' => utf8($sp->adres),
+      'file' => $sp->file,
+      'dop' => $sp->dop,
+      'viewer_id' => $sp->viewer_id_add,
+      'viewer_id_show' => $sp->viewer_id_show,
+      'viewer_name' => $vkName[$sp->viewer_id_add],
+      'dtime' => utf8(FullData($sp->dtime_add,1)),
+      'active' => $active,
+      'day_last' => $day_last,
+      'country_name' => utf8($sp->country_name),
+      'city_id' => $sp->city_id,
+      'city_name' => utf8($sp->city_name)
+    ));
+  }
+  if(count($spisok) == $maxCount) {
+    if($VK->QNumRows("select id from zayav ".$find." limit ".($_GET['page']*$maxCount).",".$maxCount) > 0) {
+      $send->page = $_GET['page'] + 1;
+    }
+  }
+}
 
 echo json_encode($send);
 ?>

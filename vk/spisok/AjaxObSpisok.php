@@ -1,11 +1,10 @@
 <?php
-function obEnd($count)
-  {
+function obEnd($count) {
   $ost=$count%10;
   $ost10=$count/10%10;
 
-  if($ost10==1) return 'й';
-  else
+  if($ost10==1) { return 'й'; }
+  else {
     switch($ost)
       {
       case '1': return 'е';
@@ -15,46 +14,39 @@ function obEnd($count)
       default: return 'й';
       }
   }
+}
 
 setlocale(LC_ALL, 'ru_RU.CP1251', 'rus_RUS.CP1251', 'Russian_Russia.1251');
 require_once('../../include/AjaxHeader.php');
 
-$find = "where status=1 and category=1 and vk_day_active>='".strftime("%Y-%m-%d",time())."'";
+$find = "where status=1 and category=1 and active_day>='".strftime("%Y-%m-%d",time())."'";
+
 if ($_GET['rub'] > 0) $find.=" and rubrika=".$_GET['rub'];
 if ($_GET['podrub'] > 0) $find.=" and podrubrika=".$_GET['podrub'];
 if ($_GET['foto_only'] == 1) $find.=" and length(file)>0";
-if (isset($_GET['input'])) {
+if ($_GET['city_id'] > 0) $find.=" and city_id=".$_GET['city_id'];
+if ($_GET['input']) {
   $input = iconv("UTF-8", "WINDOWS-1251",$_GET['input']);
   $find .= " and txt LIKE '%".$input."%'";
 }
 
-$count = $VK->QRow("select count(id) from zayav ".$find);
-if ($_GET['rub'] > 0 or
-   $_GET['podrub'] > 0 or
-   $_GET['foto_only'] == 1 or
-   isset($_GET['input'])) { $fCount="Найдено "; } else { $fCount="Всего "; }
-
-$send->result = utf8($fCount.$count." объявлени".obEnd($count));
-$send->page = 0;
+$send->all = $VK->QRow("select count(id) from zayav ".$find);
+$send->next = 0;
 $send->spisok = array();
 
-$maxCount = 50;
-$spisok = $VK->QueryObjectArray("select * from zayav ".$find." order by id desc limit ".(($_GET['page']-1)*$maxCount).",".$maxCount);
+$spisok = $VK->QueryObjectArray("select * from zayav ".$find." order by id desc limit ".$_GET['start'].",".$_GET['limit']);
 if (count($spisok) > 0) {
-  $ids = "0";
+  $viewers = array(); // Список пользователей, которые показывают ссылку на свою страницу в объявлении
   foreach ($spisok as $sp) {
-    if ($sp->vk_viewer_id_show == 1) { $ids .= ",".$sp->viewer_id_add; }
+    if ($sp->viewer_id_show == 1) { array_push($viewers, $sp->viewer_id_add); }
   }
-  if ($ids != '0') {
-    $vkUsers = $VK->QueryObjectArray("select viewer_id,first_name,last_name from vk_user where viewer_id in (".$ids.")");
-    foreach ($vkUsers as $us) {
-      $vkName[$us->viewer_id] = utf8($us->first_name." ".$us->last_name);
-    }
+  if (count($viewers) > 0) {
+    $viewers = $VK->QueryPtPArray("select viewer_id,concat(first_name,' ',last_name) from vk_user where viewer_id in (".implode(',',array_unique($viewers)).")");
   }
 
   foreach ($spisok as $sp) {
-    if(isset($input)) { $sp->txt = preg_replace("/(".$input.")/i","<TT>\\1</TT>", $sp->txt); }
-    $arr = array(
+    if($_GET['input']) { $sp->txt = preg_replace("/(".$input.")/i","<TT>\\1</TT>", $sp->txt); }
+    array_push($send->spisok, array(
       'id' => $sp->id,
       'rubrika' => $sp->rubrika,
       'podrubrika' => $sp->podrubrika,
@@ -63,27 +55,26 @@ if (count($spisok) > 0) {
       'adres' => utf8($sp->adres),
       'file' => $sp->file,
       'dop' => $sp->dop,
-      'viewer_id' => $sp->vk_viewer_id_show ==1 ? $sp->viewer_id_add : 0,
-      'vk_name' => $sp->vk_viewer_id_show ==1 ? $vkName[$sp->viewer_id_add] : ''
-    );
-    array_push($send->spisok, $arr);
+      'viewer_id' => $sp->viewer_id_show ==1 ? $sp->viewer_id_add : 0,
+      'viewer_name' => $sp->viewer_id_show ==1 ? utf8($viewers[$sp->viewer_id_add]) : '',
+      'country_name' => utf8($sp->country_name),
+      'city_name' => utf8($sp->city_name)
+    ));
   }
-  if(count($spisok) == $maxCount) {
-    if($VK->QNumRows("select id from zayav ".$find." limit ".($_GET['page']*$maxCount).",".$maxCount) > 0) {
-      $send->page = $_GET['page'] + 1;
+  if(count($spisok) == $_GET['limit']) {
+    if($VK->QNumRows("select id from zayav ".$find." limit ".($_GET['start'] + $_GET['limit']).",".$_GET['limit']) > 0) {
+      $send->next = 1;
     }
   }
 }
 
-$send->time = $_GET['viewer_id'] == 982006 ? getTime($T)." " : '';
+$send->time = getTime($T);
 
 $json = json_encode($send);
-if (!xcache_get('obSpisokFirst') or $_GET['cache_new'] == 1) {
+if ($_GET['cache_new'] == 2) {
   xcache_set('obSpisokFirst', $json, 86400);
   xcache_unset('rubrikaCount');
-  }
+}
+
 echo $json;
 ?>
-
-
-

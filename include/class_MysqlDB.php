@@ -1,6 +1,6 @@
 <?php
 // name  : Класс Mysql
-// version  : 1.8.1 (12.12.2012)
+// version  : 1.8.3 (2013-01-21)
 // author  : Mikhail V Kornilov (mihan_k@mail.ru)
 
 class MysqlDB {
@@ -47,15 +47,14 @@ class MysqlDB {
     return $arr;
   }
 
-  
+  // поправка для возврата пустого массива 2013-01-21
   function QueryRowArray($sql) {
-    $result=mysql_query($sql,$this->conn) or die($sql);
-    $n=0;
-    while($temp=mysql_fetch_row($result)) {
-      $rez[$n]=$temp;
-      $n++;
+    $result = mysql_query($sql,$this->conn) or die($sql);
+    $send = array();
+    while($temp = mysql_fetch_row($result)) {
+      array_push($send, $temp);
     }
-    return $rez;
+    return $send;
   }
 
   function QueryPtPArray($sql) {
@@ -71,14 +70,14 @@ class MysqlDB {
     return mysql_fetch_object($result);
   }
   
+  // замена вставки на array_push 2013.01.07
   function QueryObjectArray($sql) {
-    $result=mysql_query($sql,$this->conn) or die($sql);
-    $n=0;
-    while($temp=mysql_fetch_object($result)) {
-      $rez[$n]=$temp;
-      $n++;
+    $result = mysql_query($sql,$this->conn) or die($sql);
+    $arr = array();
+    while($temp = mysql_fetch_object($result)) {
+      array_push($arr, $temp);
     }
-    return $rez;
+    return $arr;
   }
   
   function QNumRows($sql) {

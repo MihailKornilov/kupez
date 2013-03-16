@@ -1,8 +1,11 @@
 <?php
 include('incHeader.php');
-$spisok=$VK->QueryRowArray("select distinct(substr(day_public,1,4)) from gazeta_nomer order by day_public");
-foreach($spisok as $sp)
-	$year.="{uid:".$sp[0].",title:'".$sp[0]."'},";
+
+$year = array();
+$spisok = $VK->QueryRowArray("select distinct(substr(day_public,1,4)) from gazeta_nomer order by day_public");
+foreach ($spisok as $sp) {
+	array_push($year, array('uid' => $sp[0], 'title' => $sp[0]));
+}
 
 $gnMin=$VK->QRow("select min(general_nomer) from gazeta_nomer where day_print>='".strftime('%Y-%m-%d',time())."'");
 ?>
@@ -29,7 +32,7 @@ $(document).ready(function(){
 	$("#year").vkSel({
 		width:147,
 		title0:'Год не указан',
-		spisok:[<?php echo substr($year,0,strlen($year)-1); ?>],
+		spisok:<?php echo json_encode($year); ?>,
 		func:function(YEAR){
 			if(YEAR>0) gazetaNomerGet(YEAR);
 			else $("#vkSel_gazeta_nomer").remove();
@@ -90,7 +93,6 @@ function zayavSpisokGet(OBJ)
 		URL+="&category="+$("#category").val();
 		URL+="&gazeta_nomer="+$("#gazeta_nomer").val();
 		var FAST=$("#fastFind_input").val(); if(FAST) URL+="&fast="+encodeURIComponent(FAST);
-
 		$.getJSON("/gazeta/zayav/AjaxZayavSpisok.php?<?php echo $VALUES; ?>"+URL,function(data){
 			if(data[0].count>0)
 				{

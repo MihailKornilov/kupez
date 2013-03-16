@@ -6,7 +6,7 @@ $(document).ready(function(){
 	$("#razdelSel").vkSel({
 		width:300,
 		spisok:[
-			<?php if($WR[$vkUser->viewer_id] == 1) echo "{uid:8,title:'Доступ и права сотрудников'},"; ?>
+			<?php if($WR[$vkUser['viewer_id']] == 1) echo "{uid:8,title:'Доступ и права сотрудников'},"; ?>
 			{uid:1,title:'Заявители'},
 			{uid:2,title:'Рубрики'},
 			{uid:7,title:'Подрубрики'},

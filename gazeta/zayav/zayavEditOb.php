@@ -15,7 +15,7 @@ $(document).ready(function(){
 
 	podRubVkSel(<?php echo $zayav->podrubrika; ?>);
 
-	$('#txt').textareaResize({minH:29,func:calcSummaOb});
+	$('#txt').autosize().keyup(calcSummaOb);
 
 	$("#nomer").gnGet({
 		zayav_id:<?php echo $zayav->id; ?>,

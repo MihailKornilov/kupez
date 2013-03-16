@@ -19,7 +19,7 @@ function obEnd($count)
 setlocale(LC_ALL, 'ru_RU.CP1251', 'rus_RUS.CP1251', 'Russian_Russia.1251');
 require_once('../../include/AjaxHeader.php');
 
-$find="where status=1 and category=1 and vk_day_active>='".strftime("%Y-%m-%d",time())."'";
+$find="where status=1 and category=1 and active_day>='".strftime("%Y-%m-%d",time())."'";
 if($_GET['rub']>0) $find.=" and rubrika=".$_GET['rub'];
 if($_GET['podrub']>0) $find.=" and podrubrika=".$_GET['podrub'];
 if($_GET['input'])
@@ -50,7 +50,7 @@ foreach($spisokRub as $spRub)
 						{
 						$contact=($sp->telefon?"<B>Тел.: ".$sp->telefon."</B>":'');
 						if($sp->adres) $contact.=($sp->telefon?", ":'')."<B>Адрес: ".$sp->adres."</B>";
-						if($sp->vk_viewer_id_show==1)
+						if($sp->viewer_id_show==1)
 							{
 							$vkUs=$VK->QueryObjectOne("select first_name,last_name from vk_user where viewer_id=".$sp->viewer_id_add." limit 1");
 							$contact.="<EM>(<A href='http://vk.com/id".$sp->viewer_id_add."' target=_vk>".$vkUs->first_name." ".$vkUs->last_name."</A>)</EM>";
@@ -70,7 +70,7 @@ foreach($spisokRub as $spRub)
 					{
 					$contact=($sp->telefon?"<B>Тел.: ".$sp->telefon."</B>":'');
 					if($sp->adres) $contact.=($sp->telefon?", ":'')."<B>Адрес: ".$sp->adres."</B>";
-					if($sp->vk_viewer_id_show==1)
+					if($sp->viewer_id_show==1)
 						{
 						$vkUs=$VK->QueryObjectOne("select first_name,last_name from vk_user where viewer_id=".$sp->viewer_id_add." limit 1");
 						$contact.="<EM>(<A href='http://vk.com/id".$sp->viewer_id_add."' target=_vk>".$vkUs->first_name." ".$vkUs->last_name."</A>)</EM>";

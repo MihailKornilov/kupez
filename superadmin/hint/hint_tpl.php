@@ -1,5 +1,5 @@
 <?php
-if (!$SA[$_GET['viewer_id']]) Header("Location:".$URL); // переводим на главную страницу, если пользователю нельзя смотреть эту
+if (SA != [$_GET['viewer_id']) Header("Location:".$URL); // переводим на главную страницу, если пользователю нельзя смотреть эту
 include('incHeader.php');
 ?>
 
