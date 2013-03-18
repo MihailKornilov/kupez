@@ -32,8 +32,8 @@ if($send['pub'][0]->count>0)
 		{
 		$send['pub'][$n]->week_nomer=$sp[0];
 		$send['pub'][$n]->general_nomer=$sp[1];
-		$send['pub'][$n]->day_public=iconv("WINDOWS-1251","UTF-8",FullData($sp[2],0,1));
-		$send['pub'][$n]->dop_name=iconv("WINDOWS-1251","UTF-8",$sp[$spn]>0?$gnDopName[$sp[$spn]]:'');
+		$send['pub'][$n]->day_public=utf8(FullData($sp[2],0,1));
+		$send['pub'][$n]->dop_name=utf8($sp[$spn]>0?$gnDopName[$sp[$spn]]:'');
 		$send['pub'][$n]->summa=round($sp[3],2);
 		$send['pub'][$n]->viewed=1;
 		$send['gn_prev'].=$sp[1].":".$sp[$spn].":".round($sp[3],2).",";
@@ -48,7 +48,7 @@ if(count($spisok)>0)
 		{
 		$send['gaz'][$n]->week_nomer=$sp->week_nomer;
 		$send['gaz'][$n]->general_nomer=$sp->general_nomer;
-		$send['gaz'][$n]->day_public=iconv("WINDOWS-1251","UTF-8",FullData($sp->day_public,0,1));
+		$send['gaz'][$n]->day_public=utf8(FullData($sp->day_public,0,1));
 		$send['gaz'][$n]->sel=($gnPub[$sp->general_nomer]?1:0);
 		$send['gaz'][$n]->dop=($gnDop[$sp->general_nomer]?$gnDop[$sp->general_nomer]:0);
 		$send['gaz'][$n]->viewed=0;
@@ -58,24 +58,24 @@ if(count($spisok)>0)
 switch($_GET['category'])
 	{
 	case 1:
-		$title0="Доп. параметр не указан";
+		$title0="пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
 		$spisokDop=$VK->QueryObjectArray("select * from setup_ob_dop order by id");
 		break;
 	case 2:
-		$title0="Полоса не указана";
+		$title0="пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 		$spisokDop=$VK->QueryObjectArray("select * from setup_polosa_cost order by sort");
 		break;
 	}
 
 $send['dop'][0]->uid=0;
-$send['dop'][0]->title=iconv("WINDOWS-1251","UTF-8",$title0);
+$send['dop'][0]->title=utf8($title0);
 $send['dop_cena'][0]=0;
 $send['dop'][0]->count=count($spisokDop);
 if($send['dop'][0]->count>0)
 	foreach($spisokDop as $n=>$sp)
 		{
 		$send['dop'][$n+1]->uid=$sp->id;
-		$send['dop'][$n+1]->title=iconv("WINDOWS-1251","UTF-8",$sp->name);
+		$send['dop'][$n+1]->title=utf8($sp->name);
 		$send['dop_cena'][$sp->id]=round($sp->cena,2);
 		}
 

@@ -84,14 +84,36 @@ class MysqlDB {
     $result=mysql_query($sql,$this->conn) or die($sql);
     return mysql_num_rows($result);
     }
-  
-  function ptpJson($q) {
-    $res = mysql_query($q, $this->conn) or die($q);
-    while($sp = mysql_fetch_row($res)) {
-      $send[$sp[0]] = iconv("WINDOWS-1251","UTF-8",$sp[1]);
+
+    // ассоциативный массив
+    function ptpJson($q) {
+        $res = mysql_query($q, $this->conn) or die($q);
+        $send = array();
+        while($sp = mysql_fetch_row($res)) {
+            array_push($send, $sp[0].":".(preg_match("|^[-\d]+$|", $sp[1]) ? $sp[1] : "\"".$sp[1]."\""));
+        }
+        return "{".implode(',',$send)."}";
     }
-    return json_encode($send);
-  }
+
+    // массив для выпадающего списка 2013-01-22
+    function vkSelJson($q) {
+        $send = array();
+        $res = mysql_query($q, $this->conn) or die($q);
+        while($sp = mysql_fetch_row($res)) {
+            array_push($send, "{uid:".$sp[0].",title:\"".$sp[1]."\"}");
+        }
+        return "[".implode(',',$send)."]";
+    }
+
+    // последовательный список из чисел: "select id from table"
+    function ids($q) {
+        $res = mysql_query($q, $this->conn) or die($q);
+        $send = array();
+        while($sp = mysql_fetch_row($res)) {
+            array_push($send, $sp[0]);
+        }
+        return implode(',',$send);
+    }
+
 }
 ?>
-

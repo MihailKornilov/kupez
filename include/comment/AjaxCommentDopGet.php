@@ -4,8 +4,8 @@ require_once('../AjaxHeader.php');
 $spisok=$VK->QueryObjectArray("select * from vk_user");
 foreach($spisok as $sp)
 	{
-	$vkUs[$sp->viewer_id]->first_name=iconv("WINDOWS-1251","UTF-8",$sp->first_name);
-	$vkUs[$sp->viewer_id]->last_name=iconv("WINDOWS-1251","UTF-8",$sp->last_name);
+	$vkUs[$sp->viewer_id]->first_name=utf8($sp->first_name);
+	$vkUs[$sp->viewer_id]->last_name=utf8($sp->last_name);
 	$vkUs[$sp->viewer_id]->photo=$sp->photo;
 	}
 
@@ -17,8 +17,8 @@ foreach($spisok as $n=>$sp)
 	$send[$n]->first_name=$vkUs[$sp->viewer_id_add]->first_name;
 	$send[$n]->last_name=$vkUs[$sp->viewer_id_add]->last_name;
 	$send[$n]->photo=$vkUs[$sp->viewer_id_add]->photo;
-	$send[$n]->txt=iconv("WINDOWS-1251","UTF-8",$sp->txt);
-	$send[$n]->dtime_add=iconv("WINDOWS-1251","UTF-8",FullDataTime($sp->dtime_add));
+	$send[$n]->txt=utf8($sp->txt);
+	$send[$n]->dtime_add=utf8(FullDataTime($sp->dtime_add));
 	}
 
 echo json_encode($send);

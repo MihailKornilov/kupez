@@ -1,49 +1,77 @@
 <?php
 define('TIME', microtime(true));
-$T = getTime();
+define('SA', 982006); // назначение суперадминистратора
+define('DOMAIN', $_SERVER["SERVER_NAME"]);
 
-
-/* LOCALHOST */
-if($_SERVER["SERVER_NAME"] == 'kupez') {
-  ini_set('display_errors',1); error_reporting(E_ALL);
-  $mysql=array(
-    'host' => '127.0.0.1',
-    'user' => 'root',
-    'pass' => '4909099',
-    'database' => 'kupez',
-    'names' => 'cp1251'
-  );
-
-  $PATH_FILES = "c:/www/kupez/files/";
-  $domain = 'http://kupez';
-  $_GET['viewer_id'] = 982006;
+switch (DOMAIN) {
+    case 'kupez': // localhost
+        ini_set('display_errors',1);
+        error_reporting(E_ALL);
+        $mysql=array(
+            'host' => '127.0.0.1',
+            'user' => 'root',
+            'pass' => '4909099',
+            'database' => 'kupez',
+            'names' => 'cp1251'
+        );
+        define('PATH', 'c:/www/kupez/');
+        define('VIEWER_ID', 982006);
+        break;
+    case 'kupez.nyandoma.ru':
+        $mysql=array(
+            'host' => 'a6460.mysql.mchost.ru',
+            'user' => 'a6460_kupez',
+            'pass' => '4909099',
+            'database' => 'a6460_kupez',
+            'names' => 'cp1251'
+        );
+        define('PATH', '/home/httpd/vhosts/nyandoma.ru/subdomains/kupez/httpdocs/');
+        define('VIEWER_ID', VIEWER_ID);
+        define('API_ID', 2881875);
+        define('API_SECRET', 'h9IjOkxIMwoW8agQkW3M');
+        define('API_AUTH_KEY', $_GET['auth_key']);
+        apiAuth();
+        break;
+    case 'kupeztest.nyandoma.ru':
+        $mysql=array(
+            'host' => 'a6460.mysql.mchost.ru',
+            'user' => 'a6460_kupeztest',
+            'pass' => '4909099',
+            'database' => 'a6460_kupeztest',
+            'names' => 'cp1251'
+        );
+        define('PATH', '/home/httpd/vhosts/nyandoma.ru/subdomains/kupeztest/httpdocs/');
+        define('VIEWER_ID', VIEWER_ID);
+        define('API_ID', 3495523);
+        define('API_SECRET', 'acnJyLI2QDM6yTXQXcwC');
+        define('API_AUTH_KEY', $_GET['auth_key']);
+        apiAuth();
+        break;
+    default: echo 'domain error'; exit; break;
 }
-/* END LOCALHOST */
+
+if (!defined('API_ID')) define('API_ID', '');
+if (!defined('API_AUTH_KEY')) define('API_AUTH_KEY', '');
+
+define('VALUES', 'viewer_id='.VIEWER_ID.'&api_id='.API_ID."&auth_key=".API_AUTH_KEY);
+define('URL', 'http://'.DOMAIN.'/index.php?'.VALUES);
 
 
-if($_SERVER["SERVER_NAME"] == 'kupeztest.nyandoma.ru') {
-  $mysql=array(
-    'host' => 'a6460.mysql.mchost.ru',
-    'user' => 'a6460_kupeztest',
-    'pass' => '4909099',
-    'database' => 'a6460_kupeztest',
-    'names' => 'cp1251'
-  );
-  $PATH_FILES = "/home/httpd/vhosts/nyandoma.ru/subdomains/kupeztest/httpdocs/files/";
-  $domain = "http://kupez.nyandoma.ru";
+
+
+// Авторизация пользователя ВКонтакте
+function apiAuth()
+{
+    if ($_GET['auth_key'] != md5($_GET['api_id']."_".VIEWER_ID."_".API_SECRET)) {
+        echo 'auth error';
+        exit;
+    }
 }
 
 
-$values = "viewer_id=".$_GET['viewer_id']
-    .'&api_id=2881875'
-    ."&auth_key=".(isset($_GET['auth_key']) ? $_GET['auth_key'] : '');
-define('DOMAIN', $domain);
-define('VALUES', $values);
-define('URL', DOMAIN.'/index.php?'.VALUES);
-define('SA', 982006); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
-header('P3P: CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"'); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ ie пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+/* ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ, ВЫБОР МАСТЕРСКОЙ И ЗАГРУЗКА ДАННЫХ СОТРУДНИКА */
+header('P3P: CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"'); // ВКЛЮЧАЕТ РАБОТУ КУКОВ В ie ЧЕРЕЗ ФРЕЙМ
 require_once('class_MysqlDB.php');
 
 $VK = new MysqlDB($mysql['host'],$mysql['user'],$mysql['pass'],$mysql['database'],$mysql['names']);
@@ -55,159 +83,159 @@ define('G_VALUES_VERSION', $G->g_values);
 
 
 $zayavCategory = array(
-  1 => 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  2 => 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  3 => 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  4 => 'пїЅпїЅпїЅпїЅпїЅпїЅ'
+    1 => 'Объявление',
+    2 => 'Реклама',
+    3 => 'Поздравление',
+    4 => 'Статья'
 );
 
 
-/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ */
+/* форматирование текста для внесения в базу */
 function textFormat($txt) {
-  $txt = str_replace("'","&#039;", $txt);
-  $txt = str_replace("<","&lt;", $txt);
-  $txt = str_replace(">","&gt;", $txt);
-  return str_replace("\n","<BR>", $txt);
+    $txt = str_replace("'","&#039;", $txt);
+    $txt = str_replace("<","&lt;", $txt);
+    $txt = str_replace(">","&gt;", $txt);
+    return str_replace("\n","<BR>", $txt);
 }
 
 function textUnFormat($txt) {
-  $txt=str_replace("&#039;","'",$txt);
-  $txt=str_replace("&lt;","<",$txt);
-  $txt=str_replace("&gt;",">",$txt);
-  return str_replace("<BR>","\n",$txt);
+    $txt=str_replace("&#039;","'",$txt);
+    $txt=str_replace("&lt;","<",$txt);
+    $txt=str_replace("&gt;",">",$txt);
+    return str_replace("<BR>","\n",$txt);
 }
 
 
 
-/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
+/* установка баланса клиента */
 function setClientBalans($client_id = 0) {
-  if ($client_id > 0) {
-    global $VK;
-    $rashod = $VK->QRow("select sum(summa) from zayav where client_id=".$client_id);
-    $prihod = $VK->QRow("select sum(summa) from oplata where status=1 and client_id=".$client_id);
-    $balans = $prihod - $rashod;
-    $VK->Query("update client set balans=".$balans." where id=".$client_id);
-    return $balans;
-  } else {
-    return 0;
-  }
+    if ($client_id > 0) {
+        global $VK;
+        $rashod = $VK->QRow("select sum(summa) from zayav where client_id=".$client_id);
+        $prihod = $VK->QRow("select sum(summa) from oplata where status=1 and client_id=".$client_id);
+        $balans = $prihod - $rashod;
+        $VK->Query("update client set balans=".$balans." where id=".$client_id);
+        return $balans;
+    } else {
+        return 0;
+    }
 }
 
 
-function win1251($txt) { return iconv("UTF-8","WINDOWS-1251",$txt); }
-function utf8($txt) { return iconv("WINDOWS-1251","UTF-8",$txt); }
+function win1251($txt) { return win1251($txt); }
+function utf8($txt) { return utf8($txt); }
 function curTime () { return strftime("%Y-%m-%d %H:%M:%S",time()); }
 
 
 
 $MonthFull = array(
-  1=>'пїЅпїЅпїЅпїЅпїЅпїЅ',
-  2=>'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  3=>'пїЅпїЅпїЅпїЅпїЅ',
-  4=>'пїЅпїЅпїЅпїЅпїЅпїЅ',
-  5=>'пїЅпїЅпїЅ',
-  6=>'пїЅпїЅпїЅпїЅ',
-  7=>'пїЅпїЅпїЅпїЅ',
-  8=>'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  9=>'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  10=>'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  11=>'пїЅпїЅпїЅпїЅпїЅпїЅ',
-  12=>'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  '01'=>'пїЅпїЅпїЅпїЅпїЅпїЅ',
-  '02'=>'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  '03'=>'пїЅпїЅпїЅпїЅпїЅ',
-  '04'=>'пїЅпїЅпїЅпїЅпїЅпїЅ',
-  '05'=>'пїЅпїЅпїЅ',
-  '06'=>'пїЅпїЅпїЅпїЅ',
-  '07'=>'пїЅпїЅпїЅпїЅ',
-  '08'=>'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
-  '09'=>'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ'
+    1=>'января',
+    2=>'февраля',
+    3=>'марта',
+    4=>'апреля',
+    5=>'мая',
+    6=>'июня',
+    7=>'июля',
+    8=>'августа',
+    9=>'сентября',
+    10=>'октября',
+    11=>'ноября',
+    12=>'декабря',
+    '01'=>'января',
+    '02'=>'февраля',
+    '03'=>'марта',
+    '04'=>'апреля',
+    '05'=>'мая',
+    '06'=>'июня',
+    '07'=>'июля',
+    '08'=>'августа',
+    '09'=>'сентября'
 );
 
 $MonthCut = array(
-  1=>'пїЅпїЅпїЅ',
-  2=>'пїЅпїЅпїЅ',
-  3=>'пїЅпїЅпїЅ',
-  4=>'пїЅпїЅпїЅ',
-  5=>'пїЅпїЅпїЅ',
-  6=>'пїЅпїЅпїЅ',
-  7=>'пїЅпїЅпїЅ',
-  8=>'пїЅпїЅпїЅ',
-  9=>'пїЅпїЅпїЅпїЅ',
-  10=>'пїЅпїЅпїЅ',
-  11=>'пїЅпїЅпїЅ',
-  12=>'пїЅпїЅпїЅ',
-  '01'=>'пїЅпїЅпїЅ',
-  '02'=>'пїЅпїЅпїЅ',
-  '03'=>'пїЅпїЅпїЅ',
-  '04'=>'пїЅпїЅпїЅ',
-  '05'=>'пїЅпїЅпїЅ',
-  '06'=>'пїЅпїЅпїЅ',
-  '07'=>'пїЅпїЅпїЅ',
-  '08'=>'пїЅпїЅпїЅ',
-  '09'=>'пїЅпїЅпїЅ'
+    1=>'янв',
+    2=>'фев',
+    3=>'мар',
+    4=>'апр',
+    5=>'мая',
+    6=>'июн',
+    7=>'июл',
+    8=>'авг',
+    9=>'сент',
+    10=>'окт',
+    11=>'ноя',
+    12=>'дек',
+    '01'=>'янв',
+    '02'=>'фев',
+    '03'=>'мар',
+    '04'=>'апр',
+    '05'=>'мая',
+    '06'=>'июн',
+    '07'=>'июл',
+    '08'=>'авг',
+    '09'=>'сен'
 );
 
 
 $WeekName = array(
-  1=>'пїЅпїЅ',
-  2=>'пїЅпїЅ',
-  3=>'пїЅпїЅ',
-  4=>'пїЅпїЅ',
-  5=>'пїЅпїЅ',
-  6=>'пїЅпїЅ',
-  0=>'пїЅпїЅ'
+    1=>'пн',
+    2=>'вт',
+    3=>'ср',
+    4=>'чт',
+    5=>'пт',
+    6=>'сб',
+    0=>'вс'
 );
 
 function FullData($value, $cut = 0, $week = 0, $yYear = 0) {
-  // 14 пїЅпїЅпїЅпїЅпїЅпїЅ 2010
-  global $MonthFull,$MonthCut,$WeekName;
-  $d=explode("-",$value);
-  if($yYear) if($d[0]==strftime("%Y",time())) $d[0]=''; // пїЅпїЅпїЅпїЅ eYear!=0, пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
-  return ($week!=0?$WeekName[date('w',strtotime($value))].". ":'').abs($d[2])." ".($cut==0?$MonthFull[$d[1]]:$MonthCut[$d[1]])." ".$d[0];
+    // 14 апреля 2010
+    global $MonthFull,$MonthCut,$WeekName;
+    $d=explode("-",$value);
+    if($yYear) if($d[0]==strftime("%Y",time())) $d[0]=''; // если eYear!=0, а также год совпадает с текущим, то не отображаем его
+    return ($week!=0?$WeekName[date('w',strtotime($value))].". ":'').abs($d[2])." ".($cut==0?$MonthFull[$d[1]]:$MonthCut[$d[1]])." ".$d[0];
 }
 
 function FullDataTime($value, $cut = 0) {
-  // 14 пїЅпїЅпїЅпїЅпїЅпїЅ 2010 пїЅ 12:45
-  global $MonthFull,$MonthCut;
-  $arr=explode(" ",$value);
-  $d=explode("-",$arr[0]);
-  $t=explode(":",$arr[1]);
-  return abs($d[2])." ".($cut==0?$MonthFull[$d[1]]:$MonthCut[$d[1]]).(date('Y')==$d[0]?'':' '.$d[0])." пїЅ ".$t[0].":".$t[1];
+    // 14 апреля 2010 в 12:45
+    global $MonthFull,$MonthCut;
+    $arr=explode(" ",$value);
+    $d=explode("-",$arr[0]);
+    $t=explode(":",$arr[1]);
+    return abs($d[2])." ".($cut==0?$MonthFull[$d[1]]:$MonthCut[$d[1]]).(date('Y')==$d[0]?'':' '.$d[0])." в ".$t[0].":".$t[1];
 }
 
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ select. пїЅпїЅпїЅпїЅпїЅпїЅ: "select id,name from table"
+// получение списка для select. Пример: "select id,name from table"
 function vkSelGetJson($q) {
-  global $VK;
-  $send = array();
-  $spisok = $VK->QueryRowArray($q);
-  if (count($spisok) > 0) {
-    foreach($spisok as $sp) {
-      array_push($send, array(
-        'uid' => $sp[0],
-        'title' => utf8($sp[1])
-      ));
+    global $VK;
+    $send = array();
+    $spisok = $VK->QueryRowArray($q);
+    if (count($spisok) > 0) {
+        foreach($spisok as $sp) {
+            array_push($send, array(
+                'uid' => $sp[0],
+                'title' => utf8($sp[1])
+            ));
+        }
     }
-  }
-  return json_encode($send);
+    return json_encode($send);
 }
 
 
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// текущее время в миллисекундах
 function getTime($start = 0) {
-  $arr = explode(' ', microtime());
-  return round($arr[1] + $arr[0] - $start, 3);
+    $arr = explode(' ', microtime());
+    return round($arr[1] + $arr[0] - $start, 3);
 }
 
 
 
-  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// обновление количества объявлений для рубрики
 function rubrikaCountUpdate($rub) {
-  global $VK;
-  $count = $VK->QRow("select count(id) from zayav where rubrika=".$rub." and status=1 and category=1 and active_day>='".strftime("%Y-%m-%d",time())."'");
-  $VK->Query("update setup_rubrika set ob_count=".$count." where id=".$rub);
-  xcache_unset('rubrikaCount');
-  xcache_unset('obSpisokFirst');
+    global $VK;
+    $count = $VK->QRow("select count(id) from zayav where rubrika=".$rub." and status=1 and category=1 and active_day>='".strftime("%Y-%m-%d",time())."'");
+    $VK->Query("update setup_rubrika set ob_count=".$count." where id=".$rub);
+    xcache_unset('rubrikaCount');
+    xcache_unset('obSpisokFirst');
 }
 
 ?>

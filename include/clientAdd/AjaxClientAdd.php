@@ -10,11 +10,11 @@ adres,
 viewer_id_add
 ) values (
 ".$_POST['person'].",
-'".iconv("UTF-8","WINDOWS-1251",$_POST['org_name'])."',
-'".iconv("UTF-8","WINDOWS-1251",$_POST['fio'])."',
-'".iconv("UTF-8","WINDOWS-1251",$_POST['telefon'])."',
-'".iconv("UTF-8","WINDOWS-1251",$_POST['adres'])."',
-".$_GET['viewer_id'].")");
+'".win1251($_POST['org_name'])."',
+'".win1251($_POST['fio'])."',
+'".win1251($_POST['telefon'])."',
+'".win1251($_POST['adres'])."',
+".VIEWER_ID.")");
 
 echo json_encode($send);
 ?>

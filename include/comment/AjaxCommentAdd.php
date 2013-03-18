@@ -1,7 +1,7 @@
 <?php
 require_once('../AjaxHeader.php');
 
-$txt=str_replace("'","&#039;",iconv("UTF-8", "WINDOWS-1251",$_POST['txt']));
+$txt=str_replace("'","&#039;",win1251($_POST['txt']));
 $txt=str_replace("<","&lt;",$txt);
 $txt=str_replace(">","&gt;",$txt);
 $txt=str_replace("\n","<BR>",trim($txt));
@@ -26,8 +26,8 @@ if($_POST['parent_id']>0)
 	}
 else $send->count=$VK->QRow("select count(id) from vk_comment where parent_id=0 and status=1 and table_name='".$_POST['table_name']."' and table_id=".$_POST['table_id']);
 
-$send->txt=iconv("WINDOWS-1251","UTF-8",$txt);
-$send->dtime_add=iconv("WINDOWS-1251","UTF-8",FullDataTime(strftime("%Y-%m-%d %H:%M:%S",time())));
+$send->txt=utf8($txt);
+$send->dtime_add=utf8(FullDataTime(strftime("%Y-%m-%d %H:%M:%S",time())));
 
 echo json_encode($send);
 ?>
