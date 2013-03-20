@@ -1,46 +1,4 @@
 <?php
-/*
-// ВНЕСЕНИЕ ПЛАТЕЖЕЙ ВСЕМ ЗАЯВКАМ, У КОТОРЫХ СУММА > 0
-$spisok=$VK->QueryObjectArray("select * from zayav where summa>0 order by id");
-foreach($spisok as $sp)
-	$VK->Query("insert into oplata (zayav_id,summa,tip,viewer_id_add,dtime_add) values (".$sp->id.",'".$sp->summa."',1,".$sp->viewer_id_add.",'".$sp->dtime_add."')");
-
-// УСТАНОВКА ВСЕМ ЗАЯВКАМ ПОСЛЕДНИЙ АКТИВНЫЙ ДЕНЬ
-if($_GET['viewer_id']==982006)
-	{
-	$gnDay=$VK->QueryPtPArray("select general_nomer,day_end from gazeta_nomer order by id");
-	$spisok=$VK->QueryObjectArray("select id from zayav order by id");
-	foreach($spisok as $sp)
-		{
-		$gnLast=$VK->QRow("select general_nomer from gazeta_nomer_pub where zayav_id=".$sp->id." order by general_nomer desc limit 1");
-		if($gnDay[$gnLast]) $VK->Query("update zayav set active_day='".$gnDay[$gnLast]."' where id=".$sp->id);
-		echo $sp->id." = ".$gnDay[$gnLast]."<BR>";
-		}
-	}
-
-// УСТАНОВКА ПАРАМЕТРА dop ВСЕМ ЗАЯВКАМ
-$spisok=$VK->QueryObjectArray("select id from zayav where category=1 order by id limit 0,1000");
-foreach($spisok as $sp)
-	{
-	$dop=$VK->QRow("select ob_dop_id from gazeta_nomer_pub where zayav_id=".$sp->id." order by id desc limit 1");
-	if($dop>0)
-		{
-		switch($dop)
-			{
-			case 1: $dop='ramka'; break;
-			case 2: $dop='black'; break;
-			case 3: $dop='bold'; break;
-			}
-		$VK->Query("update zayav set dop='".$dop."' where id=".$sp->id);
-		}
-	echo $sp->id." - ".$dop."<BR>";
-	}
-*/
-
-
-
-
-
 
 
 
@@ -299,39 +257,7 @@ function zayavAddGo()
 <INPUT type=hidden id=txt_len_next value="<?php echo $txtLen->txt_len_next; ?>">
 <INPUT type=hidden id=txt_cena_next value="<?php echo $txtLen->txt_cena_next; ?>">
 
-<DIV id=zayavAdd>
-	<DIV class=headName>Внесение новой заявки</DIV>
 
-	<FORM method=post action='' name=FormZayav>
-	<TABLE cellpadding=0 cellspacing=8>
-	<TR><TD class=tdAbout>Клиент:							<TD><INPUT TYPE=hidden id=client_id name=client_id value="<?php echo  $dub->client_id?$dub->client_id:$_GET['client_id']; ?>">
-	<TR><TD class=tdAbout>Категория:					<TD><INPUT TYPE=hidden NAME=category id=category value=<?php echo $dub->category?$dub->category:1; ?>>
-	</TABLE>
-	
-	<DIV id=content></DIV>
-
-	<TABLE cellpadding=0 cellspacing=8><TR><TD class=tdAbout>Номера выпуска:<TD></TABLE>
-	<DIV id=nomer></DIV>
-
-	<DIV id=skidkaContent></DIV>
-
-	<TABLE cellpadding=0 cellspacing=8 id=manual_tab>
-		<TR><TD class=tdAbout>Указать стоимость вручную:<TD><INPUT TYPE=hidden id=summa_manual name=summa_manual value=0>
-	</TABLE>
-
-	<TABLE cellpadding=0 cellspacing=8>
-	<TR><TD class=tdAbout>Итоговая стоимость:	<TD><INPUT TYPE=text NAME=summa id=summa readonly value=0> руб.
-																							<SPAN id=sumSkidka>Сумма скидки: <B></B> руб.</SPAN><INPUT TYPE=hidden NAME=skidka_sum id=skidka_sum value=0>
-	<TR><TD class=tdAbout>Заявка оплачена?:			<TD><INPUT TYPE=hidden name=oplata id=oplata>
-	<TR><TD class=tdAbout valign=top>Заметка:<TD><TEXTAREA name=note id=note></TEXTAREA>
-	</TABLE>
-
-
-	<input type=hidden name=zayavAdd value=1>
-	</FORM>
-	<DIV id=zMsg></DIV>
-	<DIV class=vkButton><BUTTON onclick=zayavAddGo();>Внести</BUTTON></DIV><DIV class=vkCancel><BUTTON onclick="location.href='<?php echo $URL; ?>&my_page=zayav'">Отмена</BUTTON></DIV>
-</DIV>
 
 
 

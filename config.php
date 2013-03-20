@@ -10,7 +10,7 @@ switch (DOMAIN) {
     case 'kupez': // localhost
         ini_set('display_errors',1);
         error_reporting(E_ALL);
-        $mysql=array(
+        $mysql = array(
             'host' => '127.0.0.1',
             'user' => 'root',
             'pass' => '4909099',
@@ -21,7 +21,7 @@ switch (DOMAIN) {
         define('VIEWER_ID', 982006);
         break;
     case 'kupez.nyandoma.ru':
-        $mysql=array(
+        $mysql = array(
             'host' => 'a6460.mysql.mchost.ru',
             'user' => 'a6460_kupez',
             'pass' => '4909099',
@@ -36,9 +36,9 @@ switch (DOMAIN) {
         apiAuth();
         break;
     case 'kupeztest.nyandoma.ru':
-        ini_set('display_errors',1);
-        error_reporting(E_ALL);
-        $mysql=array(
+//        ini_set('display_errors',1);
+//        error_reporting(E_ALL);
+        $mysql = array(
             'host' => 'a6460.mysql.mchost.ru',
             'user' => 'a6460_kupeztest',
             'pass' => '4909099',
@@ -68,6 +68,7 @@ $G = $VK->QueryObjectOne("SELECT * FROM `setup_global` LIMIT 1");
 define('JS_VERSION', $G->script_style);
 define('CSS_VERSION', $G->script_style);
 define('G_VALUES_VERSION', $G->g_values);
+define('KASSA_START', $G->kassa_start);
 
 
 

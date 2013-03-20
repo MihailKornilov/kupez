@@ -2,7 +2,7 @@
 require_once('../../include/AjaxHeader.php');
 
 if($_POST['person'])
-	$VK->Query("update client set
+	$VK->Query("update gazeta_client set
 person=".$_POST['person'].",
 org_name='".win1251($_POST['org_name'])."',
 fio='".win1251($_POST['fio'])."',
@@ -12,7 +12,7 @@ viewer_id_edit=".VIEWER_ID.",
 dtime_edit=current_timestamp
 where id=".$_GET['id']);
 
-$client=$VK->QueryObjectOne("select * from client where id=".$_GET['id']);
+$client=$VK->QueryObjectOne("select * from gazeta_client where id=".$_GET['id']);
 $personName=$VK->QRow("select name from setup_person where id=".$client->person);
 $send->person_name=utf8($personName);
 $send->person_id=$client->person;

@@ -108,10 +108,10 @@ function FullDataTime($value, $cut = 0) {
 }
 
 // Составление Ajax-списка
-function AjaxSpisokCreate($sql) {
+function AjaxSpisokCreate($sql, $sort='') {
     global $VK;
     if (!@$_GET['order']) $_GET['order'] = 'id';
-    if (!@$_GET['sort']) $_GET['sort'] = 'desc';
+    if (!@$_GET['sort']) $_GET['sort'] = $sort ? $sort : 'desc';
     $send->all = $VK->QNumRows($sql);
     $send->next = 0;
     $send->spisok = $VK->QueryObjectArray($sql." ORDER BY ".$_GET['order']." ".$_GET['sort']." LIMIT ".$_GET['start'].",".$_GET['limit']);
@@ -132,6 +132,7 @@ function GvaluesCreate() {
     $save .= "G.person_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`').";G.person_ass = SpisokToAss(G.person_spisok);";
     $save .= "G.polosa_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').";G.polosa_ass = SpisokToAss(G.polosa_spisok);";
     $save .= "G.skidka_spisok = ".$VK->vkSelJson('SELECT `id`,`razmer` FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
+    $save .= "G.rashod_category_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `id`').";G.rashod_category_ass = SpisokToAss(G.rashod_category_spisok);";
 
     $spisok = $VK->QueryObjectArray("SELECT `id`,`name`,`rubrika_id` FROM `setup_pod_rubrika` ORDER BY `rubrika_id`,`sort`");
     $podrubrika = array();

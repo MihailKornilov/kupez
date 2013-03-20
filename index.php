@@ -14,7 +14,7 @@ if ($_GET['p'] == 'gazeta') {
     switch (main_links(@$_GET['d'])) {
         case 'client': clientSpisok(); break;
         case 'zayav': zayavSpisok(); break;
-        case 'report':break;
+        case 'report': reportView(); break;
         case 'setup': setupView($vku['gazeta_admin']); break;
     }
 }

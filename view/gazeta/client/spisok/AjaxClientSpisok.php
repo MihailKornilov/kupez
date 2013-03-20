@@ -16,11 +16,11 @@ if($_GET['dolg']==1) {
 if($_GET['person'] > 0)
     $find.=" AND `person`=".$_GET['person'];
 
-$send->all = $VK->QRow("SELECT COUNT(`id`) FROM `client` ".$find);
+$send->all = $VK->QRow("SELECT COUNT(`id`) FROM `gazeta_client` ".$find);
 $send->next = 0;
 $send->spisok = array();
 
-$spisok = $VK->QueryObjectArray("SELECT * FROM `client` ".$find." ORDER BY `id` DESC LIMIT ".$_GET['start'].",".$_GET['limit']);
+$spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_client` ".$find." ORDER BY `id` DESC LIMIT ".$_GET['start'].",".$_GET['limit']);
 if(count($spisok) > 0) {
     foreach($spisok as $sp) {
         if($_GET['input']) {
@@ -40,7 +40,7 @@ if(count($spisok) > 0) {
         ));
     }
     if(count($spisok) == $_GET['limit']) {
-        if($VK->QNumRows("SELECT COUNT(`id`) FROM `client` ".$find." LIMIT ".($_GET['start'] + $_GET['limit']).",".$_GET['limit']) > 0)
+        if($VK->QNumRows("SELECT COUNT(`id`) FROM `gazeta_client` ".$find." LIMIT ".($_GET['start'] + $_GET['limit']).",".$_GET['limit']) > 0)
             $send->next = 1;
 
     }

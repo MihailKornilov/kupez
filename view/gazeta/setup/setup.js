@@ -1,7 +1,12 @@
+function progressShow() { $(".headName:first").find("IMG").remove().end().append("<IMG src=/img/upload.gif>"); }
+function progressHide() { $(".headName:first IMG").remove(); }
+
+
 function setupSet(id) {
     $(".razdel").find(".help").remove();
     switch(id) {
-        case '1': setupPerson(); break;
+        case '1':
+        default: setupPerson(); break;
         case '2': setupRubrika(); break;
         case '7': setupPodRubrika(); break;
         case '3': setupGazNomer(); break;
@@ -10,6 +15,7 @@ function setupSet(id) {
         case '6': setupObDop(); break;
         case '8': setupAccess(); break;
         case '9': setupObLenght(); break;
+        case '10': setupRashodCategory(); break;
     }
 } // end of setupSet()
 
@@ -19,12 +25,14 @@ function setupPerson() {
         .find(".help").remove()
         .end().append("<DIV class=help>Типы заявителей используются для разделения клиентов на категории, такие как '<B>Частный клиент</B>', '<B>Организация</B>' и тп.</DIV>");
     var html="<DIV id=person>" +
-        "<DIV class=headName>Настройки типов заявителей</DIV>" +
+        "<DIV class=headName>Настройки типов заявителей</div>" +
         "<A onclick=personAdd();>Добавить новый тип заявителя</A>" +
         "<DIV id=person_table></DIV>" +
         "</DIV>";
     $("#edit").html(html);
+    progressShow();
     $.getJSON("/view/gazeta/setup/person/AjaxPersonGet.php?" + G.values, function(res){
+        progressHide();
         if(res.length > 0) {
             $("#person_table").html("<IMG src=/img/upload.gif>");
             var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok>" +
@@ -48,13 +56,12 @@ function setupPerson() {
                 var DD=$("#person_drag DD");
                 var LEN=DD.length;
                 var VAL=DD.eq(0).attr('id');
-                if(LEN>1)
-                    {
-                    $("#person .headName").find("IMG").remove().end().append("<IMG src=/img/upload.gif>");
+                if(LEN>1) {
+                    progressShow();
                     for(var n=1;n<LEN;n++) VAL+=","+DD.eq(n).attr('id');
-                    $.getJSON("/view/gazeta/setup/person/AjaxPersonSort.php?" + G.values + "&val=" + VAL,function(){ $("#person .headName IMG").remove(); });
-                    }
-                }});
+                    $.getJSON("/view/gazeta/setup/person/AjaxPersonSort.php?" + G.values + "&val=" + VAL, progressHide);
+                }
+            }});
         } else $("#person_table").html("Список заявителей пуст.");
         frameBodyHeightSet();
     });
@@ -165,10 +172,125 @@ function personDel(id) {
             spisok:spisok
         });
     }
-} // end of personEdit()
+} // end of personDel()
 
 
 
+
+
+
+
+
+
+// Категории расходов
+function setupRashodCategory() {
+    var html="<DIV id=rashod>" +
+        "<DIV class=headName>Настройки категорий расходов</div>" +
+        "<A onclick=rashodCategoryAdd();>Добавить новую категорию</A>" +
+        "<DIV id=spisok></DIV>" +
+        "</DIV>";
+    $("#edit").html(html);
+    progressShow();
+    $.getJSON("/view/gazeta/setup/rashod_category/AjaxRashodGet.php?" + G.values, function(res){
+        progressHide();
+        if(res.length > 0) {
+            var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok>" +
+                "<TR><TH class=name>Наименование" +
+                "<TH class=set>Настройки" +
+                "</TABLE>" +
+                "<DL id=drag>";
+            for(var n = 0; n < res.length; n++) {
+                var sp = res[n];
+                html += "<DD id=" + sp.id + ">" +
+                    "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR>" +
+                    "<TD class=name>" + sp.name +
+                    "<TD class=set><DIV class=img_edit onclick=rashodCategoryEdit("+sp.id+");></DIV>" +
+                    "<DIV class=img_del onclick=rashodCategoryDel("+sp.id+");></DIV></TABLE>";
+            }
+            html += "</DL>";
+            $("#spisok").html(html);
+            $("#drag").sortable({axis:'y',update:function () {
+                var DD=$("#drag DD");
+                var LEN=DD.length;
+                var VAL=DD.eq(0).attr('id');
+                if(LEN>1) {
+                    progressShow();
+                    for(var n=1;n<LEN;n++) VAL+=","+DD.eq(n).attr('id');
+                    $.getJSON("/view/gazeta/setup/rashod_category/AjaxRashodSort.php?" + G.values + "&val=" + VAL, progressHide);
+                }
+            }});
+        } else $("#spisok").html("Список пуст.");
+        frameBodyHeightSet();
+    });
+} // end of setupRashodCategory()
+
+function rashodCategoryAdd() {
+    var html = "<TABLE cellpadding=0 cellspacing=10>" +
+        "<TR><TD class=tdAbout>Наименование:<TD><INPUT type=text id=rashod_name style=width:200px;>" +
+        "</TABLE>";
+    var dialog = $("#setup_dialog").vkDialog({
+        head:'Внесение новой категории',
+        content:html,
+        focus:'#rashod_name',
+        submit:function () {
+            var send = {name:$("#rashod_name").val()}
+            if(!send.name) {
+                $("#setup_dialog .bottom:first").vkHint({msg:'<SPAN class=red>Не указано наименование.</SPAN>', top:-47, left:94, indent:40, show:1, remove:1});
+            } else {
+                dialog.process();
+                $.post("/view/gazeta/setup/rashod_category/AjaxRashodAdd.php?" + G.values, send, function (res) {
+                    dialog.close();
+                    setupRashodCategory();
+                    vkMsgOk("Новая категория добавлена.");
+                },'json');
+            }
+        }
+    }).o;
+} // end of rashodCategoryAdd()
+
+function rashodCategoryEdit(id) {
+    var html="<TABLE cellpadding=0 cellspacing=10>" +
+        "<TR><TD class=tdAbout>Наименование:<TD><INPUT type=text id=name style=width:200px; value='"+$("#"+id+" .name").html()+"'>" +
+        "</TABLE>";
+    var dialog = $("#setup_dialog").vkDialog({
+        head:'Редактирование',
+        butSubmit:'Сохранить',
+        content:html,
+        submit:function () {
+            var send = {
+                id:id,
+                name:$("#name").val()
+            };
+            if(!send.name) {
+                $("#setup_dialog .bottom:first").vkHint({msg:'<SPAN class=red>Не указано наименование.</SPAN>', top:-47, left:94, indent:40, show:1, remove:1});
+            }  else {
+                dialog.process();
+                $.post("/view/gazeta/setup/rashod_category/AjaxRashodEdit.php?" + G.values, send, function (res) {
+                    dialog.close();
+                    setupRashodCategory();
+                    vkMsgOk("Наименование категории изменено!");
+                },'json');
+            }
+        }
+    }).o;
+} // end of rashodCategoryEdit()
+
+function rashodCategoryDel(id) {
+    var dialog = $("#setup_dialog").vkDialog({
+        width:300,
+        head:'Удаление',
+        butSubmit:'Удалить',
+        content:"<CENTER>Подтвердите удаление категории '<B>"+$("#"+id+" .name").html()+"</B>'.</CENTER>",
+        submit:function(){
+            dialog.process();
+            $.post("/view/gazeta/setup/rashod_category/AjaxRashodDel.php?" + G.values, {id:id}, function(res){
+                dialog.close();
+                setupRashodCategory();
+                vkMsgOk("Удаление успешно произведено!");
+            },'html');
+        }
+    }).o;
+} // end of rashodCategoryDel()
 
 
 
@@ -184,7 +306,9 @@ function setupRubrika() {
         "<DIV id=rubrika_table></DIV>" +
         "</DIV>";
     $("#edit").html(html);
+    progressShow();
     $.getJSON("/view/gazeta/setup/rubrika/AjaxRubrikaGet.php?" + G.values, function (res) {
+        progressHide();
         if(res.length > 0) {
             $("#rubrika_table").html("<IMG src=/img/upload.gif>");
             var html="<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH class=name>Наименование<TH class=set>Настройки</TABLE>";
@@ -202,9 +326,9 @@ function setupRubrika() {
                 var LEN=DD.length;
                 var VAL=DD.eq(0).attr('id');
                 if(LEN > 1) {
-                    $("#rubrika .headName").find("IMG").remove().end().append("<IMG src=/img/upload.gif>");
+                    progressShow();
                     for(var n=1;n<LEN;n++) VAL+=","+DD.eq(n).attr('id');
-                    $.getJSON("/view/gazeta/setup/rubrika/AjaxRubrikaSort.php?"+G.values+"&val="+VAL,function(){ $("#rubrika .headName IMG").remove(); });
+                    $.getJSON("/view/gazeta/setup/rubrika/AjaxRubrikaSort.php?"+G.values+"&val="+VAL, progressHide);
                 }
             }});
         } else $("#rubrika_table").html("Рубрики не внесены.");
@@ -329,9 +453,11 @@ function setupPodRubrika() {
 } // end of setupPodRubrika()
 
 function podRubrikaGet(id) {
+    progressShow();
     var RUBNAME = $("#rubrika_id .sel:first").html();
     $("#podRubLinkAdd").html("<A onclick=\"podRubrikaAdd(" + id + ", '" + RUBNAME + "');\">Добавить новую подрубрику для рубрики <B>" + RUBNAME + "</B></A>");
     $.getJSON("/view/gazeta/setup/podrubrika/AjaxPodRubrikaGet.php?" + G.values + "&rubrika_id=" + id, function (res) {
+        progressHide();
         if(res.length > 0) {
             $("#podRub_table").html("<IMG src=/img/upload.gif>");
             var html="<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH class=name>Наименование<TH class=set>Настройки</TABLE>";
@@ -350,9 +476,9 @@ function podRubrikaGet(id) {
                 var LEN=DD.length;
                 var VAL=DD.eq(0).attr('id');
                 if(LEN>1) {
-                    $("#podrubrika .headName").find("IMG").remove().end().append("<IMG src=/img/upload.gif>");
+                    progressShow();
                     for(var n=1;n<LEN;n++) VAL+=","+DD.eq(n).attr('id');
-                    $.getJSON("/view/gazeta/setup/podrubrika/AjaxPodRubrikaSort.php?"+G.values+"&val="+VAL,function () { $("#podrubrika .headName IMG").remove(); });
+                    $.getJSON("/view/gazeta/setup/podrubrika/AjaxPodRubrikaSort.php?"+G.values+"&val="+VAL, progressHide);
                 }
             }});
         }
@@ -487,12 +613,14 @@ function setupGazNomer() {
 } // end of setupGazNomer()
 
 function gazNomerGet(year, id) {
+    progressShow();
     var A = $("#dopMenu A");
     A.attr('class','link');
     for(var n = 0; n < A.length; n++)
         if(A.eq(n).find("DIV:first").html() == year)
             A.eq(n).attr('class','linkSel');
     $.getJSON("/view/gazeta/setup/gazeta_nomer/AjaxGNSpisokGet.php?"+G.values+"&year="+year+"&id="+id,function(res){
+        progressHide();
         if(res.spisok.length > 0) {
             var html = "<A val=add_>Добавить новый номер</a><br /><br />" +
                 "<TABLE cellpadding='0' cellspacing='0' class=tabSpisok><TR>" +
@@ -763,10 +891,11 @@ function setupSmKvCost() {
         "<DIV id=spisok></DIV>" +
         "</DIV>";
     $("#edit").html(html);
-
+    progressShow();
     $("#polosaAdd").click(setupPolosaAdd);
 
     $.getJSON("/view/gazeta/setup/polosa_cost/AjaxPolosaGet.php?" + G.values, function (res) {
+        progressHide();
         var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok>" +
             "<TR><TH class=name>Полоса" +
                 "<TH class=cena>Цена за см&sup2;" +
@@ -792,9 +921,9 @@ function setupSmKvCost() {
             var LEN=DD.length;
             var VAL=DD.eq(0).attr('id');
             if(LEN > 1) {
-                $("#smKvCost .headName").find("IMG").remove().end().append("<IMG src=/img/upload.gif>");
+                progressShow();
                 for(var n=1;n<LEN;n++) VAL+=","+DD.eq(n).attr('id');
-                $.getJSON("/view/gazeta/setup/polosa_cost/AjaxPolosaSort.php?" + G.values + "&val="+VAL,function(){ $("#smKvCost .headName IMG").remove(); });
+                $.getJSON("/view/gazeta/setup/polosa_cost/AjaxPolosaSort.php?" + G.values + "&val="+VAL, progressHide);
             }
         }});
     });
@@ -913,7 +1042,9 @@ function setupSkidka() {
         "<DIV id=spisok></DIV>" +
         "</DIV>";
     $("#edit").html(html);
+    progressShow();
     $.getJSON("/view/gazeta/setup/skidka/AjaxSkidkaGet.php?" + G.values, function (res) {
+        progressHide();
         var html="<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH>Размер скидки<TH>Описание<TH>Настройки";
         if (res.length > 0)
             for(var n = 0; n < res.length; n++) {
@@ -1085,7 +1216,9 @@ function setupObDop() {
         "<DIV id=spisok></DIV>" +
         "</DIV>";
     $("#edit").html(html);
+    progressShow();
     $.getJSON("/view/gazeta/setup/ob_dop/AjaxObDopGet.php?" + G.values, function (res) {
+        progressHide();
         var html="<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH>Наименование<TH>Стоимость<TH>Настройки";
         if(res.length > 0)
             for(var n = 0; n < res.length; n++) {
@@ -1153,134 +1286,98 @@ function paramEdit(id) {
 
 // УПРАВЛЕНИЕ ПРАВАМИ СОТРУДНИКОВ
 function setupAccess() {
-    var html="<DIV id=access>";
-        "<DIV class=headName>Добавление нового сотрудника</DIV>";
-        "<TABLE cellpadding=0 cellspacing=7><TR><TD class=tdAbout>Ссылка на страницу<BR>пользователя Вконтакте или его id:";
-        "<TD id=fi><INPUT type=text id=find_input>";
-        "<TD id=but><DIV class=vkButton><BUTTON onclick=accessUserGet(); id=acBut>Поиск</BUTTON></DIV></TABLE>";
-        "<DIV id=userFind></DIV>";
+    var html="<DIV id=access>" +
+        "<DIV class=headName>Добавление нового сотрудника</DIV>" +
+        "<TABLE cellpadding=0 cellspacing=7><TR><TD class=tdAbout>Ссылка на страницу<BR>пользователя Вконтакте или его id:" +
+        "<TD><INPUT type=text id=find_input>" +
+        "<TD><DIV class=vkButton><BUTTON onclick=accessUserGet(this);>Поиск</BUTTON></DIV></TABLE>" +
+        "<DIV id=userFind></DIV>" +
 
-        "<DIV class='headName top30'>Список сотрудников газеты</DIV>";
-        "<DIV id=spisok></DIV>";
+        "<DIV class='headName top30'>Список сотрудников газеты</DIV>" +
+        "<DIV id=spisok></DIV>" +
         "</DIV>";
     $("#edit").html(html);
     $("#find_input").focus();
+    frameBodyHeightSet();
     accessUserSpisok();
 }
 
-
-function vkUserTest(VAL) {
-    if(VAL)
-        {
-        var reg = /^[0-9]*$/i;
-        if(reg.exec(VAL)!=null && VAL>0) return VAL;        // если введено число и оно больше 0, то всё ок
-        else
-            {
-            var arr=("_"+VAL).split(/id/);
-            if(reg.exec(arr[1])!=null && arr[1]>0) return arr[1];
-            else
-                {
-                reg = /\//;
-                if(reg.exec(VAL)!=null)
-                    {
-                    arr=VAL.split(/\//);
-                    if(typeof(arr[3])=='undefined')
-                        if(typeof(arr[2])=='undefined') return '';
-                        else return arr[2];
-                    else return arr[3];
-                    }
-                else
-                    {
-                    reg=/^[0-9a-zA-Z_]*$/i;
-                    if(reg.exec(VAL)!=null) return VAL;
-                    else return'';
-                    }
-                }
-            }
-        }
-    else return '';
-    }
-
-function accessUserGet() {
-    var UID=vkUserTest($("#find_input").val());
-    if(UID)
-        {
-        $("#acBut").butProcess();
-        VK.api('users.get',{uids:UID,name_case:'acc',fields:'photo'},function(data){
-            accessUserShow(data.response[0]);
-            $("#but").html("<DIV class=vkButton><BUTTON onclick=accessUserGet(); id=acBut>Поиск</BUTTON></DIV>");
-            });
-        }
-    else
-        {
-        $("#fi").vkHint({msg:"<SPAN class=red>Не корректно введена ссылка на страницу.</SPAN>",top:-43,left:-2});
-        $("#find_input").focus();
-        }
-    }
-
-
-
-
-function accessUserShow(res) {
-    var html="<DIV class=userShow><TABLE cellpadding=0 cellspacing=8>";
-        "<TR><TD><A href='http://vk.com/id"+res.uid+"' target=_blank><IMG src="+res.photo+"></A>";
-        "<TD>Вы действительно добавить в сотрудники <A href='http://vk.com/id"+res.uid+"' target=_blank>"+res.first_name+" "+res.last_name+"</A> ?";
-        "<DIV class=buttons><DIV class=vkButton><BUTTON onclick=accessUserAdd(this);>Добавить</BUTTON></DIV>";
-        "<DIV class=vkCancel><BUTTON onclick=\"$('#userFind .userShow').slideUp(200,frameBodyHeightSet);\">Отмена</BUTTON></DIV></DIV>";
-        "</TABLE>";
-        "<INPUT type=hidden id=uid value="+res.uid+">";
-        "</DIV>";
-    $("#userFind").html(html);
-    frameBodyHeightSet();
-    }
-
-function accessUserAdd(OBJ) {
-    $(OBJ).butProcess();
-    $.post("/view/gazeta/setup/access/AjaxWorkerAdd.php?"+G.values,{uid:$("#uid").val()},function(){
-        $('#userFind').html('');
-        $("#find_input").val('');
-        accessUserSpisok();
-        });
-    }
-
-
-
 function accessUserSpisok() {
-    $.getJSON("/view/gazeta/setup/access/AjaxWorkerSpisok.php?"+G.values,function(res){
+    progressShow();
+    $.getJSON("/view/gazeta/setup/access/AjaxWorkerSpisok.php?" + G.values, function (res) {
+        progressHide();
         var html='';
-        if(res[0].count>0)
-            for(var n=0;n<res[0].count;n++) {
+        if(res.length > 0)
+            for(var n = 0; n < res.length; n++) {
                 var sp = res[n];
-                html+="<DIV class=userShow id=user"+sp.viewer_id+"><TABLE cellpadding=0 cellspacing=8>";
-                    "<TR><TD><A href='http://vk.com/id"+sp.viewer_id+"' target=_blank><IMG src="+sp.photo+"></A>";
-                    "<TD width=330><A href='http://vk.com/id"+sp.viewer_id+"' target=_blank id=name"+sp.viewer_id+">"+sp.first_name+" "+sp.last_name+"</A>";
-                if(sp.admin==1)     "<DIV class=admin>Администратор</DIV>";
-                    "<DIV class=dtime>"+sp.dtime_add+"</DIV>";
-                if(sp.admin==0)     "<TD><A href='javascript:' onclick=accessUserDel("+sp.viewer_id+");>Удалить</A>";
-                    "</TABLE>";
-                    "</DIV>";
-                }
+                html += "<DIV class=userShow id=user"+sp.viewer_id+"><TABLE cellpadding=0 cellspacing=8>" +
+                    "<TR><TD><A href='http://vk.com/id"+sp.viewer_id+"' target=_blank><IMG src="+sp.photo+"></A>" +
+                    "<TD width=330><A href='http://vk.com/id"+sp.viewer_id+"' target=_blank id=name"+sp.viewer_id+">" + sp.full_name + "</A>" +
+                    (sp.admin == 1 ? "<DIV class=admin>Администратор</DIV>" : '') +
+                    "<DIV class=dtime>" + sp.dtime_add + "</DIV>" +
+                    (sp.admin ==0 ? "<TD><A onclick=accessUserDel("+sp.viewer_id+");>Удалить</A>" : '') +
+                    "</TABLE>" +
+                "</DIV>";
+            }
         $("#spisok").html(html);
         frameBodyHeightSet();
+    });
+}
+
+function accessUserGet(but) {
+    var user = $("#find_input").val();
+    if (user) {
+        var host = user.split('http://vk.com/')[1];
+        if (host) user = host;
+        progressShow();
+        VK.api('users.get',{uids:user, fields:'photo,sex'}, function (data) {
+            progressHide();
+            var res = data.response[0];
+            var html="<DIV class=userShow><TABLE cellpadding=0 cellspacing=8>" +
+            "<TR><TD><A href='http://vk.com/id"+res.uid+"' target=_blank><IMG src="+res.photo+"></A>" +
+            "<TD>Вы действительно добавить в сотрудники <br />" +
+                "пользователя <A href='http://vk.com/id"+res.uid+"' target=_blank>"+res.first_name+" "+res.last_name+"</A> ?" +
+            "<DIV class=buttons><DIV class=vkButton><BUTTON id=vk_add>Добавить</BUTTON></DIV>&nbsp;&nbsp;" +
+            "<DIV class=vkCancel><BUTTON id=vk_cancel>Отмена</BUTTON></DIV></DIV>" +
+            "</TABLE>" +
+            "<INPUT type=hidden id=uid value="+res.uid+">" +
+            "</DIV>";
+            $("#userFind").html(html);
+            $("#vk_add").on('click', function () {
+                progressShow();
+                $.post("/view/gazeta/setup/access/AjaxWorkerAdd.php?" + G.values, res, function () {
+                    $('#userFind').html('');
+                    $("#find_input").val('');
+                    accessUserSpisok();
+                });
+            });
+            $("#vk_cancel").on('click', function () { $('#userFind .userShow').slideUp(200,frameBodyHeightSet); });
+            frameBodyHeightSet();
         });
     }
+}
+
+
+
+
+
+
 
 function accessUserDel(id) {
     var dialog = $("#setup_dialog").vkDialog({
         width:240,
-        top:100,
-        head:'Удаление',
+        head:'Удаление сотрудника',
         butSubmit:'Удалить',
         content:"<CENTER>Подтвердите удаление сотрудника <B>"+$("#name"+id).html()+"</B>.</CENTER>",
         submit:function(){
             dialog.process();
-            $.post("/view/gazeta/setup/access/AjaxWorkerDel.php?"+G.values,{viewer_id:id},function(res){
+            $.post("/view/gazeta/setup/access/AjaxWorkerDel.php?" + G.values, {viewer_id:id}, function (res) {
                 dialog.close();
                 vkMsgOk("Удаление успешно произведено!");
                 $("#user"+id).remove();
                 frameBodyHeightSet();
-                },'json');
-            }
-        });
-    }
+            },'json');
+        }
+    }).o;
+}
 

@@ -43,7 +43,7 @@ function _footer()
         </DIV>
         <SCRIPT type='text/javascript'>
             $('#script_style').click(function () {
-                $.getJSON('/superadmin/AjaxScriptStyleUp.php?' + G.values, function () { location.reload(); });
+                $.getJSON('/view/superadmin/AjaxScriptStyleUp.php?' + G.values, function () { location.reload(); });
             });
             $("#js_time").html(((new Date()).getTime() - G.T)/1000);
         </SCRIPT>

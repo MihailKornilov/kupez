@@ -26,7 +26,7 @@ if($_GET['input']) {
     }
 }
 
-$send = AjaxSpisokCreate("SELECT * FROM `zayav` ".$find);
+$send = AjaxSpisokCreate("SELECT * FROM `gazeta_zayav` ".$find);
 if(count($send->spisok) > 0) {
   $spisok = $send->spisok;
   $send->spisok = array();

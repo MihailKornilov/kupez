@@ -17,7 +17,7 @@ $("#clientFind").topSearch({
 
 $("#personFind").vkSel({
 	width:177,
-	spisok:Client.spisok,
+	spisok: G.person_spisok,
 	title0:'Заявитель не указан',
 	func:function (id) { G.spisok.print({person:id}); }
 });

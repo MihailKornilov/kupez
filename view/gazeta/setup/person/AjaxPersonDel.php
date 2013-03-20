@@ -5,6 +5,3 @@ $VK->Query("delete from setup_person where id=".$_POST['del']);
 GvaluesCreate();
 echo 1;
 ?>
-
-
-

@@ -90,7 +90,7 @@ G.spisok.create({
     next:"Показать ещё заявки",
     nofind:"Заявок не найдено.",
     imgup:$("#findResult"),
-    a:1,
+//    a:1,
     values:{
         input:'',
         category:0,

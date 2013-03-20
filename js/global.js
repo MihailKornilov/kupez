@@ -637,6 +637,79 @@ G.months_sel_ass = {1:'января',2:'февраля',3:'марта',4:'апреля',5:'мая',6:'июня'
 
 
 
+
+
+
+// перелистывание годов
+$.fn.years = function (obj) {
+    var obj = $.extend({
+        year:(new Date()).getFullYear(),
+        func:function () {}
+    }, obj);
+
+    var t = $(this);
+    var id = t.attr('id');
+
+    var html = "<DIV class=years id=years_" + id + ">" +
+        "<TABLE cellpadding=0 cellspacing=0>" +
+        "<TR><TD class=but>&laquo;<TD id=ycenter><SPAN>" + obj.year + "</SPAN><TD class=but>&raquo;" +
+        "</TABLE></DIV>";
+    t.after(html);
+    t.val(obj.year);
+
+    var years = {
+        left:0,
+        speed:2,
+        span:$("#years_" + id + " #ycenter SPAN"),
+        width:Math.round($("#years_" + id + " #ycenter").css('width').split(/px/)[0] / 2),  // ширина центральной части, где год
+        ismove:0,
+    };
+    years.next = function (side) {
+        var y = years;
+        if (y.ismove == 0) {
+            y.ismove = 1;
+            var changed = 0;
+            var timer = setInterval(function () {
+                var span = y.span;
+                y.left -= y.speed * side;
+
+                if (y.left > 0 && changed == 1 && side == -1 ||
+                    y.left < 0 && changed == 1 && side == 1) {
+                    y.left = 0;
+                    y.ismove = 0;
+                    y.speed = 0;
+                    clearInterval(timer);
+                }
+
+                span[0].style.left = y.left + 'px';
+                y.speed += 2;
+
+                if (y.left > y.width && changed == 0 && side == -1 ||
+                    y.left < -y.width && changed == 0 && side == 1) {
+                    changed = 1;
+                    obj.year += side;
+                    span.html(obj.year);
+                    y.left = y.width * side;
+                    t.val(obj.year);
+                    obj.func();
+                }
+            }, 25);
+        }
+    };
+
+    $("#years_" + id + " .but:first").mousedown(function () { allmon = 1; years.next(-1); });
+    $("#years_" + id + " .but:eq(1)").mousedown(function () { allmon = 1; years.next(1); });
+}; // end of years
+
+
+
+
+
+
+
+
+
+
 // ПОКАЗЫВАЕТ ОЖИДАНИЕ ПРОГРЕССА ДЛЯ СИНЕЙ КНОПКИ
 $.fn.butProcess = function(){
   var W=$(this).parent().css('width');
@@ -922,48 +995,52 @@ $.fn.myCheckVal = function(VAL){
 
 
 
-// КНОПКА РАДИО
-$.fn.myRadio = function(OBJ){
-  var OBJ = $.extend({
-    width:0,
-    spisok:[{uid:0,title:'radio'}],
-    bottom:0,
-    func:''
-    },OBJ);
+// радио
+$.fn.vkRadio = function (obj) {
+    var t = $(this);
+    var id = t.attr('id');
+    var value = t.val(); // текщее значение
 
-  var INP = $(this);
-  var ID=INP.attr('id');
-  if ($("#" + ID+"_radio").length > 0) { INP.next().remove(); }
-  var VAL=INP.val();
-  if(VAL.length==0) VAL=-1;
-  var HTML="<DIV class=radio id="+ID+"_radio>";
-  for(var n=0;n<OBJ.spisok.length;n++)
-    HTML+="<DIV class="+(OBJ.spisok[n].uid==VAL?'on':'off')+" val="+OBJ.spisok[n].uid+">"+OBJ.spisok[n].title+"</DIV>";
-  HTML+="</DIV>";
-  INP.after(HTML);
+    if (!obj) { var obj = {}; }
+    obj.spisok = obj.spisok || [];
+    obj.value = /\d$/.test(value) ? value : (obj.value || -1); // установленное значение. Можно установить либо в INPUT, либо через объект
+    obj.display = "display:" + (obj.display || "block") +";";
+    obj.top = obj.top ? "margin-top:" + obj.top + "px;" : '';
+    obj.bottom = obj.bottom ? "margin-bottom:" + obj.bottom + "px;" : '';
+    obj.right = obj.right ? "margin-right:" + obj.right + "px;" : '';
+    obj.light = obj.light || 0; // подсветка выбранного значения
+    obj.func = obj.func || function () {};
 
-  if (OBJ.width > 0) { INP.next().width(OBJ.width); }
+    var html = "<DIV class=radio id=" + id + "_radio val=end_>";
+    for(var n = 0; n < obj.spisok.length; n++) {
+        var sp = obj.spisok[n];
+        html += "<DIV class=" + (sp.uid == obj.value ? 'on' : 'off') + " val=radio_" + obj.spisok[n].uid + " style=" + obj.display + obj.bottom + obj.top + obj.right + ">" + sp.title + "</DIV>";
+    }
+    html += "</DIV>";
+    t.after(html);
 
-  if(OBJ.bottom>0) $("#"+ID+"_radio DIV").css('margin-bottom',OBJ.bottom+'px');
+    if (obj.light) { $("#" + id +"_radio .off").css('color', '#888'); }
 
-  $("#"+ID+"_radio DIV").click(function(){
-    $("#"+ID+"_radio .on").removeClass('on').addClass('off');
-    $(this).removeClass('off').addClass('on');
-    var V=$(this).attr('val');
-    INP.val(V);
-    if(OBJ.func) OBJ.func(V);
+    $("#" + id +"_radio").click(function (e) {
+        var target = $(e.target);
+        var n = 1;
+        while (target.attr('val') == undefined) {
+            target = target.parent();
+            n--;
+            if (n < 0) break;
+        }
+        var val = target.attr('val').split('_');
+        if (val[0] == 'radio') {
+            if (obj.value != val[1]) {
+                obj.value = val[1];
+                $(this).find(".on").attr('class', 'off').css('color', obj.light ? '#888' : '#000');
+                target.attr('class', 'on').css('color', '#000');
+                t.val(obj.value);
+                obj.func(obj.value);
+            }
+        }
     });
-  };
-$.fn.myRadioSet = function(VAL){
-  this.val(VAL);
-  var ID=this.attr('id');
-  var DIVS=$("#"+ID+"_radio DIV");
-  DIVS.attr('class','off');
-  var LEN=DIVS.length;
-  for(var n=0;n<LEN;n++)
-    if(VAL==DIVS.eq(n).attr('val'))
-      DIVS.eq(n).attr('class','on');
-  };
+};
 
 
 
