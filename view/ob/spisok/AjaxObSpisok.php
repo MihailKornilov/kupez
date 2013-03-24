@@ -12,11 +12,11 @@ if ($_GET['input']) {
   $find .= " and txt LIKE '%".$input."%'";
 }
 
-$send->all = $VK->QRow("select count(id) from zayav ".$find);
+$send->all = $VK->QRow("select count(id) from gazeta_zayav ".$find);
 $send->next = 0;
 $send->spisok = array();
 
-$spisok = $VK->QueryObjectArray("select * from zayav ".$find." order by id desc limit ".$_GET['start'].",".$_GET['limit']);
+$spisok = $VK->QueryObjectArray("select * from gazeta_zayav ".$find." order by id desc limit ".$_GET['start'].",".$_GET['limit']);
 if (count($spisok) > 0) {
   $viewers = array(); // —писок пользователей, которые показывают ссылку на свою страницу в объ€влении
   foreach ($spisok as $sp) {
@@ -44,7 +44,7 @@ if (count($spisok) > 0) {
     ));
   }
   if(count($spisok) == $_GET['limit']) {
-    if($VK->QNumRows("select id from zayav ".$find." limit ".($_GET['start'] + $_GET['limit']).",".$_GET['limit']) > 0) {
+    if($VK->QNumRows("select id from gazeta_zayav ".$find." limit ".($_GET['start'] + $_GET['limit']).",".$_GET['limit']) > 0) {
       $send->next = 1;
     }
   }

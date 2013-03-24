@@ -16,6 +16,7 @@ function setupSet(id) {
         case '8': setupAccess(); break;
         case '9': setupObLenght(); break;
         case '10': setupRashodCategory(); break;
+        case '11': setupMoneyType(); break;
     }
 } // end of setupSet()
 
@@ -291,6 +292,142 @@ function rashodCategoryDel(id) {
         }
     }).o;
 } // end of rashodCategoryDel()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Виды платежей
+function setupMoneyType() {
+    var html="<DIV id=money_type>" +
+        "<DIV class=headName>Настройки видов платежей</div>" +
+        "<A onclick=moneyTypeAdd();>Добавить новый вид платежа</A>" +
+        "<DIV id=spisok></DIV>" +
+        "</DIV>";
+    $("#edit").html(html);
+    progressShow();
+    $.getJSON("/view/gazeta/setup/money_type/AjaxMoneyTypeGet.php?" + G.values, function(res){
+        progressHide();
+        if(res.length > 0) {
+            var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok>" +
+                "<TR><TH class=name>Наименование" +
+                "<TH class=set>Настройки" +
+                "</TABLE>" +
+                "<DL id=drag>";
+            for(var n = 0; n < res.length; n++) {
+                var sp = res[n];
+                html += "<DD id=" + sp.id + ">" +
+                    "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR>" +
+                    "<TD class=name>" + sp.name +
+                    "<TD class=set><DIV class=img_edit onclick=moneyTypeEdit("+sp.id+");></DIV>" +
+                    "<DIV class=img_del onclick=moneyTypeDel("+sp.id+");></DIV></TABLE>";
+            }
+            html += "</DL>";
+            $("#spisok").html(html);
+            $("#drag").sortable({axis:'y',update:function () {
+                var DD=$("#drag DD");
+                var LEN=DD.length;
+                var VAL=DD.eq(0).attr('id');
+                if(LEN>1) {
+                    progressShow();
+                    for(var n=1;n<LEN;n++) VAL+=","+DD.eq(n).attr('id');
+                    $.getJSON("/view/gazeta/setup/money_type/AjaxMoneyTypeSort.php?" + G.values + "&val=" + VAL, progressHide);
+                }
+            }});
+        } else $("#spisok").html("Список пуст.");
+        frameBodyHeightSet();
+    });
+} // end of setupMoneyType()
+
+function moneyTypeAdd() {
+    var html = "<TABLE cellpadding=0 cellspacing=10>" +
+        "<TR><TD class=tdAbout>Наименование:<TD><INPUT type=text id=money_name style=width:200px;>" +
+        "</TABLE>";
+    var dialog = $("#setup_dialog").vkDialog({
+        head:'Внесение нового вида платежа',
+        content:html,
+        focus:'#money_name',
+        submit:function () {
+            var send = {name:$("#money_name").val()}
+            if(!send.name) {
+                $("#setup_dialog .bottom:first").vkHint({msg:'<SPAN class=red>Не указано наименование.</SPAN>', top:-47, left:94, indent:40, show:1, remove:1});
+            } else {
+                dialog.process();
+                $.post("/view/gazeta/setup/money_type/AjaxMoneyTypeAdd.php?" + G.values, send, function (res) {
+                    dialog.close();
+                    setupMoneyType();
+                    vkMsgOk("Новый тип платежа дбавлен.");
+                },'json');
+            }
+        }
+    }).o;
+} // end of moneyTypeAdd()
+
+function moneyTypeEdit(id) {
+    var html="<TABLE cellpadding=0 cellspacing=10>" +
+        "<TR><TD class=tdAbout>Наименование:<TD><INPUT type=text id=name style=width:200px; value='"+$("#"+id+" .name").html()+"'>" +
+        "</TABLE>";
+    var dialog = $("#setup_dialog").vkDialog({
+        head:'Редактирование',
+        butSubmit:'Сохранить',
+        content:html,
+        submit:function () {
+            var send = {
+                id:id,
+                name:$("#name").val()
+            };
+            if(!send.name) {
+                $("#setup_dialog .bottom:first").vkHint({msg:'<SPAN class=red>Не указано наименование.</SPAN>', top:-47, left:94, indent:40, show:1, remove:1});
+            }  else {
+                dialog.process();
+                $.post("/view/gazeta/setup/money_type/AjaxMoneyTypeEdit.php?" + G.values, send, function (res) {
+                    dialog.close();
+                    setupMoneyType();
+                    vkMsgOk("Наименование вида платежа изменено!");
+                },'json');
+            }
+        }
+    }).o;
+} // end of moneyTypeEdit()
+
+function moneyTypeDel(id) {
+    var dialog = $("#setup_dialog").vkDialog({
+        width:300,
+        head:'Удаление',
+        butSubmit:'Удалить',
+        content:"<CENTER>Подтвердите удаление вида платежа '<B>"+$("#"+id+" .name").html()+"</B>'.</CENTER>",
+        submit:function(){
+            dialog.process();
+            $.post("/view/gazeta/setup/money_type/AjaxMoneyTypeDel.php?" + G.values, {id:id}, function(res){
+                dialog.close();
+                setupMoneyType();
+                vkMsgOk("Удаление успешно произведено!");
+            },'html');
+        }
+    }).o;
+} // end of moneyTypeDel()
+
+
+
+
+
+
+
+
+
+
+
 
 
 

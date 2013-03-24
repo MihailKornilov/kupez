@@ -115,5 +115,15 @@ class MysqlDB {
         return implode(',',$send);
     }
 
+    // Ассоциативный массив объектов. Ключём является id.
+    function ObjectAss($q) {
+        $res = mysql_query($q, $this->conn) or die($q);
+        $send = array();
+        while($sp = mysql_fetch_object($res)) {
+            $send[$sp->id] = $sp;
+            unset($send[$sp->id]->id);
+        }
+        return $send;
+    }
 }
 ?>

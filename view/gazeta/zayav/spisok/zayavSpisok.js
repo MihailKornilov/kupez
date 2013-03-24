@@ -1,36 +1,50 @@
-$("#category").vkSel({
-    width:147,
-    title0:'Категория не указана',
+G.category_spisok.unshift({uid:0, title:'Любая категория'});
+G.category_spisok[1].title += "<div class=img_word></div>";
+$("#category").infoLink({
     spisok:G.category_spisok,
-    func:function(id){
-        if(id == 1) {
-            //$("#type_gaz").myCheck({name:"Газетный вариант",func:''});
-            $("#type_gaz").after("<A class=word>Скачать в формате Word</A>");
-            //$(".word").click(function(){ location.href="/gazeta/zayav/PrintWordOb.php?<?php echo $VALUES; ?>&gn="+$("#gazeta_nomer").val(); });
-        } else {
-            //$("#check_type_gaz").remove();
-            $(".word").remove();
-        }
+    func:function (id) {
         G.spisok.print({category:id});
     }
-
 });
+$("#category .img_word:first")
+    .click(function () {
+        var gn = $("#gazeta_nomer").val();
+        if (gn == 0) {
+            $(this).vkHint({
+                msg:'<span class=red>Не выбран номер газеты.</span>',
+                indent:'right',
+                top:-74,
+                left:-19,
+                show:1,
+                remove:1
+            });
+        } else location.href = "/view/gazeta/zayav/spisok/PrintWord.php?gn=" + gn;
+    })
+    .vkHint({
+        msg:'<span style=color:#444;>Открыть список объявлений<br>' +
+            'в газетном варианте в формате<br>' +
+            'Microsoft Word.</span>',
+        indent:'right',
+        top:-97,
+        left:-51
+    });
 
-$("#vkSel_category").css('margin-bottom','5px');
+
+
 
 $("#year").vkSel({
     width:147,
     title0:'Год не указан',
-    spisok:Zayav.year,
+    spisok: G.zayav.year,
     func:function(year){
         $("#vkSel_gazeta_nomer").remove();
         $("#gazeta_nomer").val(0);
         if(year > 0) gazetaNomerGet(year);
-        G.spisok.print({year:year,gazeta_nomer:0});
+        G.spisok.print({year:year, gazeta_nomer:0});
     }
 });
     
-if($("#year").val() > 0) gazetaNomerGet($("#year").val());
+gazetaNomerGet((new Date).getFullYear());
 
 $("#fastFind").topSearch({
     txt:'Быстрый поиск...',
@@ -41,13 +55,42 @@ $("#fastFind").topSearch({
         G.spisok.print({input:encodeURIComponent(inp)});
     }
 });
+$("#fastFind").vkHint({
+    msg:'Введите значение и нажмите <b>Enter</b>.<br>' +
+        'Поиск производится по всем объявлениям,<br>' +
+        'то есть другие параметры не учитываются.<br>' +
+        'Если указано число и оно совпадает с номером<br>' +
+        'заявки, то эта заявка выводится первая в списке.',
+    ugol:'right',
+    indent:10,
+    top:-10,
+    left:-316,
+    delayShow:1500
+});
 
 
+
+$("#no_public").myCheck({
+    title:'Невыходившие заявки',
+    bottom:20,
+    func:function (id) {
+        $("#public")[id == 0 ? 'show' : 'hide']();
+        G.spisok.print({no_public:id});
+    }
+});
+$("#check_no_public").vkHint({
+    msg:'Заявки, которые не публиковались<br>ни в одном номере газеты.',
+    indent:60,
+    top:-70,
+    left:-61
+});
+
+// Вывод списка номеров за определённый год
 function gazetaNomerGet(year) {
     $("#gazeta_nomer").vkSel({
         width:147,
         title0:'Номер не указан',
-        spisok:G.gazeta_nomer_spisok[year],
+        spisok:G.zayav.gazeta_nomer_spisok[year],
         func:function (id) { G.spisok.print({gazeta_nomer:id}); }
     });
     $("#vkSel_gazeta_nomer").css('margin-top','4px');
@@ -61,17 +104,18 @@ G.spisok.unit = function (sp) {
     return "<H1><EM>" + sp.dtime + "</EM><A href='" + G.url + "&p=gazeta&d=zayav&d1=view&id="+sp.id+"'>" + G.category_ass[sp.category] + " №" + sp.id + "</A></H1>" +
         "<TABLE cellpadding=0 cellspacing=0><TR><TD valign=top>" +
             "<TABLE cellpadding=0 cellspacing=4>" +
-            (sp.client_id > 0 ? "<TR><TD class=tdAbout>Клиент:<TD><A HREF='" + G.url + "&p=gazeta&d=client&id=" + sp.client_id + "'>" + sp.client_fio + "</A>" : '') +
+            (sp.client_id ? "<TR><TD class=tdAbout>Клиент:<TD><A HREF='" + G.url + "&p=gazeta&d=client&d1=info&id=" + sp.client_id + "'>" + sp.client_fio + "</A>" : '') +
             (sp.category == 1 ?
                 "<TR><TD class=tdAbout>Рубрика:<TD>" + G.rubrika_ass[sp.rubrika] + (sp.podrubrika > 0 ? "<SPAN class=ug>»</SPAN>" + G.podrubrika_ass[sp.podrubrika] : '') +
                 "<TR><TD class=tdAbout valign=top>Текст:<TD><DIV class=txt>" + sp.txt + "</DIV>" : '') +
 
             (sp.ob_dop ? "<TR><TD class=tdAbout>Доп. параметр:<TD>" + sp.ob_dop : '') +
-            (sp.category == 2 ? "<TR><TD class=tdAbout>Размер:<TD>" + sp.size_x + " x " + sp.size_y + " = " + sp.kv_sm : '') +
+            (sp.category == 2 ? "<TR><TD class=tdAbout>Размер:<TD>" + sp.size_x + " x " + sp.size_y + " = <b>" + sp.kv_sm + '</b> см&sup2;' : '') +
 //    if(sp.telefon) HTML+="<TR><TD class=tdAbout>Телефон:<TD>"+sp.telefon;
 //    if(sp.adres) HTML+="<TR><TD class=tdAbout>Адрес:<TD>"+sp.adres;
 
-            "<TR><TD class=tdAbout>Стоимость:<TD><B>" + sp.summa + "</B> руб." + (sp.summa_manual == 1 ? '<SPAN class=manual>(указана вручную)</SPAN>' : '') +
+            "<TR><TD class=tdAbout>Стоимость:<TD><B>" + sp.summa + "</B> руб." +
+                    (sp.summa_manual == 1 ? '<SPAN class=manual>(указана вручную)</SPAN>' : '') +
             "</TABLE>" +
 
 //    if(sp.file) HTML+="<TD class=image><IMG src=/files/images/"+sp.file+"s.jpg onclick=fotoShow('"+sp.file+"');>";
@@ -95,20 +139,8 @@ G.spisok.create({
         input:'',
         category:0,
         year:(new Date()).getFullYear(),
-        gazeta_nomer:Zayav.gazeta_nomer
+        gazeta_nomer:G.gn.first_active,
+        no_public:0
     }
 });
 
-function obSpisokGet() {
-    var URL="&gn="+$("#gazeta_nomer").val();
-    $.ajax({
-        url:"/gazeta/zayav/AjaxObSpisok.php?<?php echo $VALUES; ?>"+URL,
-        dataType:'json',
-        success:function(data){
-            $("#findResult").html(data.result);
-            $("#spisok").html("<DIV id=obSpisok>"+data.html+"</DIV>");
-            frameBodyHeightSet();
-            }
-        });
-
-    }

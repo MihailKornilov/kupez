@@ -1,51 +1,139 @@
-<?php
-$client=$VK->QueryObjectOne("select * from client where id=".(preg_match("|^[\d]+$|",$_GET['id'])?$_GET['id']:0));
-if(!$client->id)  header("Location: ". $URL."&my_page=nopage&parent=client");
-
-$zc=$VK->QRow("select count(id) from zayav where client_id=".$client->id); if($zc>0) $zayav_count="<EM>".$zc."</EM>";
-$oc=$VK->QRow("select count(id) from oplata where client_id=".$client->id); if($oc>0) $oplata_count="<EM>".$oc."</EM>";
-$mc=$VK->QRow("select count(id) from vk_comment where table_name='client' and table_id=".$client->id); if($mc>0) $msg_count="<EM>".$mc."</EM>";
-
-switch($_GET['msg']){ case 'zdel': $msg="Заявка удалена!"; break; }
-include('incHeader.php');
-?>
-
-<SCRIPT LANGUAGE="JavaScript">
-$(document).ready(function(){
-  $("#links").infoLink({
-    spisok:[
-      {uid:1,title:'Информация'},
-      {uid:2,title:'Редактировать'},
-      {uid:3,title:'Новая заявка'},
-      {uid:4,title:'Принять платёж'}
-      <?php if($zc==0 and $oc==0) echo ",{uid:5,title:'Удалить клиента'}"; ?>
-    ],
+var linkSpisok = [
+    {uid:1,title:'Информация'},
+    {uid:2,title:'Редактировать'},
+    {uid:3,title:'<b>Новая заявка</b>'},
+    {uid:4,title:'Принять платёж'}
+];
+if (G.client.del == 0) linkSpisok.push({uid:5, title:'<span class=red>Удалить клиента</span>'});
+$("#links").infoLink({
+    spisok:linkSpisok,
     func:function (uid) {
-      switch (uid) {
-      case '2': clientEdit(); break;
-      case '3': location.href="/index.php?" + G.values + "&my_page=zayavAdd&client_id=<?php echo $client->id; ?>"; break;
-      case '4': oplataInsert(); break;
-      case '5': clientDel(); break;
-      }
+        switch (uid) {
+            case '2': clientAdd(function () { vkMsgOk("Данные клиента изменены."); location.reload(); }, G.client); break;
+            case '3': location.href = G.url + "&p=gazeta&d=zayav&d1=add&client_id=" + G.client.id; break;
+            case '4': oplataInsert(); break;
+            case '5': clientDel(); break;
+        }
     }
-  });
+});
 
-  $("#spLinks").infoLink({
-    spisok:[
-      {uid:0,title:'<?php echo $zayav_count; ?>Заявки'},
-      {uid:1,title:'<?php echo $oplata_count; ?>Платежи'},
-      {uid:2,title:'<?php echo $msg_count; ?>Заметки'}],
-    func:function (uid) {
-      switch (uid) {
-      case '0': zayavShow(this); break;
-      case '1': oplataShow(this); break;
-      case '2': commShow(this); break;
-      }      
-    }
-  });
+
+zayavShow($("#dopMenu A:first"));
 
 
 
+
+
+function zayavShow(link) {
+    $("#dopMenu A").attr('class', 'link')
+    $(link).attr('class', 'linkSel')
+
+    $("#money").html('');
+
+    G.spisok.unit = function (sp) {
+        return "<H1><EM>" + sp.dtime + "</EM><A href='" + G.url + "&p=gazeta&d=zayav&d1=view&id="+sp.id+"'>" + G.category_ass[sp.category] + " №" + sp.id + "</A></H1>" +
+            "<TABLE cellpadding=0 cellspacing=0><TR><TD valign=top>" +
+            "<TABLE cellpadding=0 cellspacing=4>" +
+            (sp.client_id > 0 ? "<TR><TD class=tdAbout>Клиент:<TD><A HREF='" + G.url + "&p=gazeta&d=client&id=" + sp.client_id + "'>" + sp.client_fio + "</A>" : '') +
+            (sp.category == 1 ?
+                "<TR><TD class=tdAbout>Рубрика:<TD>" + G.rubrika_ass[sp.rubrika] + (sp.podrubrika > 0 ? "<SPAN class=ug>»</SPAN>" + G.podrubrika_ass[sp.podrubrika] : '') +
+                    "<TR><TD class=tdAbout valign=top>Текст:<TD><DIV class=txt>" + sp.txt + "</DIV>" : '') +
+
+            (sp.ob_dop ? "<TR><TD class=tdAbout>Доп. параметр:<TD>" + sp.ob_dop : '') +
+            (sp.category == 2 ? "<TR><TD class=tdAbout>Размер:<TD>" + sp.size_x + " x " + sp.size_y + " = <b>" + sp.kv_sm + '</b> см&sup2;' : '') +
+//    if(sp.telefon) HTML+="<TR><TD class=tdAbout>Телефон:<TD>"+sp.telefon;
+//    if(sp.adres) HTML+="<TR><TD class=tdAbout>Адрес:<TD>"+sp.adres;
+
+            "<TR><TD class=tdAbout>Стоимость:<TD><B>" + sp.summa + "</B> руб." + (sp.summa_manual == 1 ? '<SPAN class=manual>(указана вручную)</SPAN>' : '') +
+            "</TABLE>" +
+
+//    if(sp.file) HTML+="<TD class=image><IMG src=/files/images/"+sp.file+"s.jpg onclick=fotoShow('"+sp.file+"');>";
+
+            "</TABLE>";
+    };
+
+    G.spisok.create({
+        view:$("#zayav"),
+        limit:15,
+        json: G.client.zayav_spisok,
+        result_view:$("#result"),
+        result:"Показан$show $count заяв$zayav",
+        ends:{'$show':['а', 'о'],'$zayav':['ка', 'ки', 'ок']},
+        next:"Показать ещё заявки",
+        nofind:"Заявок нет"
+    });
+}
+
+
+
+
+
+
+function moneyShow(link) {
+    $("#dopMenu A").attr('class', 'link')
+    $(link).attr('class', 'linkSel')
+
+    $("#zayav").html('');
+
+    G.spisok.unit = function (sp) {
+        var txt = sp.txt;
+        if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&p=gazeta&d=zayav&d1=view&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
+        var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok width=100%><TR>" +
+            "<TD class=sum><B>" + sp.sum + "</B>" +
+            "<TD class=about><b>" + G.money_type_ass[sp.type] + ":</b> " + txt +
+            "<TD class=data>" + sp.dtime_add +
+            "</TABLE>";
+        return html;
+    };
+
+    G.spisok.create({
+        view:$("#money"),
+        limit:15,
+        json: G.client.money_spisok,
+        result_view:$("#result"),
+        result:"Показан$show $count платеж$pay",
+        ends:{'$show':['а', 'о'],'$pay':['', 'а', 'ей']},
+        next:"Показать ещё...",
+        nofind:"Платежей нет",
+        callback:function (res) {
+            if(res.length > 0) {
+                var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok width=100%>" +
+                    "<TR><TH class=sum>Сумма" +
+                    "<TH class=about>Описание" +
+                    "<TH class=data>Дата" +
+                    "</TABLE>";
+                $("#money").prepend(html);
+            }
+        }
+    });
+
+}
+
+
+
+
+
+
+
+
+function clientDel() {
+    var dialog = $("#dialog_client").vkDialog({
+        width:250,
+        head:"Удаление клиента",
+        butSubmit:"Удалить",
+        content:"<CENTER><B>Подтвердите удаление клиента</B></CENTER>",
+        cancel:function () { $("#links").infoLinkSet(1); },
+        submit:function () {
+            dialog.process();
+            $.getJSON("/view/gazeta/client/info/AjaxClientDel.php?" + G.values + "&id=" + G.client.id, function () {
+                location.href = G.url + "&p=gazeta&d=client";
+            }, 'json');
+        }
+    }).o;
+} // end of clientDel()
+
+
+/*
   $("#category").vkSel({
     width:146,
     title0:'Категория не указана',
@@ -104,20 +192,6 @@ function clientEdit()
   }
 
 
-
-
-function getClient(res) {
-  var HTML="<TABLE cellpadding=0 cellspacing=4>";
-  HTML+="<TR><TD class=tdAbout>Заявитель:<INPUT type=hidden id=edit_person_id value="+res.person_id +"><TD class=person_name>"+res.person_name;
-  HTML+="<TR"+(res.org_name?'':' style=display:none')+">  <TD class=tdAbout>Организация:    <TD><B id=edit_org_name>"+res.org_name+"</B>";
-  HTML+="<TR"+(res.fio?'':' style=display:none')+">        <TD class=tdAbout>Имя:          <TD"+(!res.org_name?' style=font-weight:bold':'')+"  id=edit_fio>"+res.fio+"</TD>";
-  HTML+="<TR"+(res.telefon?'':' style=display:none')+">    <TD class=tdAbout>Телефоны:       <TD id=edit_telefon>"+res.telefon+"</TD>";
-  HTML+="<TR"+(res.adres?'':' style=display:none')+">      <TD class=tdAbout>Адрес          <TD id=edit_adres>"+res.adres+"</TD>";
-  HTML+="<TR><TD class=tdAbout>Баланс:            <TD><B style=color:#<?php echo ($client->balans<0?'A00':'090'); ?>><?php echo $client->balans; ?></B>";
-  HTML+="</TABLE>";
-  HTML+="<DIV class=info>"+res.info+"</DIV>";
-  $("#tab").html(HTML);
-}
 
 
 
@@ -268,45 +342,6 @@ function commShow(OBJ)
     });
   }
 
-function clientDel() {
-  dialogShow({
-    top:100,
-    width:250,
-    head:"Удаление",
-    butSubmit:"Удалить",
-    content:"<CENTER><B>Подтвердите удаление клиента</B></CENTER>",
-    cancel:function () { $("#links").infoLinkSet(1); },
-    submit:function(){
-      $.getJSON("/gazeta/client/AjaxClientDel.php?" + G.values + "&id=<?php echo $client->id; ?>",function(){ location.href="<?php echo $URL; ?>&my_page=client"; },'json');
-      }
-    });
-  }
-
-</SCRIPT>
-
-<?php $mLink1='Sel'; include 'gazeta/mainLinks.php'; ?>
-
-<INPUT type=hidden id=msg value="<?php echo $msg; ?>";>
-<TABLE cellpadding=0 cellspacing=0 width=100%>
-<TR>
-  <TD id=clientInfo>
-    <DIV id=tab><IMG src=/img/upload.gif></DIV>
-    
-    <DIV id=zHead><DIV id=zResult><IMG src=/img/upload.gif></DIV>Список заявок</DIV>
-    
-    <DIV id=zSpisok></DIV>
-
-  <TD id=clientRight>
-    <DIV id=links></DIV>
-    <DIV id=spLinks></DIV>
-
-    <DIV id=catDop>
-      <DIV class=findName>Категория</DIV><INPUT TYPE=hidden id=category value=0>
-    </DIV>
-
-</TABLE>
 
 
-
-<?php include('incFooter.php'); ?>
-
+*/

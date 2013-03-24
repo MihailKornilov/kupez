@@ -1,19 +1,27 @@
-$("#cDolg").myCheck({name:"Должники",func:function(){
-		$("#clientFind INPUT:first").val('');
-		$("#clientFind H5 DIV:first").show();
+$("#buttonCreate").click(function () {
+    clientAdd(function(res) {
+        location.href = G.url + "&p=gazeta&d=client&d1=info&id=" + res.uid;
+    });
+});
+
+$("#cDolg").myCheck({
+    title:"Должники",
+    func:function () {
+        $("#clientFind INPUT:first").val('');
+        $("#clientFind H5 DIV:first").show();
         G.spisok.print();
-		}
-	});
+    }
+});
 
 $("#clientFind").topSearch({
-	width:585,
-	focus:1,
-	txt:'Начните вводить данные клиента',
-	func:function (INP) {
-		$("#cDolg").myCheckVal();
+    width:585,
+    focus:1,
+    txt:'Начните вводить данные клиента',
+    func:function (INP) {
+        //$("#cDolg").myCheckVal();
         G.spisok.print({input:encodeURIComponent(INP)});
-		}
-	});
+    }
+});
 
 $("#personFind").vkSel({
 	width:177,
@@ -28,8 +36,8 @@ G.spisok.unit = function (sp) {
     if(sp.balans != 0) HTML += "<DIV class=balans>Баланс: <B style=color:#"+(sp.balans<0?'A00':'090')+">"+sp.balans+"</B></DIV>";
     HTML += "<TABLE cellspacing=3 cellpadding=0>";
     if(sp.org_name)
-        HTML += "<TR><TD class=tdAbout>Организация:<TD><A HREF='" + G.url + "&p=client&d=info&id=" + sp.id + "'>" + sp.org_name + "</A>";
-    else HTML += "<TR><TD class=tdAbout>Имя:<TD><A HREF='" + G.url + "&p=client&d=info&id=" + sp.id + "'>" + sp.fio + "</A>";
+        HTML += "<TR><TD class=tdAbout>Организация:<TD><A HREF='" + G.url + "&p=gazeta&d=client&d1=info&id=" + sp.id + "'>" + sp.org_name + "</A>";
+    else HTML += "<TR><TD class=tdAbout>Имя:<TD><A HREF='" + G.url + "&p=gazeta&d=client&d1=info&id=" + sp.id + "'>" + sp.fio + "</A>";
     if(sp.telefon) HTML += "<TR><TD class=tdAbout>Телефон:<TD>" + sp.telefon;
     if(sp.adres) HTML += "<TR><TD class=tdAbout>Адрес:<TD>" + sp.adres;
     if(sp.zayav_count > 0) HTML += "<TR><TD class=tdAbout>Заявки:<TD>" + sp.zayav_count;

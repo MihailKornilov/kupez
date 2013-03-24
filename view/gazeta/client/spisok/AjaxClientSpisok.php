@@ -34,7 +34,7 @@ if(count($spisok) > 0) {
             'fio' => utf8($sp->fio),
             'telefon' => utf8($sp->telefon),
             'zayav_count' => $sp->zayav_count,
-            'balans' => $sp->balans,
+            'balans' => round($sp->balans, 2),
 
 
         ));

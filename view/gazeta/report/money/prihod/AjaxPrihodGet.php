@@ -2,8 +2,11 @@
 require_once('../../../../../include/AjaxHeader.php');
 
 $find = "WHERE `status`=1 AND `sum`>0";
-$find .= " and dtime_add>='".$_GET['day_begin']." 00:00:00'";
-$find .= " and dtime_add<='".$_GET['day_end']." 23:59:59'";
+$find .= " AND dtime_add>='".$_GET['day_begin']." 00:00:00'";
+$find .= " AND dtime_add<='".$_GET['day_end']." 23:59:59'";
+if ($_GET['type'] > 0)
+    $find .= " AND `type` = ".$_GET['type'];
+
 
 $send = AjaxSpisokCreate("SELECT * FROM `gazeta_money` ".$find, 'asc');
 $send->sum = 0;
@@ -13,6 +16,7 @@ if (count($send->spisok) > 0) {
     $send->spisok = array();
     foreach($spisok as $sp) {
         array_push($send->spisok, array(
+            'type' => $sp->type,
             'zayav_id' => $sp->zayav_id,
             'sum' => round($sp->sum, 2),
             'txt' => utf8($sp->prim),

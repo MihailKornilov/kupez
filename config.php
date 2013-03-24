@@ -65,11 +65,10 @@ require_once('include/class_MysqlDB.php');
 $VK = new MysqlDB($mysql['host'],$mysql['user'],$mysql['pass'],$mysql['database'],$mysql['names']);
 
 $G = $VK->QueryObjectOne("SELECT * FROM `setup_global` LIMIT 1");
-define('JS_VERSION', $G->script_style);
-define('CSS_VERSION', $G->script_style);
+define('JS_VERSION',       $G->script_style);
+define('CSS_VERSION',      $G->script_style);
 define('G_VALUES_VERSION', $G->g_values);
-define('KASSA_START', $G->kassa_start);
-
+define('KASSA_START',      $G->kassa_start);
 
 
 
@@ -82,4 +81,17 @@ function apiAuth()
     }
 }
 
+/* установка баланса клиента */
+function setClientBalans($client_id = 0) {
+    if ($client_id > 0) {
+        global $VK;
+        $rashod = $VK->QRow("SELECT SUM(`summa`) FROM `gazeta_zayav` WHERE `client_id`=".$client_id);
+        $prihod = $VK->QRow("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `status`=1 AND `client_id`=".$client_id);
+        $balans = $prihod - $rashod;
+        $VK->Query("UPDATE `gazeta_client` SET `balans`=".$balans." WHERE `id`=".$client_id);
+        return $balans;
+    } else {
+        return 0;
+    }
+}
 ?>

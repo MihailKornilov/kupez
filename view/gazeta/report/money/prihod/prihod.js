@@ -11,6 +11,16 @@ $("#periodHead").on('click', function (e) {
     }
 });
 
+$("#money_type").vkSel({
+    width:140,
+    title0:'Любые платежи',
+    spisok:G.money_type_spisok,
+    func:function (id) {
+        if($("#periodCalendar").is(":hidden"))
+            reportMonthGet();
+        else G.spisok.print({type:id});
+    }
+});
 
 reportCalendarGet();
 
@@ -44,10 +54,10 @@ function reportCalendarGet(month) {
     $("#spisokHead").html(html);
     G.spisok.unit = function (sp) {
         var txt = sp.txt;
-        if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&my_page=remZayavkiInfo&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
+        if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&p=gazeta&d=zayav&d1=view&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
         var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok width=100%><TR>" +
             "<TD class=sum><B>" + sp.sum + "</B>" +
-            "<TD class=about>" + txt +
+            "<TD class=about><b>" + G.money_type_ass[sp.type] + ":</b> " + txt +
             "<TD class=data>" + sp.dtime_add +
             //"<BR><A href='http://vk.com/id" + sp.viewer_id + "'>" + G.vkusers[sp.viewer_id] + "</A>" +
             "</TABLE>";
@@ -63,7 +73,8 @@ function reportCalendarGet(month) {
         //a:1,
         values:{
             day_begin:$("#day_begin").val(),
-            day_end:$("#day_end").val()
+            day_end:$("#day_end").val(),
+            type:$("#money_type").val()
         },
         callback:function (res) { $("#itog").html(G.spisok.data.sum); }
     });
@@ -77,7 +88,9 @@ function reportMonthGet() {
     $("#periodMonth").show();
     $("#spisokHead").html('');
     $("#spisok").html('<img src=/img/upload.gif>');
-    $.getJSON("/view/gazeta/report/money/prihod/AjaxPrihodMonth.php?" + G.values + "&year=" + $("#period_year").val(), function (res) {
+    var val = "&year=" + $("#period_year").val() +
+              "&type=" + $("#money_type").val()
+    $.getJSON("/view/gazeta/report/money/prihod/AjaxPrihodMonth.php?" + G.values + val, function (res) {
         $("#itog").html(res.sum);
         var html = "";
         if (res.spisok.length > 0) {

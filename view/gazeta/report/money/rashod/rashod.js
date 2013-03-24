@@ -54,7 +54,7 @@ function reportCalendarGet(month) {
     $("#spisokHead").html(html);
     G.spisok.unit = function (sp) {
         var txt = sp.txt;
-        if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&my_page=remZayavkiInfo&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
+        if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&p=gazeta&d=zayav&d1=view&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
         var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok width=100%><TR>" +
             "<TD class=sum><B>" + sp.sum + "</B>" +
             "<TD class=about>" + txt +
@@ -146,7 +146,7 @@ function rashodAdd() {
 
         var msg;
         if (!send.txt && send.cat == 0) { msg = "Выберите категорию или укажите описание."; $("#rashod_txt").focus(); }
-        else if (!/^(\d+)(.{1}\d{1,2})?$/.test(send.sum)) { msg = "Некорректно указана сумма."; $("#rashod_sum").focus(); }
+        else if (!G.reg_sum.test(send.sum)) { msg = "Некорректно указана сумма."; $("#rashod_sum").focus(); }
         else if (send.kassa == -1) { msg = "Укажите, деньги взяты из кассы или нет."; }
         else {
             dialog.process();

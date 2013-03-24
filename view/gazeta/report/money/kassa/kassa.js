@@ -3,7 +3,7 @@ $("#day_end").vkCalendar({lost:1, place:'left', func:function (data) { G.spisok.
 
 G.spisok.unit = function (sp) {
     var txt = sp.txt;
-    if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&my_page=remZayavkiInfo&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
+    if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&p=gazeta&d=zayav&d1=view&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
     var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok width=100%><TR>" +
         "<TD class=sum><B>" + sp.sum + "</B>" +
         "<TD class=about>" + txt +

@@ -1,7 +1,8 @@
 var G = {
     T:(new Date()).getTime(),
     vkScroll:0,
-    zindex:100
+    zindex:100,
+    reg_sum:/^(\d+)([.]{1}\d{1,2})?$/
 };
 
 /*
@@ -22,6 +23,8 @@ G.end = function (count, arr) {
     }
     return send;
 }
+
+
 
 
 
@@ -712,12 +715,9 @@ $.fn.years = function (obj) {
 
 // ПОКАЗЫВАЕТ ОЖИДАНИЕ ПРОГРЕССА ДЛЯ СИНЕЙ КНОПКИ
 $.fn.butProcess = function(){
-  var W=$(this).parent().css('width');
+  var W = $(this).parent().css('width');
   $(this)
-    .css('padding-top','7px')
-    .css('padding-bottom','6px')
     .css('width',W)
-    .attr('onclick','')
     .html("<IMG src=/img/upload.gif>");
   }
 
@@ -853,100 +853,118 @@ $.fn.topSearchSet = function(VAL){
 
 
 
-/* ВЫПАДАЮЩЕЕ МЕНЮ ПО ССЫЛКЕ */
-$.fn.linkMenu = function(OBJ){
-  var OBJ = $.extend({
-    name:'Меню',
-    grey0:0,
-    right:0,
-    spisok:[{uid:0,title:'Пусто'}],
-    selected:-1,
-    func:''
-    },OBJ);
+/* Выпадающее меню по ссылке
+ *
+ * id указывается из INPUT hidden
+ */
+$.fn.linkMenu = function (obj) {
+    var obj = $.extend({
+        head:'',    // если указано, то ставится в название ссылки, а список из spisok
+        value:0,
+        spisok:[],
+        func:null,
+        right:0    // прижимать вправо или нет
+    }, obj);
 
-  var TS=$(this);
-  var ID=TS.attr('id');
-
-  var LEN=OBJ.spisok.length;
-  var DD='';
-  var GREY='';
-  for(var n=0;n<LEN;n++)
-    {
-    if(OBJ.grey0==1)
-      if(OBJ.spisok[n].uid==0)
-        GREY=" grey";
-      else GREY='';
-    if(OBJ.selected==OBJ.spisok[n].uid) OBJ.name=OBJ.spisok[n].title;
-    DD+="<DD class='over"+(n==LEN-1?' last':'')+GREY+"' val="+OBJ.spisok[n].uid+">"+OBJ.spisok[n].title;
+    var t = $(this);
+    var idSel = t.val() // бранное значение в INPUT
+    if (!idSel) {
+        idSel = obj.value;
+        t.val(idSel);
     }
-  var HTML="<DIV class=linkMenu><DL>";
-  HTML+="<DT>"+OBJ.name+DD+"</DL></DIV>";
-  HTML+="<A href='javascript:'>"+OBJ.name+"</A>";
-  HTML+="<INPUT type=hidden name=linkMenu_"+ID+" id=linkMenu_"+ID+" value="+OBJ.selected+">";
-
-  TS.html(HTML);
-
-  if(OBJ.right)
-    {
-    var W=TS.find('.linkMenu').css('width');
-    var arr=W.split(/px/);
-    $("#findResult1").html(W);
-    TS.find('DL').css('left',(145-arr[0])+'px').find('DT').css('text-align','right');
+    var selA = obj.head || obj.spisok[0].title;  // выбранное имя по id
+    var dl = '';
+    var len = obj.spisok.length;
+    var ass = {};  // Составление ассоциативного списка
+    for (var n = 0; n < len; n++) {
+        var sp = obj.spisok[n];
+        ass[sp.uid] = sp.title;
+        var last = n == len -1 ? 'last' : '';
+        var grey = sp.uid == 0 ? ' grey' : '';
+        dl += "<DD class='" + last + grey + "' val=" + sp.uid + ">" + sp.title;
+        if (idSel == sp.uid) { selA = sp.uid == 0 ? (obj.head || sp.title) : sp.title; }
     }
 
-  if(OBJ.grey0==1 && OBJ.selected==0)
-    {
-    TS.find('DT:first').css('color','#999');
-    TS.find('A:last').css('color','#999');
-    }
+    var attrId = "linkMenu_" + t.attr('id');
+    var grey = idSel == 0 ? 'grey' : '';
+    var html = "<DIV class=linkMenu id=" + attrId + ">" +
+        "<A class='" + grey + "'>" + selA + "</A>" +
+        "<DIV class=fordl><DL><DT><EM class='" + grey + "'>" + selA + "</EM>" + dl + "</DL></DIV>" +
+        "</DIV>";
 
-  TS.find('A:last').click(function(){ TS.find('.linkMenu').show(); });
-  TS.find(".over").mouseover(function(){ TS.find(".hover").removeClass('hover').addClass('over'); $(this).removeClass('over').addClass('hover'); });
-  TS.find("DT").click(function(){ TS.find('.linkMenu').hide(); });
-  var stHide=0;
-  TS.find("DL").bind({
-    mouseout:function(){ stHide=setTimeout("$('#"+ID+"').find('.linkMenu').fadeOut(150);",500); },
-    mouseover:function(){ clearTimeout(stHide); }
+    t.after(html);
+
+
+    var ID = $("#" + attrId);
+    var leftDl =  parseInt(ID.find('DL:first').css('left').split('px')[0]);
+
+    ID.find("A:first").click(function () {
+        var dd = getDD(t.val());
+        if(dd) { dd.addClass('hover'); }
+        $(this).next().show();
+        if (obj.right) {
+            var wDt = parseInt(ID.find("DT:first").css('text-align','right').css('width').split('px')[0]);
+            var wEm = parseInt(ID.find('EM:first').css('width').split('px')[0]);
+            ID.find('DL').css('left', (wEm - wDt + leftDl) + 'px');
+        }
     });
-  TS.find("DD").click(function(){
-    var VAL=$(this).attr('val');
-    $("#linkMenu_"+ID).val(VAL);
-    var nam=$(this).html();
-    TS.find('DT:first').html(nam);
-    TS.find('A:last').html(nam)
-    if(OBJ.grey0==1)
-      {
-      TS.find('DT:first').css('color',VAL>0?'#2C587D':'#999');
-      TS.find('A:last').css('color',VAL>0?'#2C587D':'#999');
-      }
-    TS.find('.linkMenu').hide();
-    clearTimeout(stHide);
-    if(OBJ.func) OBJ.func(VAL);
-    });
-  }
 
-/* ВЫПАДАЮЩЕЕ МЕНЮ ПО ССЫЛКЕ - УСТАНОВКА ЗНАЧЕНИЯ*/
-$.fn.linkMenuSet = function (VAL) {
-  var DD=this.find('DD');
-  var HTML;
-  var COLOR;
-  var N=DD.length;
-  while(N>0)
-    {
-    N--;
-    var EQ=DD.eq(N);
-    var ATTR=EQ.attr('val');
-    if(ATTR==VAL)
-      {
-      HTML=EQ.html();
-      COLOR=EQ.css('color');
-      break;
-      }
+    ID.find("DL").bind({
+        mouseleave:function () {
+            var forDL = $(this).parent();
+            if(forDL.is(':visible')) {
+                window.linkMenuDelay = window.setTimeout(function () { forDL.fadeOut(150); },500);
+            }
+        },
+        mouseenter:function () {
+            if (typeof window.linkMenuDelay == 'number') {
+                window.clearTimeout(window.linkMenuDelay);
+            }
+        }
+    });
+
+    ID.find("DT").click(dlHide);
+
+    ID.find("DD").bind({
+        mouseenter:function () {
+            ID.find(".hover").removeClass('hover');
+            $(this).addClass('hover');
+        },
+        mouseleave:function () { $(this).removeClass('hover'); },
+        click:function () {
+            dlHide();
+            var uid = $(this).attr('val');
+            if (obj.func) { obj.func(uid); }
+            // если head не указан, то можно менять имя при выборе
+            if(!obj.head) setValue(uid);
+        }
+    });
+
+    function setValue(uid) {
+        t.val(uid);
+        var cl = uid == 0 ? 'add' : 'remove';
+        ID.find("A:first").html(ass[uid])[cl + 'Class']('grey');
+        ID.find("DT:first em:first").html(ass[uid])[cl + 'Class']('grey');
     }
-  this.find('A:last').html(HTML).css('color',COLOR);
-  this.find('DT:first').html(HTML).css('color',COLOR);
-  this.find('INPUT:first').val(VAL);
+
+    function dlHide() { ID.find(".fordl").hide(); }
+
+    function getDD (sel) {
+        var dd = ID.find("DD");
+        for (var n = 0; n < len; n++) {
+            if (sel == obj.spisok[n].uid) {
+                return dd.eq(n);
+            }
+        }
+        return false;
+    }
+
+    t.o = {
+      val:setValue
+    };
+    return t;
 };
+
 
 
 
@@ -958,36 +976,76 @@ $.fn.linkMenuSet = function (VAL) {
 
 
 // чекбокс
-$.fn.myCheck = function(OBJ){
-  var ID=$(this).attr('id');
-  if (!$("#check_"+ID).length) {
-    var OBJ = $.extend({
-      name:'',
-      value:0,
-      func:''
-    },OBJ);
+$.fn.myCheck = function (obj) {
+    if (!obj) { obj = {}; }
+    obj.uid = obj.uid || null;           // id чекбокса, если нет INPUT или списка
+    obj.title = obj.title || '';              // описание чекбокса
+    obj.value = obj.value || 0;       // значение
 
-    var HID = $(this);
+    obj.top = obj.top ? " style='margin-top:" + obj.top + "px'" : ''; // отступ сверху
+    obj.bottom = obj.bottom ? " style='margin-bottom:" + obj.bottom + "px'" : ''; // отступ снизу
+    obj.br = obj.br ? "<BR>" : '';   // перевод на новую строку
+    obj.func = obj.func || null;       // функция, выполняемая при нажатии
 
-    // устанавливаем в INPUT значение, если оно не равно 0 или 1
-    var V = HID.val();
-    if(V != '0' && V != '1')
-      HID.val(OBJ.value);
-    else OBJ.value = V;
+    obj.spisok = obj.spisok || null; // массив чекбоксов в виде [{uid:1, title:'Описание', value:0}]
 
-    HID.after("<DIV id=check_"+ID+" class=check"+OBJ.value+">"+OBJ.name+"</DIV>");
+    var t = $(this);
+    var id = t.attr('id');
 
-    HID.next().click(function(){
-      var VAL=HID.val();
-      HID.val(VAL==0?1:0)
-      $(this).attr('class','check'+(VAL==0?'1':'0'))
-      if(OBJ.func) OBJ.func(HID.attr('id'));
-    });
-  }
-};
-$.fn.myCheckVal = function(VAL){
-  if (!VAL) VAL = 0;
-  $(this).val(VAL).next().attr('class','check'+VAL);
+    // чекбокс для скрытого INPUT
+    if (t[0].tagName == 'INPUT') {
+        if($("#check_" + id).length) { $("#check_" + id).remove(); } // удаление, если такой же существует
+
+        // установка в INPUT значения, если оно пустое
+        var val = t.val();
+        if(val == '') {
+            t.val(obj.value);
+        } else {
+            obj.value = val;
+        }
+
+        t.after("<DIV class=check" + obj.value + obj.top + obj.bottom + " id=check_" + id + ">" + obj.title + "</DIV>" + obj.br);
+
+        // действие при нажатии
+        t.next().click(function () {
+            var val = t.val() == 0 ? 1 : 0;
+            t.val(val);
+            $(this).attr('class', 'check' + val)
+            if(obj.func) { obj.func(val); }
+        });
+    } else if (obj.spisok) { // вывод списка чекбоксов
+        var html = '';
+        for (var n = 0; n < obj.spisok.length; n++) {
+            var sp = obj.spisok[n];
+            var value = sp.value ? 1 : 0;
+            html += "<INPUT type=hidden name=check_" + sp.uid + " id=check_" + sp.uid + " value=" + value + ">";
+            html += "<DIV class=check" + value + obj.top + obj.bottom + " val=check_" + sp.uid + ">" + (sp.title ? sp.title : '') + "</DIV>" + obj.br;
+        }
+        t.html(html);
+        t.unbind().bind('click',function (e) {
+            var target = $(e.target);
+            var val = target.attr('val');
+            if (val) {
+                var arr = val.split('_');
+                if (arr[0] == 'check') {
+                    var input = $("#check_" + arr[1]);
+                    var o = {
+                        uid:arr[1],
+                        title:target.html(),
+                        value:input.val() == 0 ? 1 : 0,
+                        target:target
+                    };
+                    input.val(o.value);
+                    $(e.target).attr('class', 'check' + o.value);
+                    if(obj.func) { obj.func(o); }
+                }
+            }
+        });
+    } else {
+
+    }
+
+    return t;
 };
 
 
@@ -1609,24 +1667,14 @@ function commCount(C) {
 
 //УСТАНОВКА ВЫСОТЫ ФРЕЙМА КОНТАКТА ПОД РАЗМЕР ОКНА
 function frameBodyHeightSet(y) {
-  var FB=document.getElementById('frameBody');
-  if (!y) { FB.style.height='auto'; }
-  var H=FB.offsetHeight-1;
-  if (y && y > H) {
-    H=y;
-    FB.style.height=(H+1)+'px';
-  }
-    
-  var dialog = $("#dialog");
-  if (dialog.length > 0) {
-    var DH = dialog.height() + parseInt(dialog.css('top'));
-    if (H < (DH + 30)) {
-      H = DH + 30;
-      FB.style.height = H + 'px';
+    var FB = document.getElementById('frameBody');
+    if (!y) { FB.style.height = 'auto'; }
+    var H = FB.offsetHeight-1;
+    if(y && y > H) {
+        H = y;
+        FB.style.height = (H + 1) + 'px';
     }
-  }
-
-  VK.callMethod('resizeWindow',627,H);
+    VK.callMethod('resizeWindow', 625, H);
 }
 
 
@@ -1758,54 +1806,6 @@ function vkMsgOk(MSG) {
 
 
 
-
-
-
-// ПРОСМОТР ФОТОГРАФИИ
-function fotoShow(file) {
-  var arr = file.split('_');
-  var len = arr.length;
-
-  // ведение счётчика фотографий и получение ссылок через замыкание
-  var n = 0;
-  var image = function () {
-    if (n == len) { n = 0; }
-    n++;
-    return arr[n - 1];
-  };
-
-  var getn = function () { return n; };
-
-  var view = len == 1 ? 'Просмотр фотографии' : "Фотография <B>1</B> из " + len;
-
-  var HTML="<DIV><TABLE cellspacing=0 cellpadding=0><TR><TD class=fHead>" + view + "<TD class=close><A>закрыть</A></TABLE>";
-  HTML+="<CENTER><IMG SRC=" + image() + "b.jpg></CENTER></DIV>";
-
-  opFonSet();
-
-  $("#opFon").after("<DIV id=fotoShow>"+HTML+"</DIV>");
-
-  if(G.vkScroll < 70) G.vkScroll=0; else G.vkScroll -= 70;
-
-  // закрытие просмотра
-  var close = function () {
-      $('#opFon').remove();
-      $('#fotoShow').remove();
-      frameBodyHeightSet();
-    };
-
-  $("#fotoShow")
-    .css('top', $(window).scrollTop() + 6 + G.vkScroll)
-    .find('A:first').click(close);
-
-  // перелистывание фотографий
-  $("#fotoShow CENTER:first").click(len == 1? close : function () {
-    $(this).find('IMG:first').attr('src',image() + "b.jpg");
-    $("#fotoShow B:first").html(getn());
-  });
-
-  frameBodyHeightSet(650);
-}
 
 
 

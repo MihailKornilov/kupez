@@ -24,7 +24,7 @@ viewer_id_add
 )");
 
 if ($_POST['kassa'] == 1) {
-  $VK->Query("INSERT INTO `gazeta_kassa` (
+    $VK->Query("INSERT INTO `gazeta_kassa` (
         sum,
         txt,
         money_id,

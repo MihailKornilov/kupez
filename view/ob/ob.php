@@ -13,12 +13,12 @@ function obSpisok()
     $rubrikaCount = $VK->ptpJson('SELECT
                                     `rubrika` AS `id`,
                                     COUNT(`id`) AS `ob_count`
-                                  FROM `zayav` WHERE
+                                  FROM `gazeta_zayav` WHERE
                                     `status`=1 AND
                                     `category`=1 AND
                                     `active_day`>=DATE_FORMAT(NOW(), "%Y-%m-%d") GROUP BY `rubrika`');
     // Список городов, для которых есть объявления
-    $cities = $VK->vkSelJson('SELECT DISTINCT(`city_id`),`city_name` FROM `zayav`
+    $cities = $VK->vkSelJson('SELECT DISTINCT(`city_id`),`city_name` FROM `gazeta_zayav`
                               WHERE
                                 `city_id`>0 AND
                                 `city_name`!="" AND
@@ -90,7 +90,8 @@ var spisok = {
 } // end of obSpisok()
 
 // Размещение объявления
-function obCreate() {
+function obCreate()
+{
 ?>
 <DIV id=vk-create>
   <DIV class=headName>Создание нового объявления</DIV>

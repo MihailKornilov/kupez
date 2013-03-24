@@ -20,16 +20,18 @@ function curTime() { return strftime("%Y-%m-%d %H:%M:%S", time()); }
 
 /* форматирование текста для внесения в базу */
 function textFormat($txt) {
-    $txt = str_replace("'","&#039;", $txt);
-    $txt = str_replace("<","&lt;", $txt);
-    $txt = str_replace(">","&gt;", $txt);
-    return str_replace("\n","<BR>", $txt);
+    $txt = str_replace("'", "&#039;", $txt);
+    $txt = str_replace('"', "&quot;", $txt);
+    $txt = str_replace("<", "&lt;", $txt);
+    $txt = str_replace(">", "&gt;", $txt);
+    return str_replace("\n", "<BR>", $txt);
 }
 function textUnFormat($txt) {
-    $txt=str_replace("&#039;","'",$txt);
-    $txt=str_replace("&lt;","<",$txt);
-    $txt=str_replace("&gt;",">",$txt);
-    return str_replace("<BR>","\n",$txt);
+    $txt = str_replace("&#039;", "'", $txt);
+    $txt = str_replace("&quot;", '"', $txt);
+    $txt = str_replace("&lt;", "<", $txt);
+    $txt = str_replace("&gt;", ">", $txt);
+    return str_replace("<BR>", "\n", $txt);
 }
 
 $MonthFull = array(
@@ -130,9 +132,30 @@ function GvaluesCreate() {
     $save .= 'G.category_spisok = [{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}];G.category_ass = SpisokToAss(G.category_spisok);';
     $save .= "G.rubrika_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rubrika` ORDER BY `sort`').";G.rubrika_ass = SpisokToAss(G.rubrika_spisok);";
     $save .= "G.person_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`').";G.person_ass = SpisokToAss(G.person_spisok);";
+    $save .= "G.money_type_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_money_type` ORDER BY `sort`').";G.money_type_ass = SpisokToAss(G.money_type_spisok);";
     $save .= "G.polosa_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').";G.polosa_ass = SpisokToAss(G.polosa_spisok);";
-    $save .= "G.skidka_spisok = ".$VK->vkSelJson('SELECT `id`,`razmer` FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
+    $save .= "G.polosa_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_polosa_cost` ORDER BY `id`').";G.polosa_cena_ass[0] = 0;";
+    $save .= "G.ob_dop_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_ass = SpisokToAss(G.ob_dop_spisok);";
+    $save .= "G.ob_dop_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_cena_ass[0] = 0;";
+    $save .= "G.skidka_spisok = ".$VK->vkSelJson('SELECT `razmer`,CONCAT(`razmer`,"%") FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
     $save .= "G.rashod_category_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `id`').";G.rashod_category_ass = SpisokToAss(G.rashod_category_spisok);";
+    $save .= "G.txt_len_first = ".$VK->QRow("SELECT `txt_len_first` FROM `setup_global` LIMIT 1").";";
+    $save .= "G.txt_cena_first = ".$VK->QRow("SELECT `txt_cena_first` FROM `setup_global` LIMIT 1").";";
+    $save .= "G.txt_len_next = ".$VK->QRow("SELECT `txt_len_next` FROM `setup_global` LIMIT 1").";";
+    $save .= "G.txt_cena_next = ".$VK->QRow("SELECT `txt_cena_next` FROM `setup_global` LIMIT 1").";";
+
+    $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`");
+    if (count($spisok) > 0) {
+        $gn = array();
+        foreach ($spisok as $sp) {
+            array_push($gn, $sp->general_nomer.':{'.
+                              'week:'.$sp->week_nomer.','.
+                              'public:"'.$sp->day_public.'",'.
+                              'txt:"'.FullData($sp->day_public, 0, 1).'"'.
+                              '}');
+        }
+        $save .= 'G.gn = {'.implode(',', $gn).'};';
+    }
 
     $spisok = $VK->QueryObjectArray("SELECT `id`,`name`,`rubrika_id` FROM `setup_pod_rubrika` ORDER BY `rubrika_id`,`sort`");
     $podrubrika = array();

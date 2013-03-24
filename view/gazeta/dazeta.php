@@ -1,4 +1,30 @@
 <?php
+// Активный первый и последний номера газеты
+$gn = $VK->QueryObjectOne('SELECT
+                               MIN(`general_nomer`) AS `first`,
+                               MAX(`general_nomer`) AS `max`
+                           FROM `gazeta_nomer` WHERE `day_print`>=DATE_FORMAT(NOW(),"%Y-%m-%d")');
+define('GN_FIRST_ACTIVE', $gn->first);
+define('GN_LAST_ACTIVE',  $gn->max);
+define('TXT_LEN_FIRST',   $G->txt_len_first);
+define('TXT_CENA_FIRST',  $G->txt_cena_first);
+define('TXT_LEN_NEXT',    $G->txt_len_next);
+define('TXT_CENA_NEXT',   $G->txt_cena_next);
+$zayavCategory = array(
+    1 => 'Объявление',
+    2 => 'Реклама',
+    3 => 'Поздравление',
+    4 => 'Статья'
+);
+?>
+<SCRIPT type="text/javascript">
+G.gn.first_active = <?=GN_FIRST_ACTIVE?>;
+G.gn.last_active = <?=GN_LAST_ACTIVE?>;
+</SCRIPT>
+<SCRIPT type="text/javascript" src="/include/client/client.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/js/gnGet.js?<?=JS_VERSION?>"></SCRIPT>
+<?php
+
 // Основное горизонтальное меню
 function main_links($g) {
     $name = array('Клиенты', 'Заявки', 'Отчёты', 'Настройки');
@@ -23,22 +49,9 @@ function main_links($g) {
     return $g_page;
 } // end of main_links()
 
-/* установка баланса клиента */
-function setClientBalans($client_id = 0) {
-    if ($client_id > 0) {
-        global $VK;
-        $rashod = $VK->QRow("select sum(summa) from zayav where client_id=".$client_id);
-        $prihod = $VK->QRow("select sum(summa) from oplata where status=1 and client_id=".$client_id);
-        $balans = $prihod - $rashod;
-        $VK->Query("update client set balans=".$balans." where id=".$client_id);
-        return $balans;
-    } else {
-        return 0;
-    }
-}
-
 // Список клиентов
 function clientSpisok() {
+    if (@$_GET['d1'] == 'info') { clientInfo(); return; }
     global $VK;
 ?>
 <DIV id=clientFind></DIV>
@@ -47,20 +60,133 @@ function clientSpisok() {
 <TR>
     <TD id=spisok>&nbsp;
     <TD id=cond>
-        <DIV id=buttonCreate><A onclick="ca();">Новый клиент</A></DIV>
+        <DIV id=buttonCreate><A>Новый клиент</A></DIV>
         <BR><BR>
         <INPUT TYPE=hidden id=cDolg value=0>
         <BR><BR>
         <INPUT TYPE=hidden id=personFind value=0>
 </TABLE>
-<SCRIPT type="text/javascript" src="/include/clientAdd/clientAdd.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/view/gazeta/client/spisok/clientSpisok.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 } // end of clientSpisok()
 
+// Просмотр информации о клиенте
+function clientInfo() {
+    global $VK;
+    $client = $VK->QueryObjectOne("SELECT * FROM `gazeta_client` WHERE `id`=".(preg_match("|^[\d]+$|", @$_GET['id']) ? $_GET['id'] : 0));
+    if (!$client->id) header("Location: ". $URL."&p=nopage&d=client");
+
+    $person = $VK->QueryPtPArray('SELECT `id`,`name` FROM `setup_person`');
+
+    $fio = $client->fio ?           '<tr><td class=tdAbout>ФИО:<td><b>'.$client->fio.'</b>' : '';
+    $org_name = $client->org_name ? '<tr><td class=tdAbout>Организация:<td><b>'.$client->org_name.'</b>' : '';
+    $telefon = $client->telefon ?   '<tr><td class=tdAbout>Телефоны:<td>'.$client->telefon : '';
+    $adres = $client->adres ?       '<tr><td class=tdAbout>Адрес:<td>'.$client->adres : '';
+    $inn = $client->inn ?           '<tr><td class=tdAbout>ИНН:<td>'.$client->inn : '';
+    $kpp = $client->kpp ?           '<tr><td class=tdAbout>КПП:<td>'.$client->kpp : '';
+    $email = $client->email ?       '<tr><td class=tdAbout>E-mail:<td>'.$client->email : '';
+    $skidka = $client->skidka > 0 ? '<tr><td class=tdAbout>Скидка:<td>'.$client->skidka.'%' : '';
+    $balans = '<b style=color:#'.($client->balans < 0 ? 'A00' : '090').'>'.round($client->balans, 2).'</b>';
+
+    $delCount = 0; // Значение для удаления клиента. Если оно будет больше 0, то удалить нельзя.
+
+    $spisok = $VK->QueryObjectArray('SELECT * FROM `gazeta_zayav` WHERE `client_id`='.$client->id.' ORDER BY `id` DESC');
+    $delCount += count($spisok);
+    $zayavSpisok = array();
+    if (count($spisok) > 0) {
+        $zayavCount = ' ('.count($spisok).')';
+        foreach($spisok as $sp) {
+            array_push($zayavSpisok, array(
+                'id' => $sp->id,
+                'category' => $sp->category,
+                'rubrika' => $sp->rubrika,
+                'podrubrika' => $sp->podrubrika,
+                'summa' => round($sp->summa, 2),
+                'summa_manual' => $sp->summa_manual,
+                'txt' => utf8($sp->txt),
+                'size_x' => round($sp->size_x, 1),
+                'size_y' => round($sp->size_y, 1),
+                'kv_sm' => round($sp->size_x * $sp->size_y, 2),
+                'dtime' => utf8(FullDataTime($sp->dtime_add))
+            ));
+        }
+    }
+
+    $spisok = $VK->QueryObjectArray('SELECT * FROM `gazeta_money` WHERE `sum`>0 AND `client_id`='.$client->id.' ORDER BY `id`');
+    $delCount += count($spisok);
+    $moneySpisok = array();
+    if (count($spisok) > 0) {
+        $moneyCount = ' ('.count($spisok).')';
+        foreach($spisok as $sp) {
+            array_push($moneySpisok, array(
+                'type' => $sp->type,
+                'zayav_id' => $sp->zayav_id,
+                'sum' => round($sp->sum, 2),
+                'txt' => utf8($sp->prim),
+                'dtime_add' => utf8(FullDataTime($sp->dtime_add)),
+                'viewer_id' => $sp->viewer_id_add
+            ));
+        }
+    }
+?>
+<TABLE cellpadding=0 cellspacing=0 class=clientInfo>
+    <TR><TD id=left>
+        <TABLE cellpadding=0 cellspacing=4 id=info>
+            <tr><td class=tdAbout>Заявитель:<td><?=$person[$client->person]?>
+            <?=$fio?>
+            <?=$org_name?>
+            <?=$telefon?>
+            <?=$adres?>
+            <?=$inn?>
+            <?=$kpp?>
+            <?=$email?>
+            <?=$skidka?>
+            <tr><td class=tdAbout>Баланс:<td><?=$balans?>
+        </table>
+
+        <TD id=right>
+            <DIV id=links></DIV>
+
+</TABLE>
+<TABLE cellpadding=0 cellspacing=0 class=clientInfo>
+    <TR><TD id=left>
+            <DIV id=dopMenu>
+                <A class=link onclick=zayavShow(this);><I></I><B></B><DIV>Заявки<?=@$zayavCount?></DIV><B></B><I></I></A>
+                <A class=link onclick=moneyShow(this);><I></I><B></B><DIV>Платежи<?=@$moneyCount?></DIV><B></B><I></I></A>
+                <div id=result></div>
+            </DIV>
+            <div id=zayav></div>
+            <div id=money></div>
+        <TD id=right>
+                <DIV class=findName>Категория</DIV><INPUT TYPE=hidden id=category value=0>
+</TABLE>
+<div id=dialog_client></div>
+<SCRIPT type="text/javascript">
+G.client = {
+    id:<?=$client->id?>,
+    person:<?=$client->person?>,
+    fio:"<?=$client->fio?>",
+    org_name:"<?=$client->org_name?>",
+    telefon:"<?=$client->telefon?>",
+    adres:"<?=$client->adres?>",
+    inn:"<?=$client->inn?>",
+    kpp:"<?=$client->kpp?>",
+    email:"<?=$client->email?>",
+    skidka:"<?=$client->skidka?>",
+    del:<?=$delCount?>,
+    zayav_spisok:<?=json_encode($zayavSpisok)?>,
+    money_spisok:<?=json_encode($moneySpisok)?>
+};
+</SCRIPT>
+<SCRIPT type="text/javascript" src="/view/gazeta/client/info/clientInfo.js?<?=JS_VERSION?>"></SCRIPT>
+<?php
+} // end of clientInfo()
+
 // Список заявок
 function zayavSpisok() {
     if (@$_GET['d1'] == 'add') { zayavAdd(); return; }
+    if (@$_GET['d1'] == 'view') { zayavView(); return; }
+    if (@$_GET['d1'] == 'edit') { zayavEdit(); return; }
     global $VK, $MonthCut;
     $spisok = $VK->QueryObjectArray("SELECT
                                         `general_nomer`,
@@ -83,31 +209,32 @@ function zayavSpisok() {
     }
     $y_nomer = array();
     foreach ($nomer as $n => $sp) { array_push($y_nomer, $n.":[".implode(',',$sp)."]"); }
-    $gnMin = $VK->QRow('SELECT MIN(`general_nomer`) FROM `gazeta_nomer` WHERE `day_print`>=DATE_FORMAT(NOW(),"%Y-%m-%d")');
 ?>
 <DIV id=findResult>&nbsp;</DIV>
 <TABLE cellpadding=0 cellspacing=0 id=zayav>
     <TR>
         <TD id=spisok>&nbsp;
-        <TD id=cond>
+        <TD id=right>
             <DIV id=buttonCreate><A onclick="location.href='<?=URL?>&p=gazeta&d=zayav&d1=add';">Новая заявка</A></DIV>
             <DIV id=fastFind></DIV>
             <DIV id=nofast>
-                <BR><BR>
-                <DIV class=findName>Категория</DIV><INPUT TYPE=hidden id=category value=0>
-                <INPUT TYPE=hidden id=type_gaz value=0>
-                <BR>
-                <DIV class=findName>Номер газеты</DIV><INPUT TYPE=hidden id=year value=<?=strftime("%Y",time())?>>
-                <INPUT TYPE=hidden id=gazeta_nomer value=<?=$gnMin?>><BR>
+                <DIV class=findName>Категория</DIV>
+                    <div id=category></div>
+                <input type=hidden id=no_public>
+                <div id=public>
+                    <DIV class=findName>Номер газеты</DIV>
+                        <INPUT TYPE=hidden id=year value=<?=strftime("%Y",time())?>>
+                        <INPUT TYPE=hidden id=gazeta_nomer value=<?=GN_FIRST_ACTIVE?>>
+                </div>
             </DIV>
 </TABLE>
 <SCRIPT type="text/javascript">
-G.gazeta_nomer_spisok = <?='{'.implode(',', $y_nomer).'}'?>;
-var Zayav = {
-    gazeta_nomer:<?=$gnMin?>,
+G.zayav = {
+    gazeta_nomer_spisok:<?='{'.implode(',', $y_nomer).'}'?>,
     year:<?=$VK->vkSelJson("SELECT
                                 DISTINCT(SUBSTR(`day_public`,1,4)),
                                 SUBSTR(`day_public`,1,4) FROM `gazeta_nomer` ORDER BY `day_public`");?>
+
 };
 </SCRIPT>
 <SCRIPT type="text/javascript" src="/view/gazeta/zayav/spisok/zayavSpisok.js?<?=JS_VERSION?>"></SCRIPT>
@@ -116,40 +243,283 @@ var Zayav = {
 
 // Добавление новой заявки
 function zayavAdd() {
+    $back = 'zayav';
+    if (@$_GET['client_id']) $back = 'client&d1=info&id='.$_GET['client_id'];
 ?>
 <DIV id=zayavAdd>
     <DIV class=headName>Внесение новой заявки</DIV>
 
     <TABLE cellpadding=0 cellspacing=8>
-        <TR><TD class=tdAbout>Клиент:    <TD><INPUT TYPE=hidden id=client_id name=client_id value="">
-        <TR><TD class=tdAbout>Категория: <TD><INPUT TYPE=hidden NAME=category id=category value=1>
+        <TR><TD class=tdAbout>Клиент:          <TD><INPUT TYPE=hidden id=client_id value=<?=@$_GET['client_id']?$_GET['client_id']:0?>>
+        <TR><TD class=tdAbout><b>Категория:</b><TD><INPUT TYPE=hidden id=category value=1>
     </TABLE>
 
-    <DIV id=content></DIV>
+    <TABLE cellpadding=0 cellspacing=8 id=for_ob>
+        <TR><TD class=tdAbout>Рубрика:            <TD><INPUT TYPE=hidden id=rubrika><INPUT TYPE=hidden id=podrubrika>
+        <TR><TD class=tdAbout valign=top>Текст:   <TD><TEXTAREA id=txt></TEXTAREA><DIV id=txtCount></DIV>
+        <TR><TD class=tdAbout>Контактный телефон: <TD><INPUT TYPE=text id=telefon maxlength=200>
+        <TR><TD class=tdAbout>Адрес:              <TD><INPUT TYPE=text id=adres maxlength=200>
+    </TABLE>
 
-    <TABLE cellpadding=0 cellspacing=8><TR><TD class=tdAbout>Номера выпуска:<TD></TABLE>
-    <DIV id=nomer></DIV>
-
-    <DIV id=skidkaContent></DIV>
-
-    <TABLE cellpadding=0 cellspacing=8 id=manual_tab>
-        <TR><TD class=tdAbout>Указать стоимость вручную:<TD><INPUT TYPE=hidden id=summa_manual name=summa_manual value=0>
+    <TABLE cellpadding=0 cellspacing=8 id=for_rek>
+        <TR><TD class=tdAbout>Размер изображения:
+            <TD><INPUT TYPE=text id=size_x maxlength=5>
+                <B class=xb>x</B>
+                <INPUT TYPE=text id=size_y maxlength=5>
+                 = <INPUT TYPE=text id=kv_sm readonly> см<SUP>2</SUP>
     </TABLE>
 
     <TABLE cellpadding=0 cellspacing=8>
-        <TR><TD class=tdAbout>Итоговая стоимость:<TD><INPUT TYPE=text NAME=summa id=summa readonly value=0> руб.
-               <SPAN id=sumSkidka>Сумма скидки: <B></B> руб.</SPAN><INPUT TYPE=hidden NAME=skidka_sum id=skidka_sum value=0>
-                <TR><TD class=tdAbout>Заявка оплачена?:            <TD><INPUT TYPE=hidden name=oplata id=oplata>
-        <TR><TD class=tdAbout valign=top>Заметка:<TD><TEXTAREA name=note id=note></TEXTAREA>
+        <TR><TD class=tdAbout>Изображение:<TD id=foto>
+    </TABLE>
+    <input type=hidden id=foto_link>
+
+    <TABLE cellpadding=0 cellspacing=8><TR><TD class=tdAbout>Номера выпуска:<TD></TABLE>
+    <DIV id=gn_spisok></DIV>
+
+    <TABLE cellpadding=0 cellspacing=8 id=skidka_tab>
+        <TR><TD class=tdAbout>Скидка:<TD><INPUT TYPE=hidden id=skidka>
     </TABLE>
 
-    <DIV class=vkButton><BUTTON onclick=zayavAddGo();>Внести</BUTTON></DIV>
-    <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=zayav'">Отмена</BUTTON></DIV>
+    <TABLE cellpadding=0 cellspacing=8 id=manual_tab>
+        <TR><TD class=tdAbout>Указать стоимость вручную:<TD><INPUT TYPE=hidden id=summa_manual>
+    </TABLE>
+
+    <TABLE cellpadding=0 cellspacing=8>
+        <TR><TD class=tdAbout>Итоговая стоимость:<TD><INPUT TYPE=text id=summa readonly value=0> руб.
+               <SPAN id=sumSkidka></SPAN><INPUT TYPE=hidden id=skidka_sum value=0>
+        <TR><TD class=tdAbout>Оплата произведена?:<TD><INPUT TYPE=hidden id=oplata value=-1>
+    </TABLE>
+
+    <TABLE cellpadding=0 cellspacing=8 id=money_tab>
+        <TR><TD class=tdAbout>Cумма оплаты:<TD><INPUT TYPE=text id=money> руб.
+        <TR><TD class=tdAbout>Вид платежа:<TD><INPUT TYPE=hidden id=money_type>
+        <TR><TD class=tdAbout>Деньги поступили в кассу?:<TD><INPUT TYPE=hidden id=money_kassa value=-1>
+    </TABLE>
+
+    <TABLE cellpadding=0 cellspacing=8>
+        <TR><TD class=tdAbout valign=top>Заметка:<TD><TEXTAREA id=note></TEXTAREA>
+    </TABLE>
+
+    <DIV class=vkButton><BUTTON onclick="zayavAddGo(this,0);">Внести</BUTTON></DIV>
+    <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=<?=$back?>'">Отмена</BUTTON></DIV>
 </DIV>
-<SCRIPT type="text/javascript" src="/view/gazeta/zayav/add/zayavAdd.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/view/gazeta/zayav/add/zayavAddEdit.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript">zayavAdd();</SCRIPT>
 <?php
 } // end of zayavAdd()
 
+// Просмотр заявки
+function zayavView() {
+    global $VK, $zayavCategory;
+    $zayav = $VK->QueryObjectOne("SELECT * FROM `gazeta_zayav` WHERE `id`=".(preg_match("|^[\d]+$|", @$_GET['id']) ? $_GET['id'] : 0));
+    if (!$zayav->id) header("Location: ". $URL."&p=nopage&d=zayav");
+
+    if ($zayav->client_id > 0) {
+        $client = $VK->QRow("SELECT `fio` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
+        $client = "<TR><TD class=tdAbout>Клиент:<TD><A href='".URL."&p=gazeta&d=client&d1=info&id=".$zayav->client_id."'>".$client."</A>";
+    }
+
+    switch ($zayav->category) {
+        case 1:
+            $rubrika = $VK->QRow("SELECT `name` FROM `setup_rubrika` WHERE `id`=".$zayav->rubrika);
+            if($zayav->podrubrika > 0)
+                $rubrika .= "<SPAN class=ug>»</SPAN>".$VK->QRow("select name from setup_pod_rubrika where id=".$zayav->podrubrika);
+            $rubrika = '<TR><TD class=tdAbout>Рубрика:<TD>'.$rubrika;
+            if ($zayav->file)
+                $img = '<td><img src='.$zayav->file.'-small.jpg onclick=imageView();>';
+            if ($zayav->telefon) $zayav->txt.="<B>Тел.: ".$zayav->telefon."</B>";
+            if ($zayav->adres) $zayav->txt.="<B>Адрес: ".$zayav->adres."</B>";
+            $txt = '<TR><TD class=tdAbout valign=top>Текст:<TD>'.
+                        '<TABLE cellpadding=0 cellspacing=6 class=txt><tr>'.@$img.'<td>'.$zayav->txt.'</table>';
+            if ($zayav->summa_manual == 1) $manual = "<SPAN class=manual>(указана вручную)</SPAN>";
+            $dop = '<TH>Дополнительно';
+            $dopArr = $VK->QueryPtPArray('SELECT `id`,`name` FROM `setup_ob_dop`');
+            $dopTd = '<td class=dop>';
+            break;
+        case 2:
+            $size = '<TR><TD class=tdAbout>Размер:'.
+                        '<TD>'.round($zayav->size_x,1).' x '.
+                               round($zayav->size_y,1).' = '.
+                         '<b>'.round($zayav->size_x * $zayav->size_y, 2).'</b> см&sup2;';
+            if ($zayav->summa_manual == 1) $manual = "<SPAN class=manual>(указана вручную)</SPAN>";
+            if ($zayav->skidka > 0)
+                $skidka = "<SPAN class=skidka>Скидка <B>".$zayav->skidka."</B>% (".round($zayav->skidka_sum, 2)." руб.)</SPAN>";
+            $dop = '<TH>Полоса';
+            $dopArr = $VK->QueryPtPArray('SELECT `id`,`name` FROM `setup_polosa_cost`');
+            $dopTd = '<td class=dop>';
+            break;
+    }
+    $dopArr[0] = '';
+
+
+    if ($zayav->file and $zayav->category != 1) {
+        $image = '<td id=image><img src='.$zayav->file.'-big.jpg width=200 onclick=imageView();>';
+    }
+
+    $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav->id.' ORDER BY `general_nomer`');
+    if (count($spisok) > 0) {
+        $gn = $VK->ObjectAss("SELECT `general_nomer` AS `id`,`week_nomer`,`day_public` FROM `gazeta_nomer`");
+        $pub['active'] = array();
+        $pub['lost'] = array();
+        foreach ($spisok as $sp) {
+            $class = ($sp->general_nomer >= GN_FIRST_ACTIVE ? 'active' : 'lost');
+            array_push($pub[$class], '<TR class='.$class.'>'.
+                        '<td align=right><b>'.$gn[$sp->general_nomer]->week_nomer.'</b><em>('.$sp->general_nomer.')</em>'.
+                        '<td class=public>'.FullData($gn[$sp->general_nomer]->day_public, 1, 1).
+                        '<td align=right>'.round($sp->summa, 2).
+                        @$dopTd.$dopArr[$sp->dop]);
+        }
+        $public = '<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH>Номер<TH>Выход<TH>Цена'.@$dop;
+        if (count($pub['lost']) > 0) {
+            $public .= '<tr class=lost_spisok><td colspan=4><a onclick=lostView();>Показать прошедшие выходы ('.count($pub['lost']).')</a>';
+            $public .= implode($pub['lost']);
+        }
+        $public .= implode($pub['active']).'</TABLE>';
+    }
+?>
+<DIV id=dopMenu>
+    <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=view&id=<?=$zayav->id?>' class=linkSel><I></I><B></B><DIV>Просмотр</DIV><B></B><I></I></A>
+    <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=edit&id=<?=$zayav->id?>' class=link><I></I><B></B><DIV>Редактирование</DIV><B></B><I></I></A>
+</DIV>
+
+<div id=zayavView>
+    <TABLE cellpadding=0 cellspacing=0 width=100%>
+    <tr><td valign=top width=100%>
+        <DIV class=headName><?=$zayavCategory[$zayav->category]?> №<?=$zayav->id?></DIV>
+        <TABLE cellpadding=0 cellspacing=6 width=100%>
+            <?=@$client?>
+            <TR><TD class=tdAbout>Дата приёма:<TD><?php echo FullDataTime($zayav->dtime_add); ?>
+            <?=@$rubrika?>
+            <?=@$txt?>
+            <?=@$size?>
+            <TR><TD class=tdAbout>Общая стоимость:<TD><B><?=round($zayav->summa, 2)?></B> руб.<?=@$manual.@$skidka?>
+            <TR><TD class=tdAbout>Номера выпуска:<td>
+        </TABLE>
+        <?=@$public?>
+        <?=@$image?>
+    </TABLE>
+    <DIV id=comm></DIV>
+</div>
+<SCRIPT type="text/javascript">
+G.zayavImage = "<?=$zayav->file?>";
+function imageView() {
+    G.fotoView({spisok:[{link:G.zayavImage}]});
+};
+
+function lostView() {
+    $("#zayavView .lost").show();
+    $("#zayavView .lost_spisok").hide();
+    frameBodyHeightSet();
+}
+</SCRIPT>
+<SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
+<?php
+} // end of zayavView()
+
+// Редактирование заявки
+function zayavEdit() {
+    global $VK, $zayavCategory;
+    $zayav = $VK->QueryObjectOne("SELECT * FROM `gazeta_zayav` WHERE `id`=".(preg_match("|^[\d]+$|", @$_GET['id']) ? $_GET['id'] : 0));
+    if (!$zayav->id) header("Location: ". $URL."&p=nopage&d=zayav");
+
+    if ($zayav->client_id > 0) {
+        $client = $VK->QRow("SELECT `fio` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
+        $client = '<a href="'.URL.'&p=gazeta&d=client&d1=info&id='.$zayav->client_id.'">'.$client.'</a>'.
+                  '<INPUT TYPE=hidden id=client_id value='.$zayav->client_id.'>';
+    } else {
+        $client = '<INPUT TYPE=hidden id=client_id>';
+    }
+    switch ($zayav->category) {
+        case 1:
+            $for_ob = '<TR><TD class=tdAbout>Рубрика:'.
+                          '<TD><INPUT TYPE=hidden id=rubrika value='.$zayav->rubrika.'>'.
+                              '<INPUT TYPE=hidden id=podrubrika value='.$zayav->podrubrika.'>'.
+                      '<TR><TD class=tdAbout valign=top>Текст:'.
+                          '<TD><TEXTAREA id=txt>'.textUnFormat($zayav->txt).'</TEXTAREA><DIV id=txtCount></DIV>'.
+                      '<TR><TD class=tdAbout>Контактный телефон:'.
+                          '<TD><INPUT TYPE=text id=telefon maxlength=200 value="'.textUnFormat($zayav->telefon).'">'.
+                      '<TR><TD class=tdAbout>Адрес:'.
+                          '<TD><INPUT TYPE=text id=adres maxlength=200 value="'.textUnFormat($zayav->adres).'">';
+            break;
+        case 2:
+            $for_rek = '<TR><TD class=tdAbout>Размер изображения:'.
+                           '<TD><INPUT TYPE=text id=size_x maxlength=5 value="'.round($zayav->size_x, 1).'">'.
+                               '<B class=xb>x</B>'.
+                               '<INPUT TYPE=text id=size_y maxlength=5 value="'.round($zayav->size_y, 1).'"> = '.
+                               '<INPUT TYPE=text id=kv_sm readonly value="'.round($zayav->size_x * $zayav->size_y, 2).'"> см<SUP>2</SUP>';
+            $skidka = '<TABLE cellpadding=0 cellspacing=8 id=skidka_tab>'.
+                        '<TR><TD class=tdAbout>Скидка:<TD><INPUT TYPE=hidden id=skidka value='.$zayav->skidka.'>'.
+                      '</TABLE>';
+            break;
+    }
+    $gn = $VK->ObjectAss("SELECT `general_nomer` AS `id`,`dop`,`summa` FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav->id." AND `general_nomer`>=".GN_FIRST_ACTIVE);
+
+    // Вычисление суммы активных номеров, если таковые остались
+    $sum_active = 0;
+    foreach ($gn as $sp) { $sum_active += $sp->summa; }
+    if ($sum_active > 0) {
+        $gn_paid = '<TABLE cellpadding=0 cellspacing=8>'.
+                        '<TR><TD class=tdAbout>Оплаченные выходы:<td><input type=text id=gn_paid value="'.round($sum_active, 2).'" readonly>'.
+                   '</table>';
+    }
+
+    $catEdit = array(
+        1 => 'объявления',
+        2 => 'рекламы',
+        3 => 'поздравления',
+        4 => 'статьи'
+    );
+?>
+<DIV id=dopMenu>
+    <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=view&id=<?=$zayav->id?>' class=link><I></I><B></B><DIV>Просмотр</DIV><B></B><I></I></A>
+    <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=edit&id=<?=$zayav->id?>' class=linkSel><I></I><B></B><DIV>Редактирование</DIV><B></B><I></I></A>
+</DIV>
+<DIV id=zayavAdd class=edit>
+    <DIV class=headName>Редактирование <?=$catEdit[$zayav->category]?> №<?=$zayav->id?></DIV>
+
+    <TABLE cellpadding=0 cellspacing=8>
+        <TR><TD class=tdAbout>Клиент:<TD><?=$client?>
+        <?=@$for_ob?>
+        <?=@$for_rek?>
+    </TABLE>
+
+    <TABLE cellpadding=0 cellspacing=8>
+        <TR><TD class=tdAbout>Изображение:<TD id=foto>
+    </TABLE>
+    <input type=hidden id=foto_link value="<?=$zayav->file?>">
+
+    <TABLE cellpadding=0 cellspacing=8><TR><TD class=tdAbout>Номера выпуска:<TD></TABLE>
+    <DIV id=gn_spisok></DIV>
+
+    <?=@$skidka?>
+    <?=@$gn_paid?>
+
+    <TABLE cellpadding=0 cellspacing=8 id=manual_tab>
+        <TR><TD class=tdAbout>Указать стоимость вручную:<TD><INPUT TYPE=hidden id=summa_manual value=<?=$zayav->summa_manual?>>
+    </TABLE>
+
+    <TABLE cellpadding=0 cellspacing=8>
+        <TR><TD class=tdAbout><?=$sum_active==0?'Итоговая стоимость':'Доплата'?>:<TD><INPUT TYPE=text id=summa readonly value=0> руб.
+                <SPAN id=sumSkidka></SPAN><INPUT TYPE=hidden id=skidka_sum value=0>
+        <TR><TD class=tdAbout>Оплата произведена?:<TD><INPUT TYPE=hidden id=oplata value=-1>
+    </TABLE>
+
+    <TABLE cellpadding=0 cellspacing=8 id=money_tab>
+        <TR><TD class=tdAbout>Cумма оплаты:<TD><INPUT TYPE=text id=money> руб.
+        <TR><TD class=tdAbout>Вид платежа:<TD><INPUT TYPE=hidden id=money_type>
+        <TR><TD class=tdAbout>Деньги поступили в кассу?:<TD><INPUT TYPE=hidden id=money_kassa value=-1>
+    </TABLE>
+
+    <DIV class=vkButton><BUTTON onclick="zayavAddGo(this,<?=$zayav->id?>);">Сохранить</BUTTON></DIV>
+    <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=zayav'">Отмена</BUTTON></DIV>
+</DIV>
+<SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/view/gazeta/zayav/add/zayavAddEdit.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript">zayavEdit(<?=$zayav->category.','.$zayav->client_id.','.json_encode($gn)?>);</SCRIPT>
+<?php
+}  // end of zayavEdit()
 
 function reportView() {
     global $VK;
@@ -218,6 +588,8 @@ function reportGet($d1) {
     <EM class=period_em>до:</EM><INPUT type=hidden id=day_end>
 </div>
 <div id=periodMonth><input type=hidden id=period_year /></div>
+<div class=findHead>Вид платежей</div>
+<input type=hidden id=money_type>
 ';
                     $send->js = '<SCRIPT type="text/javascript" src="/view/gazeta/report/money/prihod/prihod.js?'.JS_VERSION.'"></SCRIPT>';
                     break;
@@ -333,6 +705,7 @@ $("#razdelSel").vkSel({
         {uid:6,title:'Дополнительные параметры объявления'},
         {uid:4,title:'Стоимость см2 каждой полосы для рекламы',content:'Стоимость см&sup2; каждой полосы для рекламы'},
         {uid:3,title:'Номера выпусков газеты'},
+        {uid:11,title:'Виды платежей'},
         {uid:5,title:'Скидки'},
         {uid:10,title:'Категории расходов'}],
     func:setupSet

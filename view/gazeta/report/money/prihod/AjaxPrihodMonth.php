@@ -2,11 +2,15 @@
 require_once('../../../../../include/AjaxHeader.php');
 
 $find = "WHERE `status`=1 AND `sum`>0 AND DATE_FORMAT(`dtime_add`,'%Y')=".$_GET['year'];
+if ($_GET['type'] > 0)
+    $find .= " AND `type` = ".$_GET['type'];
+
 $spisok = $VK->QueryObjectArray("SELECT
                                     DISTINCT(DATE_FORMAT(`dtime_add`,'%m')) AS `month`,
                                     sum(sum)*-1 AS `sum`
                                  FROM `gazeta_money`
                                  ".$find." GROUP BY DATE_FORMAT(`dtime_add`,'%m')");
+
 $send->sum = 0;
 $send->spisok = array();
 if (count($spisok) > 0) {
