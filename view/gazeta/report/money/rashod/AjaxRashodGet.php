@@ -15,6 +15,7 @@ if (count($send->spisok) > 0) {
     $send->spisok = array();
     foreach($spisok as $sp) {
         array_push($send->spisok, array(
+            'cat' => $sp->rashod_category,
             'zayav_id' => $sp->zayav_id,
             'sum' => round($sp->sum * -1, 2),
             'txt' => utf8($sp->prim),

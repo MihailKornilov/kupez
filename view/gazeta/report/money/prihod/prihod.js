@@ -54,10 +54,12 @@ function reportCalendarGet(month) {
     $("#spisokHead").html(html);
     G.spisok.unit = function (sp) {
         var txt = sp.txt;
-        if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&p=gazeta&d=zayav&d1=view&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
+        txt += txt ? ". " : '';
+        if (sp.zayav_id > 0) { txt += "Оплата по заявке <A href='/index.php?" + G.values + "&p=gazeta&d=zayav&d1=view&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>. "; }
+        if (sp.client_id > 0) { txt += "Клиент: <A href='/index.php?" + G.values + "&p=gazeta&d=client&d1=info&id=" + sp.client_id + "'>" + sp.client_fio + "</A>."; }
         var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok width=100%><TR>" +
             "<TD class=sum><B>" + sp.sum + "</B>" +
-            "<TD class=about><b>" + G.money_type_ass[sp.type] + ":</b> " + txt +
+            "<TD class=about><b>" + G.money_type_ass[sp.type] + (txt ? ': ' : '') + '</b>' + txt +
             "<TD class=data>" + sp.dtime_add +
             //"<BR><A href='http://vk.com/id" + sp.viewer_id + "'>" + G.vkusers[sp.viewer_id] + "</A>" +
             "</TABLE>";
@@ -109,7 +111,8 @@ function reportMonthGet() {
 // Внесение прихода
 function prihodAdd() {
     var html = "<TABLE cellpadding=0 cellspacing=10 id=prihod_add_tab>" +
-        "<TR><TD class=tdAbout>Наименование:<TD><INPUT type=text id=prihod_txt maxlength=250>" +
+        "<TR><TD class=tdAbout>Вид:<TD><a class=img_edit href='" + G.url + "&p=gazeta&d=setup&id=11'></a><INPUT type=hidden id=prihod_type>" +
+        "<TR><TD class=tdAbout>Описание:<TD><INPUT type=text id=prihod_txt maxlength=250>" +
         "<TR><TD class=tdAbout>Сумма:<TD><INPUT type=text id=prihod_sum maxlength=8> руб." +
         "<TR><TD class=tdAbout>Деньги поступили в кассу?:<TD><INPUT type=hidden id=prihod_kassa value='-1'>" +
         "</TABLE>";
@@ -119,6 +122,8 @@ function prihodAdd() {
         content:html,
         submit:submit
     }).o;
+
+    $("#prihod_type").vkSel({width:190, title0:'Не указан', spisok:G.money_type_spisok});
 
     $("#prihod_kassa").vkRadio({
         display:'inline-block',
@@ -130,14 +135,16 @@ function prihodAdd() {
 
     function submit() {
         var send = {
+            type:$("#prihod_type").val(),
             txt:$("#prihod_txt").val(),
             sum:$("#prihod_sum").val(),
             kassa:$("#prihod_kassa").val()
         };
 
         var msg;
-        if (!send.txt) { msg = "Не указано наименование."; $("#prihod_txt").focus(); }
-        else if (!/^(\d+)(.{1}\d{1,2})?$/.test(send.sum)) { msg = "Некорректно указана сумма."; $("#prihod_sum").focus(); }
+        if (send.type == 0) { msg = "Не указан вид платежа."; }
+        else if (!send.txt) { msg = "Не указано описание."; $("#prihod_txt").focus(); }
+        else if (!G.reg_sum.test(send.sum)) { msg = "Некорректно указана сумма."; $("#prihod_sum").focus(); }
         else if (send.kassa == -1) { msg = "Укажите, деньги поступили в кассу или нет."; }
         else {
             dialog.process();

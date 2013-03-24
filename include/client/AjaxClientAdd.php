@@ -38,6 +38,11 @@ ON DUPLICATE KEY UPDATE
 
 if($_POST['id'] > 0) $send->id = $_POST['id'];
 
+$VK->Query('INSERT INTO `gazeta_log`
+                (`type`,`client_id`,`viewer_id_add`)
+            VALUES
+                ('.($_POST['id'] == 0 ? 51 : 52).','.$send->id.','.VIEWER_ID.')');
+
 echo json_encode($send);
 ?>
 

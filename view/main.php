@@ -133,4 +133,15 @@ function vkUserCheck($vku, $update = false)
     }
     return $vku;
 }
+
+// Несуществующая страница
+function nopage($p, $d)
+{
+?>
+<DIV class=nopage>
+    Ошибка: несуществующая страница.<BR><BR>
+    <DIV class=vkButton onclick="location.href='<?=URL.'&p='.@$p.'&d='.@$d?>'";><BUTTON>Назад</BUTTON></DIV>
+</DIV>
+<?php
+}
 ?>

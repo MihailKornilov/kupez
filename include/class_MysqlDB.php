@@ -125,5 +125,20 @@ class MysqlDB {
         }
         return $send;
     }
+
+    // Ассоциативный массив объектов, переведённый в json. Ключём является id.
+    function ObjectAssJson($q) {
+        $res = mysql_query($q, $this->conn) or die($q);
+        $send = array();
+        while($sp = mysql_fetch_object($res)) {
+            $obj = array();
+            foreach ($sp as $k => $o) {
+                if ($k == 'id') continue;
+                array_push($obj, $k.':'.(preg_match('/^\d+$/',$o) ? $o : '"'.$o.'"'));
+            }
+            array_push($send, $sp->id.':{'.implode(',', $obj).'}');
+        }
+        return '{'.implode(',', $send).'}';
+    }
 }
 ?>

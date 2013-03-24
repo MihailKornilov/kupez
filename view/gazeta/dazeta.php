@@ -74,7 +74,7 @@ function clientSpisok() {
 function clientInfo() {
     global $VK;
     $client = $VK->QueryObjectOne("SELECT * FROM `gazeta_client` WHERE `id`=".(preg_match("|^[\d]+$|", @$_GET['id']) ? $_GET['id'] : 0));
-    if (!$client->id) header("Location: ". $URL."&p=nopage&d=client");
+    if (!@$client->id) { nopage($_GET['p'], $_GET['d']); return; };
 
     $person = $VK->QueryPtPArray('SELECT `id`,`name` FROM `setup_person`');
 
@@ -314,7 +314,7 @@ function zayavAdd() {
 function zayavView() {
     global $VK, $zayavCategory;
     $zayav = $VK->QueryObjectOne("SELECT * FROM `gazeta_zayav` WHERE `id`=".(preg_match("|^[\d]+$|", @$_GET['id']) ? $_GET['id'] : 0));
-    if (!$zayav->id) header("Location: ". $URL."&p=nopage&d=zayav");
+    if (!@$zayav->id) { nopage($_GET['p'], $_GET['d']); return; };
 
     if ($zayav->client_id > 0) {
         $client = $VK->QRow("SELECT `fio` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
@@ -358,6 +358,9 @@ function zayavView() {
         $image = '<td id=image><img src='.$zayav->file.'-big.jpg width=200 onclick=imageView();>';
     }
 
+    $zayav_del = 1; // Изначально заявку можно удалить
+
+    // Список выходов
     $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav->id.' ORDER BY `general_nomer`');
     if (count($spisok) > 0) {
         $gn = $VK->ObjectAss("SELECT `general_nomer` AS `id`,`week_nomer`,`day_public` FROM `gazeta_nomer`");
@@ -365,6 +368,7 @@ function zayavView() {
         $pub['lost'] = array();
         foreach ($spisok as $sp) {
             $class = ($sp->general_nomer >= GN_FIRST_ACTIVE ? 'active' : 'lost');
+            if ($class == 'lost') $zayav_del = ''; // если есть прошедшие газеты, удаление заявки невозможно
             array_push($pub[$class], '<TR class='.$class.'>'.
                         '<td align=right><b>'.$gn[$sp->general_nomer]->week_nomer.'</b><em>('.$sp->general_nomer.')</em>'.
                         '<td class=public>'.FullData($gn[$sp->general_nomer]->day_public, 1, 1).
@@ -378,10 +382,32 @@ function zayavView() {
         }
         $public .= implode($pub['active']).'</TABLE>';
     }
+
+    // Список платежей
+    $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_money` WHERE `zayav_id`=".$zayav->id.' ORDER BY `id`');
+    if (count($spisok) > 0) {
+        if ($zayav->client_id == 0 and $zayav_del == 1) $zayav_del = '<span id=del>Удалить заявку</span>';
+        $type = $VK->QueryPtPArray("SELECT `id`,`name` FROM `setup_money_type`");
+        $money = '<div id=money>'.
+                '<DIV class=headBlue>Список платежей</div>'.
+                '<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH>Сумма<TH>Описание<TH>Дата';
+        foreach ($spisok as $sp) {
+            $money .= '<tr><td class=sum>'.round($sp->sum, 2).
+                          '<td class=about><b>'.$type[$sp->type].($sp->prim ? ':' : '').'</b> '.$sp->prim.
+                          '<td class=dtime>'.FullDataTime($sp->dtime_add);
+        }
+        $money .= '</table></div>';
+
+    }
+
+    if ($zayav_del == 1) {
+        $zayav_del = '<a id=delete>Удалить заявку</a>';
+    }
 ?>
 <DIV id=dopMenu>
-    <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=view&id=<?=$zayav->id?>' class=linkSel><I></I><B></B><DIV>Просмотр</DIV><B></B><I></I></A>
+    <A class=linkSel><I></I><B></B><DIV>Просмотр</DIV><B></B><I></I></A>
     <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=edit&id=<?=$zayav->id?>' class=link><I></I><B></B><DIV>Редактирование</DIV><B></B><I></I></A>
+    <?=$zayav_del?>
 </DIV>
 
 <div id=zayavView>
@@ -400,21 +426,19 @@ function zayavView() {
         <?=@$public?>
         <?=@$image?>
     </TABLE>
+    <?=@$money?>
     <DIV id=comm></DIV>
+    <DIV id=dialog_zayav></DIV>
 </div>
 <SCRIPT type="text/javascript">
-G.zayavImage = "<?=$zayav->file?>";
-function imageView() {
-    G.fotoView({spisok:[{link:G.zayavImage}]});
+G.zayav = {
+    id:<?=$zayav->id?>,
+    category:<?=$zayav->category?>,
+    image:"<?=$zayav->file?>"
 };
-
-function lostView() {
-    $("#zayavView .lost").show();
-    $("#zayavView .lost_spisok").hide();
-    frameBodyHeightSet();
-}
 </SCRIPT>
 <SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/view/gazeta/zayav/view/zayavView.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 } // end of zayavView()
 
@@ -422,7 +446,7 @@ function lostView() {
 function zayavEdit() {
     global $VK, $zayavCategory;
     $zayav = $VK->QueryObjectOne("SELECT * FROM `gazeta_zayav` WHERE `id`=".(preg_match("|^[\d]+$|", @$_GET['id']) ? $_GET['id'] : 0));
-    if (!$zayav->id) header("Location: ". $URL."&p=nopage&d=zayav");
+    if (!@$zayav->id) { nopage($_GET['p'], $_GET['d']); return; };
 
     if ($zayav->client_id > 0) {
         $client = $VK->QRow("SELECT `fio` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
@@ -474,10 +498,12 @@ function zayavEdit() {
 ?>
 <DIV id=dopMenu>
     <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=view&id=<?=$zayav->id?>' class=link><I></I><B></B><DIV>Просмотр</DIV><B></B><I></I></A>
-    <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=edit&id=<?=$zayav->id?>' class=linkSel><I></I><B></B><DIV>Редактирование</DIV><B></B><I></I></A>
+    <A class=linkSel><I></I><B></B><DIV>Редактирование</DIV><B></B><I></I></A>
 </DIV>
 <DIV id=zayavAdd class=edit>
     <DIV class=headName>Редактирование <?=$catEdit[$zayav->category]?> №<?=$zayav->id?></DIV>
+
+    <input type=hidden id=category value="<?=$zayav->category?>">
 
     <TABLE cellpadding=0 cellspacing=8>
         <TR><TD class=tdAbout>Клиент:<TD><?=$client?>
@@ -524,27 +550,20 @@ function zayavEdit() {
 function reportView() {
     global $VK;
     switch(@$_GET['d1']) {
-        case 'log':
-        default: $d1 = 'log'; $log = 'sel'; break;
+        case 'money':
+        default: $d1 = 'money'; $money = 'sel'; break;
         case 'zayav': $d1 = 'zayav'; $zayav = 'sel'; break;
-        case 'money': $d1 = 'money'; $money = 'sel'; break;
+        case 'log': $d1 = 'log'; $log = 'sel'; break;
     }
-//    $ids = $VK->ids("select distinct(viewer_id_add) from history where ws_id=".$vku->ws_id);
-    $ids = '0';
-    $ids_money = $VK->ids("SELECT DISTINCT(`viewer_id_add`) FROM `gazeta_money`");
-    $ids .= ($ids_money ? ',' : '').$ids_money;
     $report = reportGet($d1);
 ?>
-<SCRIPT type="text/javascript">
-G.vkusers = <?=$ids ? $VK->ptpJson("select viewer_id,concat(first_name,' ',last_name) from vk_user where viewer_id in (".$ids.")") : 'null'?>;
-</SCRIPT>
 <TABLE cellpadding=0 cellspacing=0 id=report>
     <TR><TD id=cont><?=$report->content?>&nbsp;
         <TD id=right>
             <DIV class=infoLink>
-                <a href="<?=URL?>&p=gazeta&d=report&d1=log" class="<?=@$log?>">История действий</a>
-                <a href="<?=URL?>&p=gazeta&d=report&d1=zayav" class="<?=@$zayav?>">Заявки</a>
                 <a href="<?=URL?>&p=gazeta&d=report&d1=money" class="<?=@$money?>">Деньги</a>
+                <a href="<?=URL?>&p=gazeta&d=report&d1=zayav" class="<?=@$zayav?>">Заявки</a>
+                <a href="<?=URL?>&p=gazeta&d=report&d1=log" class="<?=@$log?>">История действий</a>
             </DIV>
         <?=$report->right?>
 </TABLE>
@@ -554,10 +573,32 @@ echo $report->js;
 } // end of reportView()
 
 function reportGet($d1) {
+    global $VK;
     switch ($d1) {
         case 'log':
-            $send->content = '';
-            $send->js = '<SCRIPT type="text/javascript" src="/view/gazeta/report/log/log.js?'.JS_VERSION.'"></SCRIPT>';
+            $ids = $VK->ids("SELECT DISTINCT(`viewer_id_add`) FROM `gazeta_log`");
+            $vkusers = $ids ? $VK->objectAssJson('SELECT
+                            `viewer_id` AS `id`,
+                        CONCAT(`first_name`," ",`last_name`) AS name,
+                            `sex`
+                        FROM `vk_user` WHERE `viewer_id` IN ('.$ids.')') : 'null';
+
+            $send->content = '
+<div id=log>
+    <div id=spisok></div>
+</div>
+';
+            $send->right = '
+<div class=findHead>Категория</div>
+<input type=hidden id=log_type>
+<div class=findHead>Сотрудник</div>
+<input type=hidden id=log_worker>
+<div class=findHead>Период</div>
+<EM class=period_em>от:</EM><INPUT type=hidden id=day_begin>
+<EM class=period_em>до:</EM><INPUT type=hidden id=day_end>
+';
+            $send->js = '<SCRIPT type="text/javascript">G.vkusers = '.$vkusers.';</SCRIPT>'.
+                        '<SCRIPT type="text/javascript" src="/view/gazeta/report/log/log.js?'.JS_VERSION.'"></SCRIPT>';
             break;
         case 'zayav':
             $send->content = '';

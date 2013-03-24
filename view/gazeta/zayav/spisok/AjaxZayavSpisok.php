@@ -1,7 +1,7 @@
 <?php
 require_once('../../../../include/AjaxHeader.php');
 
-$find = 'WHERE `whence`="kupez"';
+$find = 'WHERE id';
 
 if($_GET['input']) {
     $fast = win1251($_GET['input']);

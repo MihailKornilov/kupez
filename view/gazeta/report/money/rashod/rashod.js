@@ -42,7 +42,7 @@ function reportCalendarGet(month) {
     if (month) {
         var year = $("#period_year").val();
         $("#day_begin").val(year + '-' + month + '-01');
-         $("#day_end").val(year + '-' + month + '-' + getDayCount(year, month));
+        $("#day_end").val(year + '-' + month + '-' + getDayCount(year, month));
     }
     $("#day_begin").vkCalendar({lost:1, place:'left', func:function (data) { G.spisok.print({day_begin:data}); }});
     $("#day_end").vkCalendar({lost:1, place:'left', func:function (data) { G.spisok.print({day_end:data}); }});
@@ -53,11 +53,11 @@ function reportCalendarGet(month) {
         "</TABLE>";
     $("#spisokHead").html(html);
     G.spisok.unit = function (sp) {
-        var txt = sp.txt;
-        if (sp.zayav_id > 0) { txt = "Оплата по заявке <A href='/index.php?" + G.values + "&p=gazeta&d=zayav&d1=view&id=" + sp.zayav_id + "'><EM>№</EM>" + sp.zayav_id + "</A>"; }
+        var cat = '';
+        if (sp.cat > 0) cat = '<b>' + G.rashod_category_ass[sp.cat] + (sp.txt ? ': ' : '') + '</b>';
         var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok width=100%><TR>" +
             "<TD class=sum><B>" + sp.sum + "</B>" +
-            "<TD class=about>" + txt +
+            "<TD class=about>" + cat + sp.txt +
             "<TD class=data>" + sp.dtime_add +
             //"<BR><A href='http://vk.com/id" + sp.viewer_id + "'>" + G.vkusers[sp.viewer_id] + "</A>" +
             "</TABLE>";
@@ -102,9 +102,6 @@ function reportMonthGet() {
         $("#spisok").html(html);
     });
 }
-
-
-
 
 
 // Внесение расхода
