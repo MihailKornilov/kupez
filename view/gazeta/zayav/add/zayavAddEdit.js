@@ -357,7 +357,7 @@ function zayavAddGo(but, id) {
         zayav.sending = 1;
         $(but).butProcess();
         $.post("/view/gazeta/zayav/add/AjaxZayavAdd.php?" + G.values, send, function (res) {
-           // $(".headName").html(res)
+            //$(".headName").html(res)
             location.href = G.url + "&p=gazeta&d=zayav&d1=view&id=" + res.id;
         }, 'json');
     }

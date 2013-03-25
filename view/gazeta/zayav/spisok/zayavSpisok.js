@@ -131,7 +131,7 @@ G.spisok.create({
     result_view:$("#findResult"),
     result:"Показано $count заяв$ob",
     ends:{'$ob':['ка', 'ки', 'ок']},
-    next:"Показать ещё заявки",
+    next_next:"Показать ещё заявки",
     nofind:"Заявок не найдено.",
     imgup:$("#findResult"),
 //    a:1,

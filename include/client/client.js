@@ -12,7 +12,7 @@ function clientAdd(func, sp) {
         skidka:0
     }, sp);
     var html = "<TABLE cellpadding=0 cellspacing=8>" +
-        "<TR><TD class=tdAbout>Заявитель:            <TD><a class=img_edit href='" + G.url + "&p=gazeta&d=setup&id=1'></a><INPUT TYPE=hidden id=person value=" + sp.person + ">" +
+        "<TR><TD class=tdAbout>Категория:            <TD><a class=img_edit href='" + G.url + "&p=gazeta&d=setup&id=1'></a><INPUT TYPE=hidden id=client_person value=" + sp.person + ">" +
         "<TR><TD class=tdAbout>Контактное лицо (фио):<TD><INPUT TYPE=text id=client_fio maxlength=200 value='" + sp.fio + "'>" +
         "<TR><TD class=tdAbout>Название организации: <TD><INPUT TYPE=text id=org_name maxlength=200 value='" + sp.org_name + "'>" +
         "<TR><TD class=tdAbout>Телефоны:             <TD><INPUT TYPE=text id=client_telefon maxlength=300 value='" + sp.telefon + "'>" +
@@ -35,7 +35,7 @@ function clientAdd(func, sp) {
         submit:function () {
             var send = {
                 id:sp.id,
-                person:$("#person").val(),
+                person:$("#client_person").val(),
                 fio:$("#client_fio").val(),
                 telefon:$("#client_telefon").val(),
                 org_name:$("#org_name").val(),
@@ -71,9 +71,9 @@ function clientAdd(func, sp) {
             }
         }
     }).o;
-    $("#person").vkSel({
+    $("#client_person").vkSel({
         width:180,
-        title0:"Не выбран",
+        title0:"Не выбрана",
         spisok:G.person_spisok
     });
 

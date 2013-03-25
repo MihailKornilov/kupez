@@ -163,5 +163,34 @@ CREATE TABLE gazeta_log (
   viewer_id_add int unsigned default 0,
   dtime_add timestamp default current_timestamp
 ) ENGINE=MyISAM DEFAULT CHARSET=cp1251;
+alter table gazeta_client add activity date default '0000-00-00' after org_name;
+alter table gazeta_nomer_pub add index gn_i (general_nomer);
+alter table gazeta_nomer_pub add index zayav_id_i (zayav_id);
+INSERT INTO
+  `gazeta_client`
+  (`id`,`activity`)
 
+  SELECT
+    `z`.`client_id`,
+    MAX(`gn`.`day_public`)
+  FROM
+      `gazeta_zayav` AS `z`
+
+      LEFT JOIN
+      `gazeta_nomer_pub` AS `pub`
+        ON
+          `pub`.`zayav_id`=`z`.`id`
+
+      LEFT JOIN
+      `gazeta_nomer` AS `gn`
+        ON
+          `pub`.`general_nomer`=`gn`.`general_nomer`
+
+  WHERE
+    `z`.`client_id`>0
+  GROUP BY
+    `z`.`client_id`
+
+ON DUPLICATE KEY UPDATE
+  `activity`=VALUES(`activity`);
 

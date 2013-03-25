@@ -54,18 +54,28 @@ function clientSpisok() {
     if (@$_GET['d1'] == 'info') { clientInfo(); return; }
     global $VK;
 ?>
-<DIV id=clientFind></DIV>
-<DIV id=findResult>&nbsp;</DIV>
-<TABLE cellpadding="0" cellspacing="0" id=client>
-<TR>
-    <TD id=spisok>&nbsp;
-    <TD id=cond>
-        <DIV id=buttonCreate><A>Новый клиент</A></DIV>
-        <BR><BR>
-        <INPUT TYPE=hidden id=cDolg value=0>
-        <BR><BR>
-        <INPUT TYPE=hidden id=personFind value=0>
-</TABLE>
+<div id=client>
+    <DIV id=clientFind></DIV>
+    <DIV id=findResult>&nbsp;</DIV>
+    <TABLE cellpadding="0" cellspacing="0">
+    <TR>
+        <TD id=spisok>&nbsp;
+        <TD id=right>
+            <DIV id=buttonCreate><A>Новый клиент</A></DIV>
+
+            <div class=findHead>Сортировка<div>
+            <INPUT TYPE=hidden id=order value=1>
+
+            <div class=findHead>Категория<div>
+            <INPUT TYPE=hidden id=person>
+
+            <div class=findHead>Скидка<div>
+            <INPUT TYPE=hidden id=skidka>
+
+            <INPUT TYPE=hidden id=dolg>
+
+    </TABLE>
+</div>
 <SCRIPT type="text/javascript" src="/view/gazeta/client/spisok/clientSpisok.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 } // end of clientSpisok()
@@ -158,7 +168,7 @@ function clientInfo() {
             <div id=zayav></div>
             <div id=money></div>
         <TD id=right>
-                <DIV class=findName>Категория</DIV><INPUT TYPE=hidden id=category value=0>
+
 </TABLE>
 <div id=dialog_client></div>
 <SCRIPT type="text/javascript">

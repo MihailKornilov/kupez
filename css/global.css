@@ -1385,33 +1385,34 @@ IMG { border:none; }
 
 
 
-/* СПИСОК КЛИЕНТОВ */
+/* Список клиентов */
 #client { width:100%; }
+#client .dolg { color:#777; margin-left:10px; font-size:10px; }
 #client #spisok {
-    width:430px;
-    height:400px;
+    width:100%;
     vertical-align:top;
 }
-#client #cond {
+#client #right {
     padding:10px;
     background-color:#F7F7F7;
     border-left:#DAE1E8 solid 1px;
     vertical-align:top;
+    height:400px;
 }
+#client #buttonCreate { margin-bottom:20px; }
+#client #vkSel_person { margin:7px 0px; }
+#client #vkSel_skidka { margin:7px 0px; }
+#client #check_dolg { margin-top:20px; }
 #client .unit {
     margin:4px 8px 8px 8px;
     border-bottom:#dae1e8 solid 1px;
     padding:5px;
 }
 #client .unit .tdAbout { width:80px; }
-#client .unit .balans {
-    float:right;
-    width:80px;
-    color:#888;
-}
+#client .unit .dop_fio { color:#999; margin-left:6px; font-size:10px; }
+#client .unit .balans { float:right; width:110px; color:#888; }
 #client .unit .balans B { float:right; }
-#client .unit EM { background-color:#e1e7ed; }
-
+#client .unit EM { background-color:#FFC; border-bottom:#FE2 solid 1px; }
 
 
 
