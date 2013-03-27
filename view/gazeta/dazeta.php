@@ -30,7 +30,7 @@ function main_links($g) {
     $name = array('Клиенты', 'Заявки', 'Отчёты', 'Настройки');
     $page = array('client',  'zayav',  'report', 'setup');
 
-    $g_page = 'client';
+    $g_page = 'zayav';
     for ($n = 0; $n < count($page); $n++) {
         if ($g == $page[$n])
             $g_page = $g;
@@ -167,7 +167,7 @@ function clientInfo() {
             </DIV>
             <div id=zayav></div>
             <div id=money></div>
-        <TD id=right>
+        <TD id=right class=right2>
 
 </TABLE>
 <div id=dialog_client></div>
@@ -219,6 +219,10 @@ function zayavSpisok() {
     }
     $y_nomer = array();
     foreach ($nomer as $n => $sp) { array_push($y_nomer, $n.":[".implode(',',$sp)."]"); }
+
+    $year = @$_GET['year'] ? $_GET['year'] : strftime("%Y",time());
+    $gn = isset($_GET['gn']) ? $_GET['gn'] : GN_FIRST_ACTIVE;
+    $cat = @$_GET['cat'] ? $_GET['cat'] : 0;
 ?>
 <DIV id=findResult>&nbsp;</DIV>
 <TABLE cellpadding=0 cellspacing=0 id=zayav>
@@ -233,15 +237,17 @@ function zayavSpisok() {
                 <input type=hidden id=no_public>
                 <div id=public>
                     <DIV class=findName>Номер газеты</DIV>
-                        <INPUT TYPE=hidden id=year value=<?=strftime("%Y",time())?>>
-                        <INPUT TYPE=hidden id=gazeta_nomer value=<?=GN_FIRST_ACTIVE?>>
+                        <INPUT TYPE=hidden id=year value=<?=$year?>>
+                        <INPUT TYPE=hidden id=gazeta_nomer value=<?=$gn?>>
                 </div>
             </DIV>
 </TABLE>
 <SCRIPT type="text/javascript">
 G.zayav = {
+    category:<?=$cat?>,
     gazeta_nomer_spisok:<?='{'.implode(',', $y_nomer).'}'?>,
-    year:<?=$VK->vkSelJson("SELECT
+    year:<?=$year?>,
+    years:<?=$VK->vkSelJson("SELECT
                                 DISTINCT(SUBSTR(`day_public`,1,4)),
                                 SUBSTR(`day_public`,1,4) FROM `gazeta_nomer` ORDER BY `day_public`");?>
 
@@ -314,7 +320,6 @@ function zayavAdd() {
     <DIV class=vkButton><BUTTON onclick="zayavAddGo(this,0);">Внести</BUTTON></DIV>
     <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=<?=$back?>'">Отмена</BUTTON></DIV>
 </DIV>
-<SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/view/gazeta/zayav/add/zayavAddEdit.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript">zayavAdd();</SCRIPT>
 <?php
@@ -338,7 +343,7 @@ function zayavView() {
                 $rubrika .= "<SPAN class=ug>»</SPAN>".$VK->QRow("select name from setup_pod_rubrika where id=".$zayav->podrubrika);
             $rubrika = '<TR><TD class=tdAbout>Рубрика:<TD>'.$rubrika;
             if ($zayav->file)
-                $img = '<td><img src='.$zayav->file.'-small.jpg onclick=imageView();>';
+                $img = '<td><img src='.$zayav->file.'s.jpg onclick=imageView();>';
             if ($zayav->telefon) $zayav->txt.="<B>Тел.: ".$zayav->telefon."</B>";
             if ($zayav->adres) $zayav->txt.="<B>Адрес: ".$zayav->adres."</B>";
             $txt = '<TR><TD class=tdAbout valign=top>Текст:<TD>'.
@@ -365,7 +370,7 @@ function zayavView() {
 
 
     if ($zayav->file and $zayav->category != 1) {
-        $image = '<td id=image><img src='.$zayav->file.'-big.jpg width=200 onclick=imageView();>';
+        $image = '<td id=image><img src='.$zayav->file.'b.jpg width=200 onclick=imageView();>';
     }
 
     $zayav_del = 1; // Изначально заявку можно удалить
@@ -447,7 +452,6 @@ G.zayav = {
     image:"<?=$zayav->file?>"
 };
 </SCRIPT>
-<SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/view/gazeta/zayav/view/zayavView.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 } // end of zayavView()
@@ -551,7 +555,6 @@ function zayavEdit() {
     <DIV class=vkButton><BUTTON onclick="zayavAddGo(this,<?=$zayav->id?>);">Сохранить</BUTTON></DIV>
     <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=zayav'">Отмена</BUTTON></DIV>
 </DIV>
-<SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/view/gazeta/zayav/add/zayavAddEdit.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript">zayavEdit(<?=$zayav->category.','.$zayav->client_id.','.json_encode($gn)?>);</SCRIPT>
 <?php
@@ -611,7 +614,17 @@ function reportGet($d1) {
                         '<SCRIPT type="text/javascript" src="/view/gazeta/report/log/log.js?'.JS_VERSION.'"></SCRIPT>';
             break;
         case 'zayav':
-            $send->content = '';
+            $send->content = '
+<div id=repZayav>
+    <div id=spisok><img src=/img/upload.gif></div>
+</div>
+';
+            $send->right = '
+<input type=hidden id=zayav_year />
+
+<div class=findName>Формат вывода</div>
+<input type=hidden id=format value="Month">
+';
             $send->js = '<SCRIPT type="text/javascript" src="/view/gazeta/report/zayav/zayav.js?'.JS_VERSION.'"></SCRIPT>';
             break;
 
@@ -676,7 +689,7 @@ function reportGet($d1) {
                     if (KASSA_START == -1) {
                         $send->content = '
 <DIV id=kassa_set>
-      <DIV class=info>Установите значение, равное текущей сумме денег, находящейся сейчас в мастерской.
+      <DIV class=info>Установите значение, равное текущей сумме денег, находящейся сейчас в редакции.
       От этого значения будет вестись дальнейший учёт средств, поступающих, либо забирающихся из кассы.<BR>
       <B>Внимание!</B> Данную операцию можно произвести только один раз.</DIV>
       <TABLE cellpadding=0 cellspacing=8 id=kassa_set_tab><TR>

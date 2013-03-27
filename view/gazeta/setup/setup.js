@@ -322,16 +322,19 @@ function setupMoneyType() {
         if(res.length > 0) {
             var html = "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok>" +
                 "<TR><TH class=name>Наименование" +
-                "<TH class=set>Настройки" +
+                    "<TH class=count>Кол-во" +
+                    "<TH class=set>Настройки" +
                 "</TABLE>" +
                 "<DL id=drag>";
             for(var n = 0; n < res.length; n++) {
                 var sp = res[n];
                 html += "<DD id=" + sp.id + ">" +
                     "<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR>" +
-                    "<TD class=name>" + sp.name +
-                    "<TD class=set><DIV class=img_edit onclick=moneyTypeEdit("+sp.id+");></DIV>" +
-                    "<DIV class=img_del onclick=moneyTypeDel("+sp.id+");></DIV></TABLE>";
+                        "<TD class=name>" + sp.name +
+                        "<TD class=count>" + (sp.count > 0 ? sp.count : '') +
+                        "<TD class=set><DIV class=img_edit onclick=moneyTypeEdit("+sp.id+");></DIV>" +
+                            (sp.count == 0 ? "<DIV class=img_del onclick=moneyTypeDel("+sp.id+");>" : '') +
+                    "</DIV></TABLE>";
             }
             html += "</DL>";
             $("#spisok").html(html);
@@ -1297,7 +1300,7 @@ function skidkaDel(id) {
 
 
 
-// СТОИМОСТЬ ДЛИНЫ ОБЪЯВЛЕНИЯ
+// Стоимость длины объявления
 function setupObLenght() {
     var html="<DIV id=obLen>" +
         "<DIV class=headName>Настройка стоимости длины объявления</DIV>" +
@@ -1312,6 +1315,7 @@ function setupObLenght() {
             "<TR><TD colspan=2 align=center id=info>" +
             "</TABLE>";
         $("#table").html(html);
+        frameBodyHeightSet();
         $("#obLen INPUT").keyup(function () {
             $("#obLen #info").html('');
             if (!/^[0-9]+$/.test($(this).val()))

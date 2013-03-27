@@ -11,6 +11,10 @@ function lostView() {
 }
 
 
+$("#comm").vkComment({
+    table_name:'zayav',
+    table_id:G.zayav.id
+});
 
 
 if ($("#del").length > 0) {

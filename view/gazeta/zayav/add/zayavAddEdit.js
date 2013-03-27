@@ -97,7 +97,7 @@ function zayavEdit(category, client, gns) {
     // Вывод изображения
     var foto_link = $("#foto_link").val();
     if (foto_link) {
-        $("#foto").html("<img src=" + foto_link + "-small.jpg><div class=img_del />");
+        $("#foto").html("<img src=" + foto_link + "s.jpg><div class=img_del />");
         $("#foto .img_del").click(fotoUpload);
         $("#foto img").click(function () {
             G.fotoView({spisok:[{link:foto_link}]});
@@ -176,11 +176,14 @@ function fotoUpload() {
     $("#foto").fotoUpload({
         func:function (res) {
             $("#foto_link").val(res.link);
-            $("#foto").html(res.img + "<div class=img_del />");
+            $("#foto")
+                .html(res.img + "<div class=img_del />")
+                .find("IMG:first").on('load', frameBodyHeightSet);
             $("#foto .img_del").click(fotoUpload);
             $("#foto img").click(function () {
-                G.fotoView({spisok:[{link:res.link}]});
+                G.fotoView(res.link);
             });
+            frameBodyHeightSet();
         }
     });
 }
@@ -233,6 +236,7 @@ function moneyCreate() {
             $("#money_tab")[id == 1 ? 'show' : 'hide']();
             var money = $("#summa").val();
             $("#money").val(money);
+            frameBodyHeightSet();
         }
     });
 

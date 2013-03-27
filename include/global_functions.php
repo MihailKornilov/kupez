@@ -1,6 +1,6 @@
 <?php
 // Формирование окончаний
-function ends($count, $e1, $e2, $e5) {
+function ends($count, $e1, $e2, $e5 = '') {
     if (!$e5) { $e5 = $e2; }
     if($count/10%10 == 1) { return $e5; }
     else {
@@ -170,6 +170,8 @@ function GvaluesCreate() {
     }
     $save .= "G.podrubrika_spisok = {".implode(',',$podrubrika)."};";
     $save .= "G.podrubrika_ass = []; G.podrubrika_ass[0] = ''; for (var k in G.podrubrika_spisok) { for (var n = 0; n < G.podrubrika_spisok[k].length; n++) { var sp = G.podrubrika_spisok[k][n]; G.podrubrika_ass[sp.uid] = sp.title; } }";
+
+    $save .= "G.countries_spisok = [{uid:1,title:'Россия'},{uid:2,title:'Украина'},{uid:3,title:'Беларусь'},{uid:4,title:'Казахстан'},{uid:5,title:'Азербайджан'},{uid:6,title:'Армения'},{uid:7,title:'Грузия'},{uid:8,title:'Израиль'},{uid:11,title:'Кыргызстан'},{uid:12,title:'Латвия'},{uid:13,title:'Литва'},{uid:14,title:'Эстония'},{uid:15,title:'Молдова'},{uid:16,title:'Таджикистан'},{uid:17,title:'Туркмения'},{uid:18,title:'Узбекистан'}];";
 
     $fp = fopen(PATH."/js/G_values.js","w+");
     fwrite($fp, $save);

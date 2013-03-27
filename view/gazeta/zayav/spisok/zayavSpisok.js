@@ -5,7 +5,8 @@ $("#category").infoLink({
     func:function (id) {
         G.spisok.print({category:id});
     }
-});
+}).infoLinkSet(G.zayav.category);
+
 $("#category .img_word:first")
     .click(function () {
         var gn = $("#gazeta_nomer").val();
@@ -21,12 +22,13 @@ $("#category .img_word:first")
         } else location.href = "/view/gazeta/zayav/spisok/PrintWord.php?gn=" + gn;
     })
     .vkHint({
-        msg:'<span style=color:#444;>Открыть список объявлений<br>' +
-            'в газетном варианте в формате<br>' +
+        width:145,
+        msg:'<span style=color:#444;>Открыть список объявлений ' +
+            'в газетном варианте в формате ' +
             'Microsoft Word.</span>',
         indent:'right',
-        top:-97,
-        left:-51
+        top:-110,
+        left:-11
     });
 
 
@@ -35,7 +37,7 @@ $("#category .img_word:first")
 $("#year").vkSel({
     width:147,
     title0:'Год не указан',
-    spisok: G.zayav.year,
+    spisok: G.zayav.years,
     func:function(year){
         $("#vkSel_gazeta_nomer").remove();
         $("#gazeta_nomer").val(0);
@@ -44,7 +46,7 @@ $("#year").vkSel({
     }
 });
     
-gazetaNomerGet((new Date).getFullYear());
+gazetaNomerGet(G.zayav.year);
 
 $("#fastFind").topSearch({
     txt:'Быстрый поиск...',
@@ -56,15 +58,16 @@ $("#fastFind").topSearch({
     }
 });
 $("#fastFind").vkHint({
-    msg:'Введите значение и нажмите <b>Enter</b>.<br>' +
-        'Поиск производится по всем объявлениям,<br>' +
-        'то есть другие параметры не учитываются.<br>' +
-        'Если указано число и оно совпадает с номером<br>' +
-        'заявки, то эта заявка выводится первая в списке.',
+    width:145,
+    msg:'<div style=text-align:justify;>Введите значение и нажмите <b>Enter</b>. ' +
+        'Поиск производится по всем объявлениям, ' +
+        'то есть другие параметры не учитываются. ' +
+        'Если указано число и оно совпадает с номером ' +
+        'заявки, то эта заявка выводится первая в списке.<div>',
     ugol:'right',
     indent:10,
     top:-10,
-    left:-316,
+    left:-179,
     delayShow:1500
 });
 
@@ -79,9 +82,10 @@ $("#no_public").myCheck({
     }
 });
 $("#check_no_public").vkHint({
-    msg:'Заявки, которые не публиковались<br>ни в одном номере газеты.',
+    width:145,
+    msg:'Заявки, которые не публиковались ни в одном номере газеты.',
     indent:60,
-    top:-70,
+    top:-84,
     left:-61
 });
 
@@ -137,9 +141,9 @@ G.spisok.create({
 //    a:1,
     values:{
         input:'',
-        category:0,
-        year:(new Date()).getFullYear(),
-        gazeta_nomer:G.gn.first_active,
+        category:G.zayav.category,
+        year:G.zayav.year,
+        gazeta_nomer:$("#gazeta_nomer").val(),
         no_public:0
     }
 });

@@ -131,7 +131,7 @@ INSERT INTO `vk_ob` (
     `dtime_add`,
     `viewer_id_add`
   FROM `gazeta_zayav`
-  WHERE `whence`='vk'
+  WHERE `category`=1
   ORDER BY `id`;
 DELETE FROM gazeta_zayav WHERE whence='vk';
 alter table gazeta_zayav drop whence;
@@ -164,7 +164,6 @@ CREATE TABLE gazeta_log (
   dtime_add timestamp default current_timestamp
 ) ENGINE=MyISAM DEFAULT CHARSET=cp1251;
 alter table gazeta_client add activity date default '0000-00-00' after org_name;
-alter table gazeta_nomer_pub add index gn_i (general_nomer);
 alter table gazeta_nomer_pub add index zayav_id_i (zayav_id);
 INSERT INTO
   `gazeta_client`
@@ -193,4 +192,5 @@ INSERT INTO
 
 ON DUPLICATE KEY UPDATE
   `activity`=VALUES(`activity`);
+alter table gazeta_nomer_pub add index general_i (general_nomer);
 

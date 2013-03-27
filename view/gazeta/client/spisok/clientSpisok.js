@@ -50,14 +50,15 @@ $("#dolg").myCheck({
     }
 });
 $("#check_dolg").vkHint({
+    width:170,
     msg:'Вывод списка клиентов,<br>' +
         'у которых баланс меньше 0.<br>' +
         'Другие параметры поиска<br>' +
         'сбрасываются.',
     ugol:'right',
     indent:15,
-    top:-21,
-    left:-202,
+    top:-1,
+    left:-205,
     delayShow:1000
 });
 
@@ -78,7 +79,7 @@ $("#skidka").vkSel({
 }).o;
 
 G.spisok.unit = function (sp) {
-    var name_about = sp.org_name ? "Организация" : "Фио";
+    var name_about = sp.org_name.length > 0 ? "Организация" : "Фио";
     var name = sp.org_name ? sp.org_name + (sp.fio ? "<span class=dop_fio>" + sp.fio + "</span>" : '') : sp.fio;
     return '' +
         (sp.balans ? "<DIV class=balans>Баланс: <B style=color:#" + (sp.balans < 0? 'A00' : '090') + ">" + sp.balans + "</B></DIV>" : '') +
@@ -105,7 +106,7 @@ G.spisok.create({
     next_txt:"Далее...",
     nofind:"Клиентов не найдено.",
     imgup:$("#findResult"),
-    //a:1,
+   // a:1,
     values:{
         input:'',
         dolg:0,

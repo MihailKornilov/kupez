@@ -1,6 +1,8 @@
 <?php
 require_once('../../../../include/AjaxHeader.php');
 
+setlocale(LC_ALL, 'ru_RU.CP1251', 'rus_RUS.CP1251', 'Russian_Russia.1251');
+
 function repl($pole) { global $input; return utf8(preg_replace("/(".$input.")/i", "<EM>\\1</EM>", $pole, 1)); }
 
 switch ($_GET['order']) {
@@ -16,7 +18,7 @@ switch ($_GET['order']) {
 
 $find="WHERE `id`";
 
-if (strlen($_GET['input']) > 0) {
+if ($_GET['input']) {
     $input = win1251($_GET['input']);
     $find .= " AND (`org_name` LIKE '%".$input."%' OR
                   `fio` LIKE '%".$input."%' OR
@@ -53,7 +55,7 @@ if (count($send->spisok) > 0) {
         if ($sp->zayav_count > 0) $push['zayav_count'] = $sp->zayav_count;
         if ($sp->balans != 0) $push['balans'] = round($sp->balans, 2);
 
-        if(isset($input)) {
+        if($_GET['input']) {
             $push['org_name'] = repl($sp->org_name);
             $push['fio'] =      repl($sp->fio);
             $push['telefon'] =  repl($sp->telefon);

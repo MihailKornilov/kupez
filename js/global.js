@@ -647,6 +647,7 @@ G.months_sel_ass = {1:'января',2:'февраля',3:'марта',4:'апреля',5:'мая',6:'июня'
 $.fn.years = function (obj) {
     var obj = $.extend({
         year:(new Date()).getFullYear(),
+        start:function () {},
         func:function () {}
     }, obj);
 
@@ -668,6 +669,7 @@ $.fn.years = function (obj) {
         ismove:0,
     };
     years.next = function (side) {
+        obj.start();
         var y = years;
         if (y.ismove == 0) {
             y.ismove = 1;
@@ -694,7 +696,7 @@ $.fn.years = function (obj) {
                     span.html(obj.year);
                     y.left = y.width * side;
                     t.val(obj.year);
-                    obj.func();
+                    obj.func(obj.year);
                 }
             }, 25);
         }
@@ -1069,6 +1071,7 @@ $.fn.vkRadio = function (obj) {
     obj.light = obj.light || 0; // подсветка выбранного значения
     obj.func = obj.func || function () {};
 
+    $("#" + id + "_radio").remove();
     var html = "<DIV class=radio id=" + id + "_radio val=end_>";
     for(var n = 0; n < obj.spisok.length; n++) {
         var sp = obj.spisok[n];
@@ -1353,7 +1356,7 @@ $.fn.vkComment = function(OBJ){
   var HTML="<DIV class=vkComment style=width:"+OBJ.width+"px;><DIV class=headBlue><DIV id=count><IMG src=/img/upload.gif></DIV>Заметки</DIV></DIV>";
   THIS.html(HTML);
 
-  $.getJSON("/include/comment/AjaxCommentGet.php?"+$("#VALUES").val()+"&table_name="+OBJ.table_name+"&table_id="+OBJ.table_id,function(res){
+  $.getJSON("/include/comment/AjaxCommentGet.php?"+G.values+"&table_name="+OBJ.table_name+"&table_id="+OBJ.table_id,function(res){
     OBJ.viewer_id=res[0].autor_viewer_id;
     OBJ.first_name=res[0].autor_first_name;
     OBJ.last_name=res[0].autor_last_name;
@@ -1410,7 +1413,7 @@ $.fn.vkComment = function(OBJ){
   function commAdd()
     {
     THIS.find("#add BUTTON").butProcess();
-    $.post("/include/comment/AjaxCommentAdd.php?"+$("#VALUES").val(),{table_name:OBJ.table_name,table_id:OBJ.table_id,parent_id:0,viewer_id:OBJ.viewer_id,txt:THIS.find("#add TEXTAREA").val()},function(res){
+    $.post("/include/comment/AjaxCommentAdd.php?"+G.values,{table_name:OBJ.table_name,table_id:OBJ.table_id,parent_id:0,viewer_id:OBJ.viewer_id,txt:THIS.find("#add TEXTAREA").val()},function(res){
       THIS.find(".deleted").remove();
       THIS.find("#add").after(createUnit({
                       id:res.id,
@@ -1476,7 +1479,7 @@ $.fn.vkComment = function(OBJ){
     {
     OB.butProcess();
     var ID=OB.attr('val');
-    $.post("/include/comment/AjaxCommentAdd.php?"+$("#VALUES").val(),{table_name:OBJ.table_name,table_id:OBJ.table_id,parent_id:ID,viewer_id:OBJ.viewer_id,txt:$("#unit"+ID+" TEXTAREA").val()},function(res){
+    $.post("/include/comment/AjaxCommentAdd.php?"+G.values,{table_name:OBJ.table_name,table_id:OBJ.table_id,parent_id:ID,viewer_id:OBJ.viewer_id,txt:$("#unit"+ID+" TEXTAREA").val()},function(res){
       $("#unit"+ID+" .dadd").remove();
       $("#unit"+ID+" .cadd").remove();
       $("#unit"+ID+" .deleted").remove();
@@ -1533,7 +1536,7 @@ $.fn.vkComment = function(OBJ){
   /* загрузка списка дополнительных комментариев */
   function commDopLoad(ID)
     {
-    $.getJSON("/include/comment/AjaxCommentDopGet.php?"+$("#VALUES").val()+"&table_name="+OBJ.table_name+"&table_id="+OBJ.table_id+"&viewer_id="+OBJ.viewer_id+"&parent_id="+ID,function(res){
+    $.getJSON("/include/comment/AjaxCommentDopGet.php?"+G.values+"&table_name="+OBJ.table_name+"&table_id="+OBJ.table_id+"&viewer_id="+OBJ.viewer_id+"&parent_id="+ID,function(res){
       var HTML='';
       for(n=0;n<res.length;n++)
         HTML+=createUnitDop({
@@ -1586,7 +1589,7 @@ $.fn.vkComment = function(OBJ){
   /* удаление комментария */
   function commDel(ID)
     {
-    $.post("/include/comment/AjaxCommentDel.php?"+$("#VALUES").val(),{del:ID},function(res){
+    $.post("/include/comment/AjaxCommentDel.php?"+G.values,{del:ID},function(res){
       $("#unit"+ID)
         .append("<CENTER>Заметка удалена. <A href='javascript:' val="+ID+">Восстановить</A></CENTER>")
         .addClass('deleted')
@@ -1599,7 +1602,7 @@ $.fn.vkComment = function(OBJ){
   /* восстановление комментария */
   function commRec(ID)
     {
-    $.post("/include/comment/AjaxCommentRec.php?"+$("#VALUES").val(),{rec:ID},function(res){
+    $.post("/include/comment/AjaxCommentRec.php?"+G.values,{rec:ID},function(res){
       $("#unit"+ID).removeClass('deleted');
       $("#unit"+ID+" CENTER").remove();
       $("#unit"+ID+" TABLE").show();
@@ -1610,7 +1613,7 @@ $.fn.vkComment = function(OBJ){
   /* удаление дополнительного комментария */
   function commDopDel(ID)
     {
-    $.post("/include/comment/AjaxCommentDopDel.php?"+$("#VALUES").val(),{del:ID},function(res){
+    $.post("/include/comment/AjaxCommentDopDel.php?"+G.values,{del:ID},function(res){
       $("#dunit"+ID)
         .append("<CENTER>Комментарий удалён. <A href='javascript:' val="+ID+">Восстановить</A></CENTER>")
         .addClass('deleted')
@@ -1623,7 +1626,7 @@ $.fn.vkComment = function(OBJ){
   /* восстановление дополнительного комментария */
   function commDopRec(ID)
     {
-    $.post("/include/comment/AjaxCommentDopRec.php?"+$("#VALUES").val(),{rec:ID},function(res){
+    $.post("/include/comment/AjaxCommentDopRec.php?"+G.values,{rec:ID},function(res){
       $("#dunit"+ID).removeClass('deleted');
       $("#dunit"+ID+" CENTER").remove();
       $("#dunit"+ID+" TABLE").show();
@@ -1824,7 +1827,7 @@ function hintTxt(txt, id) {
 
 function hintNoShow(id) {
   $("#hint H4").html("<IMG src=/img/upload.gif>");
-  $.post('/superadmin/hint/AjaxHintNoShow.php?' + $("#VALUES").val(),{hint_id:id},hintHide);
+  $.post('/superadmin/hint/AjaxHintNoShow.php?' + G.values,{hint_id:id},hintHide);
 }
 
 function hintHide() {

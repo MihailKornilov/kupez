@@ -11,6 +11,7 @@ function _header($vku)
 <SCRIPT type="text/javascript" src="/js/xd_connection.js"></SCRIPT>
 <SCRIPT type="text/javascript" src="/js/global.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/js/G_values.js?<?=G_VALUES_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
 <LINK href="/css/global.css?<?=CSS_VERSION?>" rel="stylesheet" type="text/css">
 <TITLE> Приложение КупецЪ </TITLE>
 </HEAD>
@@ -24,7 +25,8 @@ G.vk = {
     viewer_id:<?=$vku['viewer_id']?>,
     first_name:"<?=$vku['first_name']?>",
     last_name:"<?=$vku['last_name']?>",
-    city:"<?=$vku['city']?>"
+    country:<?=$vku['country']?>,
+    city:<?=$vku['city']?>
 };
 </SCRIPT>
 <DIV id=frameBody>
@@ -50,10 +52,10 @@ function _footer()
 <?php } ?>
     </DIV>
     <SCRIPT type="text/javascript">
-        //VK.init(frameBodyHeightSet);
+        VK.init(frameBodyHeightSet);
         VK.callMethod("setLocation","");
         VK.callMethod('scrollSubscribe');
-        VK.addCallback('onScroll',function(top){ vkScroll = top; });
+        VK.addCallback('onScroll',function(top){ G.vkScroll = top; });
     </SCRIPT>
     </BODY></HTML>
 <?php
@@ -66,17 +68,16 @@ function vkUserCheck($vku, $update = false)
         require_once('include/vkapi.class.php');
         $VKAPI = new vkapi(API_ID, API_SECRET);
         $res = $VKAPI->api('users.get',array('uids' => VIEWER_ID, 'fields' => 'photo,sex,country,city'));
-        $vku = array(
-            'viewer_id' => VIEWER_ID,
-            'first_name' => win1251($res['response'][0]['first_name']),
-            'last_name' => win1251($res['response'][0]['last_name']),
-            'sex' => $res['response'][0]['sex'],
-            'photo' => $res['response'][0]['photo'],
-            'country' => isset($res['response'][0]['country']) ? $res['response'][0]['country'] : 0,
-            'city' => isset($res['response'][0]['city']) ? $res['response'][0]['city'] : 0,
-            'menu_left_set' => 0,
-            'enter_last' => curTime()
-        );
+        $vku['viewer_id'] = VIEWER_ID;
+        $vku['first_name'] = win1251($res['response'][0]['first_name']);
+        $vku['last_name'] = win1251($res['response'][0]['last_name']);
+        $vku['sex'] = $res['response'][0]['sex'];
+        $vku['photo'] = $res['response'][0]['photo'];
+        $vku['country'] = isset($res['response'][0]['country']) ? $res['response'][0]['country'] : 0;
+        $vku['city'] = isset($res['response'][0]['city']) ? $res['response'][0]['city'] : 0;
+        $vku['menu_left_set'] = 0;
+        $vku['enter_last'] = curTime();
+
         // установил ли приложение
         $app = $VKAPI->api('isAppUser',array('uid'=>VIEWER_ID));
         $vku['app_setup'] = $app['response'];
@@ -123,8 +124,8 @@ function vkUserCheck($vku, $update = false)
             $VKAPI->api('secure.setCounter', array('counter'=>0, 'uid'=>VIEWER_ID, 'timestamp'=>time(), 'random'=>rand(1,1000)));
         }
         // счётчик посетителей
-        $id = $VK->QRow('SELECT `id` FROM `visit` WHERE `viewer_id`='.VIEWER_ID.' AND `dtime_add`>="'.strftime("%Y-%m-%d").' 00:00:00" LIMIT 1');
-        $VK->Query('INSERT INTO `visit` (`id`,`viewer_id`)
+        $id = $VK->QRow('SELECT `id` FROM `vk_visit` WHERE `viewer_id`='.VIEWER_ID.' AND `dtime_add`>="'.strftime("%Y-%m-%d").' 00:00:00" LIMIT 1');
+        $VK->Query('INSERT INTO `vk_visit` (`id`,`viewer_id`)
                                  VALUES ('.($id ? $id : 0).','.VIEWER_ID.')
                                  ON DUPLICATE KEY UPDATE `count_day`=`count_day`+1,`dtime_add`=current_timestamp');
         $VK->Query('UPDATE `vk_user` SET

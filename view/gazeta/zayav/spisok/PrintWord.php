@@ -36,7 +36,8 @@ ON
   pub.dop=dop.id
 
 WHERE
-  pub.general_nomer='.$_GET['gn'].'
+  pub.general_nomer='.$_GET['gn'].' AND
+  z.category=1
 ORDER BY
   rub.sort,podrub.sort,z.txt');
 

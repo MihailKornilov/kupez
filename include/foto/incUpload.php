@@ -12,7 +12,7 @@ function fileNameCreate() {
   $arr = array('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2','3','4','5','6','7','8','9','0');
   $name = '';
   for($i = 0; $i < 10; $i++) { $name .= $arr[rand(0,35)]; }
-  return $name;
+  return $name.'-';
 }
 
 
@@ -75,8 +75,8 @@ function imSave($im, $path, $file_name) {
         if ($x < 100 or $y < 100) {
             $send->error = 2; // если картинка имеет неправильные размеры
         } else {
-            $small = imResize($im, $x, $y, 80, 80, $path.$file_name."-small.jpg");
-            $big = imResize($im, $x, $y, 610, 610, $path.$file_name."-big.jpg");
+            $small = imResize($im, $x, $y, 100, 100, $path.$file_name."s.jpg");
+            $big = imResize($im, $x, $y, 610, 610, $path.$file_name."b.jpg");
             $send->link = "http://".$_SERVER["SERVER_NAME"]."/files/images/".$file_name;
             $send->x = $big->x;
             $send->y = $big->y;
