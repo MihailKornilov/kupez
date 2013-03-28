@@ -7,8 +7,11 @@ $vku = vkUserCheck($vku, isset($_GET['start']));
 _header($vku);
 //GvaluesCreate();
 
-if(!isset($_GET['p']))
+if (!isset($_GET['p'])) {
     $_GET['p'] = 'ob';
+    if ($vku['gazeta_worker'] == 1)
+        $_GET['p'] = 'gazeta';
+}
 
 if ($_GET['p'] == 'gazeta') {
     if ($vku['gazeta_worker'] == 0) {

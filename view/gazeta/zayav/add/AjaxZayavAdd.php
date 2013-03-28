@@ -95,6 +95,37 @@ if ($_POST['gns']) {
 $day_public = '0000-00-00';
 if ($gn_last > 0) {
     $day_public = $VK->QRow("SELECT `day_public` FROM `gazeta_nomer` WHERE `general_nomer`=".$gn_last);
+
+    // Внесение объявления для пользователей ВКонтакте
+    if ($_POST['category'] == 1 and $_POST['id'] == 0) {
+    $VK->Query("INSERT INTO `vk_ob` (
+        `rubrika`,
+        `podrubrika`,
+        `txt`,
+        `telefon`,
+
+        `country_id`,
+        `country_name`,
+        `city_id`,
+        `city_name`,
+
+        `file`,
+        `day_active`
+    ) VALUES (
+        ".$_POST['rubrika'].",
+        ".$_POST['podrubrika'].",
+        '".win1251(textFormat($_POST['txt']))."',
+        '".win1251(textFormat($_POST['telefon'].($_POST['adres'] ? ' Адрес: '.$_POST['adres'] : '')))."',
+
+        1,
+        '".win1251('Россия')."',
+        3644,
+        '".win1251('Няндома')."',
+
+        '".$_POST['file']."',
+        DATE_ADD('".$day_public."', INTERVAL 30 DAY)
+        )");
+    }
 }
 
 // Обновление общей суммы, количества выходов
@@ -149,7 +180,6 @@ if ($_POST['oplata'] == 1 and $_POST['money'] > 0) {
     }
 }
 
-
 // Обновление данных клиента
 if ($_POST['client_id'] > 0) {
     $VK->Query('INSERT INTO
@@ -166,7 +196,6 @@ if ($_POST['client_id'] > 0) {
     $VK->Query('UPDATE `gazeta_money` SET `client_id`='.$_POST['client_id'].' WHERE `zayav_id`='.$send->id);
     setClientBalans($_POST['client_id']);
 }
-
 
 // Заметка
 if($_POST['note']) {

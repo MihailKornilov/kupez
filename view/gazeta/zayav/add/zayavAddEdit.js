@@ -153,18 +153,18 @@ function podrubrikaSet(id) {
     if (G.podrubrika_spisok[id]) {
         $("#podrubrika").vkSel({
             display:'inline-block',
-            width:200,
+            width:180,
             title0:'Подрубрика не указана',
             spisok:G.podrubrika_spisok[id],
             funcAdd:function () { location.href = G.url + '&p=gazeta&d=setup&id=7'; }
         });
         // Подсказка о настройке подрубрик при наведении на плюсик
         $("#vkSel_podrubrika .add:first").vkHint({
-            msg:"Перейти к настройке подрубрик",
+            width:130,
+            msg:"Перейти к настройке<br>подрубрик",
             indent:60,
-            top:-58,
-            left:-59,
-            correct:0
+            top:-71,
+            left:-59
         });
     }
 } // end of podrubrikaSet

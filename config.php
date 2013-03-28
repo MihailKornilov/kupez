@@ -36,8 +36,8 @@ switch (DOMAIN) {
         apiAuth();
         break;
     case 'kupeztest.nyandoma.ru':
-//        ini_set('display_errors',1);
-//        error_reporting(E_ALL);
+        ini_set('display_errors',1);
+        error_reporting(E_ALL);
         $mysql = array(
             'host' => 'a6460.mysql.mchost.ru',
             'user' => 'a6460_kupeztest',

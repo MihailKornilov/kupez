@@ -502,7 +502,7 @@ IMG { border:none; }
     left:-115px;
     cursor:pointer;
 }
-#foto_upload_dialog IFRAME { display:none; }
+#foto_upload_dialog IFRAME { display:block; }
 #foto_upload_dialog #error_msg {
     border:#e6a393 solid 1px;
     background-color:#fdefea;

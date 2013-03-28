@@ -4,7 +4,8 @@ $gn = $VK->QueryObjectOne('SELECT
                                MIN(`general_nomer`) AS `first`,
                                MAX(`general_nomer`) AS `max`
                            FROM `gazeta_nomer` WHERE `day_print`>=DATE_FORMAT(NOW(),"%Y-%m-%d")');
-define('GN_FIRST_ACTIVE', $gn->first);
+//define('GN_FIRST_ACTIVE', $gn->first);
+define('GN_FIRST_ACTIVE', 362);
 define('GN_LAST_ACTIVE',  $gn->max);
 define('TXT_LEN_FIRST',   $G->txt_len_first);
 define('TXT_CENA_FIRST',  $G->txt_cena_first);
@@ -221,7 +222,7 @@ function zayavSpisok() {
     foreach ($nomer as $n => $sp) { array_push($y_nomer, $n.":[".implode(',',$sp)."]"); }
 
     $year = @$_GET['year'] ? $_GET['year'] : strftime("%Y",time());
-    $gn = isset($_GET['gn']) ? $_GET['gn'] : GN_FIRST_ACTIVE;
+    $gn = isset($_GET['gn']) ? $_GET['gn'] : 374;// GN_FIRST_ACTIVE;
     $cat = @$_GET['cat'] ? $_GET['cat'] : 0;
 ?>
 <DIV id=findResult>&nbsp;</DIV>
@@ -343,7 +344,7 @@ function zayavView() {
                 $rubrika .= "<SPAN class=ug>»</SPAN>".$VK->QRow("select name from setup_pod_rubrika where id=".$zayav->podrubrika);
             $rubrika = '<TR><TD class=tdAbout>Рубрика:<TD>'.$rubrika;
             if ($zayav->file)
-                $img = '<td><img src='.$zayav->file.'s.jpg onclick=imageView();>';
+                $img = '<td><img src='.$zayav->file.'s.jpg onclick=G.fotoView("'.$zayav->file.'");>';
             if ($zayav->telefon) $zayav->txt.="<B>Тел.: ".$zayav->telefon."</B>";
             if ($zayav->adres) $zayav->txt.="<B>Адрес: ".$zayav->adres."</B>";
             $txt = '<TR><TD class=tdAbout valign=top>Текст:<TD>'.
@@ -370,7 +371,7 @@ function zayavView() {
 
 
     if ($zayav->file and $zayav->category != 1) {
-        $image = '<td id=image><img src='.$zayav->file.'b.jpg width=200 onclick=imageView();>';
+        $image = '<td id=image><img src='.$zayav->file.'b.jpg width=200 onclick=G.fotoView("'.$zayav->file.'");>';
     }
 
     $zayav_del = 1; // Изначально заявку можно удалить
@@ -739,6 +740,106 @@ function reportGet($d1) {
 // Страница с настройками
 function setupView($admin) {
     global $VK;
+/*
+    // Удаление выходов газет всех заявок закреплёнными клиентами
+    $ids = $VK->ids("SELECT
+  IFNULL(pub.id,0) AS id
+FROM
+  gazeta_nomer_pub AS pub
+
+	RIGHT JOIN
+	  gazeta_zayav AS z
+	ON
+	  z.id=pub.zayav_id
+
+	RIGHT JOIN
+	  gazeta_client AS c
+	ON
+	  c.id=z.client_id
+
+WHERE
+  c.id>1
+GROUP BY pub.id");
+    $VK->Query("delete from gazeta_nomer_pub where id in (".$ids.")");
+
+
+    // Удаление платежей всех заявок закреплёнными клиентами
+    $ids = $VK->ids("SELECT
+  IFNULL(m.id,0) AS id
+FROM
+  gazeta_money AS m
+
+	RIGHT JOIN
+	  gazeta_zayav AS z
+	ON
+	  z.id=m.zayav_id
+
+	RIGHT JOIN
+	  gazeta_client AS c
+	ON
+	  c.id=z.client_id
+
+WHERE
+  c.id>1
+  GROUP BY m.id");
+    $VK->Query("delete from gazeta_money where id in (".$ids.")");
+
+
+    // Удаление платежей всех клиентов
+    $ids = $VK->ids("SELECT
+  IFNULL(m.id,0) AS id
+FROM
+  gazeta_money AS m
+
+	RIGHT JOIN
+	  gazeta_client AS c
+	ON
+	  c.id=m.client_id
+
+WHERE
+  c.id>1
+GROUP BY m.id");
+    $VK->Query("delete from gazeta_money where id in (".$ids.")");
+
+
+    // Удаление заявок с клиентами
+    $ids = $VK->ids("SELECT
+  IFNULL(z.id,0) AS id
+FROM
+  gazeta_zayav AS z
+
+	RIGHT JOIN
+	  gazeta_client AS c
+	ON
+	  c.id=z.client_id
+
+WHERE
+  c.id>1
+GROUP BY z.id");
+    $VK->Query("delete from gazeta_zayav where id in (".$ids.")");
+    $VK->Query("delete from gazeta_client where id>1");
+
+
+    // Удаление платежей заявок без выходов и самих заявок
+    $ids = $VK->ids("SELECT
+  IFNULL(m.id,0) AS id
+FROM
+  gazeta_money AS m
+
+	RIGHT JOIN
+	  gazeta_zayav AS z
+	ON
+	  m.zayav_id=z.id
+
+WHERE
+  z.gn_count=0
+GROUP BY
+  m.id");
+    $VK->Query("delete from gazeta_money where id in (".$ids.")");
+    $VK->Query("delete from gazeta_zayav where gn_count=0");
+*/
+
+
     // Получение начального и конечного года для настройки номеров газет
     $gn = $VK->QueryObjectOne("SELECT
             SUBSTR(MIN(`day_public`),1,4) AS `begin`,

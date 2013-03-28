@@ -111,7 +111,7 @@ create = {
 function obMySpisok() {
 ?>
 <div id=vk-myOb>
-    <DIV class=path><A href="<?=URL?>">КупецЪ</A> » Мои объявления</DIV>
+    <DIV class=path><A href="<?=URL.'&p=ob'?>">КупецЪ</A> » Мои объявления</DIV>
 
     <DIV id=findResult>&nbsp;</DIV>
 

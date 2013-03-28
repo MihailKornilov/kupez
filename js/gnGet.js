@@ -84,14 +84,12 @@ $.fn.gnGet = function (obj) {
     gns_clear();
     // Выделение выбранных номеров при редактировании
     if (obj.gns) {
-        var count = 0;
         for (var k in obj.gns) {
             G.gn[k].sel = 1;
             G.gn[k].dop = obj.gns[k].dop;
             G.gn[k].cena = obj.gns[k].summa;
-            count++;
         }
-        gn_show_current += count;
+        gn_show_current += k - G.gn.first_active + 1;
     }
     gns_print();
     sel_calc();

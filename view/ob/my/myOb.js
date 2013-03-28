@@ -31,7 +31,7 @@ G.spisok.create({
         $(".unit").off();
         $(".unit").on({
             mouseenter:function () { $(this).find("H2").show(); },
-            mouseleave:function(){ $(this).find("H2").hide(); }
+            mouseleave:function () { $(this).find("H2").hide(); }
         });
     }
 });
