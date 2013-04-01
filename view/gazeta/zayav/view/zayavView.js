@@ -31,8 +31,6 @@ if ($("#del").length > 0) {
     });
 }
 
-
-
 if ($("#delete").length > 0) {
     $("#delete").click(function () {
         var dialog = $("#dialog_zayav").vkDialog({
@@ -42,10 +40,15 @@ if ($("#delete").length > 0) {
             content:"<CENTER><B>Подтвердите удаление заявки</B></CENTER>",
             submit:function () {
                 dialog.process();
-                $.getJSON("/view/gazeta/zayav/view/AjaxZayavDel.php?" + G.values + "&id=" + G.zayav.id + "&category=" + G.zayav.category, function () {
+                var url = "&id=" + G.zayav.id +
+                          "&category=" + G.zayav.category +
+                          "&client_id=" + G.zayav.client_id;
+                $.getJSON("/view/gazeta/zayav/view/AjaxZayavDel.php?" + G.values + url, function () {
                     location.href = G.url + "&p=gazeta&d=zayav";
                 }, 'json');
             }
         }).o;
     });
 }
+
+

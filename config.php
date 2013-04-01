@@ -88,7 +88,10 @@ function setClientBalans($client_id = 0) {
         $rashod = $VK->QRow("SELECT SUM(`summa`) FROM `gazeta_zayav` WHERE `client_id`=".$client_id);
         $prihod = $VK->QRow("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `status`=1 AND `client_id`=".$client_id);
         $balans = $prihod - $rashod;
-        $VK->Query("UPDATE `gazeta_client` SET `balans`=".$balans." WHERE `id`=".$client_id);
+        $zayav_count = $VK->QRow("SELECT COUNT(`id`) FROM `gazeta_zayav` WHERE `client_id`=".$client_id);
+        $VK->Query("UPDATE `gazeta_client` SET
+                        `balans`=".$balans.",
+                        `zayav_count`=".$zayav_count." WHERE `id`=".$client_id);
         return $balans;
     } else {
         return 0;

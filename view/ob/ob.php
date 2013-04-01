@@ -6,7 +6,7 @@ function obSpisok()
     if (SA == VIEWER_ID) {
         $today = $VK->QRow("SELECT COUNT(`id`) FROM `vk_visit` WHERE `dtime_add`>='".strftime("%Y-%m-%d",time())." 00:00:00'");
         $visit = "<BR><BR><BR><DIV class=findName>Посетители</DIV>".
-                 "<A href='".URL."&p=ob&o=visit'>Сегодня: ".$today."</A>";
+                 "<A href='".URL."&p=admin&d=visit'>Сегодня: ".$today."</A>";
     }
     // Выборка количества объявлений каждой рубрике
     $rubrikaCount = $VK->ptpJson('SELECT
@@ -28,11 +28,13 @@ function obSpisok()
         <TR><TD><DIV id=vkFind></DIV>
             <TH><DIV class=vkButton><BUTTON onclick="location.href='<?=URL.'&p=ob&d=create'?>'";>Разместить объявление</BUTTON></DIV>
     </TABLE>
+
     <DIV id=findResult>&nbsp;</DIV>
-    <TABLE cellpadding=0 cellspacing=0 width=100%>
+
+    <TABLE cellpadding=0 cellspacing=0 class=MainSpisok>
         <TR>
-            <TD id=spisok>&nbsp;
-            <TD id=right>
+            <TD class=left id=spisok>&nbsp;
+            <TD class=right>
                 <DIV class=findName>Регион</DIV><INPUT TYPE=hidden id=countries value=1><INPUT TYPE=hidden id=cities value=0><BR>
 
                 <DIV class=findName>Рубрики</DIV><DIV id=rubrika></DIV>
@@ -72,7 +74,7 @@ function obCreate()
         <TR><TD class=tdAbout valign=top>Текст:     <TD><TEXTAREA id=txt></TEXTAREA>
         <TR><TD class=tdAbout>Контактные телефоны:  <TD><INPUT TYPE=text id=telefon maxlength=200>
         <TR><TD class=tdAbout valign=top>           <INPUT TYPE=hidden id=images><TD id=upload>
-        <TR><TD class='tdAbout top5' valign=top>Регион:<TD><INPUT TYPE=hidden id=countries value=<?=$vku['country']?>>
+        <TR><TD class='tdAbout top5' valign=top>Регион:<TD><INPUT TYPE=hidden id=countries value=<?=$vku['country_id']?>>
                                                            <INPUT TYPE=hidden id=cities value=0>
         <TR><TD class=tdAbout>Показывать имя из VK:    <TD><INPUT TYPE=hidden id=viewer_id_show value=0>
         <TR><TD class=tdAbout>Платные сервисы:         <TD><INPUT TYPE=hidden id=pay_service value=0>
@@ -110,19 +112,18 @@ create = {
 
 function obMySpisok() {
 ?>
-<div id=vk-myOb>
+<div id=myOb>
     <DIV class=path><A href="<?=URL.'&p=ob'?>">КупецЪ</A> » Мои объявления</DIV>
 
     <DIV id=findResult>&nbsp;</DIV>
 
-    <TABLE cellpadding=0 cellspacing=0 width=100%>
-        <TR><TD id=spisok><DIV id=obSpisok></DIV>
-            <TD id=right><DIV id=links></DIV>
+    <TABLE cellpadding=0 cellspacing=0 class=MainSpisok>
+        <TR><TD class=left id=obSpisok>&nbsp;
+            <TD class=right><DIV id=links></DIV>
     </TABLE>
-    <div id=dialog_my></div>
 </div>
-<SCRIPT type="text/javascript" src="/view/ob/my/ob_edit.js?<?php echo $G->script_style; ?>"></SCRIPT>
-<SCRIPT type="text/javascript" src="/view/ob/my/myOb.js?<?php echo $G->script_style; ?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/view/ob/my/ob_edit.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/view/ob/my/myOb.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 } // end of obCreate()
 ?>

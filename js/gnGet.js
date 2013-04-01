@@ -7,8 +7,7 @@ $.fn.gnGet = function (obj) {
         manual:null,
         summa:null,
         skidka:null,
-        skidka_sum:0,
-        paid:0      // сумма оплаченных выходов (для редактирования)
+        skidka_sum:0
     }, obj);
 
     var t = $(this);
@@ -38,7 +37,7 @@ $.fn.gnGet = function (obj) {
     var dopMenuA = gnGet.find("#dopMenu A"); // Список меню с периодами
     var selCount = gnGet.find("#selCount");  // Количество выбранных номеров
     var globalDop = 0;
-    var cena = 0;
+    var cena = 0;                            //
 
     switch (parseInt(obj.category)) {
         case 1:
@@ -86,10 +85,11 @@ $.fn.gnGet = function (obj) {
     if (obj.gns) {
         for (var k in obj.gns) {
             G.gn[k].sel = 1;
+            G.gn[k].prev = 1;
             G.gn[k].dop = obj.gns[k].dop;
             G.gn[k].cena = obj.gns[k].summa;
         }
-        gn_show_current += k - G.gn.first_active + 1;
+        gn_show_current += (k ? k - G.gn.first_active + 1 : 0);
     }
     gns_print();
     sel_calc();
@@ -141,7 +141,7 @@ $.fn.gnGet = function (obj) {
             if (!sp) { end++; continue; } // если номер пропущен, тогда не выводится
             html += "<TABLE cellpadding=0 cellspacing=0>" +
                 "<TR><TD>" +
-                    "<TABLE cellpadding=0 cellspacing=0 class='tab" + (sp.sel == 1 ? " tabsel" : '') + "' val=" + n + ">" +
+                    "<TABLE cellpadding=0 cellspacing=0 class='tab" + (sp.sel == 1 ? " tabsel" : '') + (sp.prev == 1 ? " prev" : '') + "' val=" + n + ">" +
                     "<TR><TD class=td><B>" + sp.week + "</B><SPAN class=g>(" + n + ")</SPAN>" +
                     "<TD class=td align=right><SPAN class=g>выход</SPAN> " + sp.txt +
                     "<TD class=cena id=cena" + n + ">" +
@@ -179,6 +179,7 @@ $.fn.gnGet = function (obj) {
             if (n > G.gn.last_active) break;
             var sp = G.gn[n];
             if (!sp) continue; // если номер пропущен, тогда нет действия
+            sp.prev = 0;
             sp.sel = 0;
             sp.dop = 0;
             sp.uid = n;
@@ -193,6 +194,8 @@ $.fn.gnGet = function (obj) {
         var n = $(this).attr('val');
         var sp = G.gn[n];
         sp.sel = tab ? 0 : 1;
+        if (sp.prev == 1) $(this).removeClass('prev');
+        sp.prev = 0;
         $(this)[(tab ? 'remove': 'add') + 'Class']('tabsel');
         sel_calc();
         if (tab == 0) {
@@ -222,24 +225,28 @@ $.fn.gnGet = function (obj) {
                 var four = 0;
                 if (manual == 1) {
                     var count = 0;
-                    gn_action_active(function () {
+                    gn_action_active(function (sp) {
+                        if (sp.prev != 1) {
+                            four++;
+                            if (four == 4) {
+                                four = 0;
+                            } else count++;
+                        }
+                    });
+                    four = 0;
+                    var sum = Math.round((parseInt(obj.summa.val()) / count) * 100) / 100;
+                }
+                gn_action_active(function (sp) {
+                    if (sp.prev != 1) {
                         four++;
                         if (four == 4) {
                             four = 0;
-                        } else count++;
-                    });
-                    four = 0;
-                    var sum = Math.round(((parseInt(obj.summa.val()) + parseInt(obj.paid)) / count) * 100) / 100;
-                }
-                gn_action_active(function (sp) {
-                    four++;
-                    if (four == 4) {
-                        four = 0;
-                        sp.cena = 0;
-                    } else if (manual == 0) {
-                        sp.cena = cena == 0 ? 0 : cena + G.ob_dop_cena_ass[sp.dop];
-                    } else {
-                        sp.cena = cena == 0 ? 0 : sum;
+                            sp.cena = 0;
+                        } else if (manual == 0) {
+                            sp.cena = cena == 0 ? 0 : cena + G.ob_dop_cena_ass[sp.dop];
+                        } else {
+                            sp.cena = cena == 0 ? 0 : sum;
+                        }
                     }
                     gnGet.find("#cena" + sp.uid).html(sp.cena);
                 });
@@ -247,20 +254,22 @@ $.fn.gnGet = function (obj) {
             case 2:
                 if (manual == 1) {
                     var count = 0;
-                    gn_action_active(function (sp) { if (sp.dop > 0) count++; });
-                    var sum = Math.round(((parseInt(obj.summa.val()) + parseInt(obj.paid)) / count) * 100) / 100;
+                    gn_action_active(function (sp) { if (sp.dop > 0 && sp.prev != 1) count++; });
+                    var sum = Math.round((parseInt(obj.summa.val()) / count) * 100) / 100;
                 }
                 var skidka = obj.skidka.val();
                 obj.skidka_sum = 0;
                 gn_action_active(function (sp) {
-                    sp.cena = 0;
-                    if (sp.dop > 0) {
-                        if (manual == 0) {
-                            sp.cena = cena * G.polosa_cena_ass[sp.dop];
-                            var sk = sp.cena * skidka / 100;
-                            sp.cena -= sk;
-                            obj.skidka_sum += sk;
-                        } else { sp.cena = sum; }
+                    if (sp.prev != 1) {
+                        sp.cena = 0;
+                        if (sp.dop > 0) {
+                            if (manual == 0) {
+                                sp.cena = cena * G.polosa_cena_ass[sp.dop];
+                                var sk = sp.cena * skidka / 100;
+                                sp.cena -= sk;
+                                obj.skidka_sum += sk;
+                            } else { sp.cena = sum; }
+                        }
                     }
                     gnGet.find("#cena" + sp.uid).html(Math.round(sp.cena * 100) / 100);
                 });
@@ -268,10 +277,10 @@ $.fn.gnGet = function (obj) {
                 break;
             default:
                 var count = 0;
-                gn_action_active(function () { count++; });
-                var sum = Math.round((obj.summa.val() * 1 + obj.paid * 1) / count * 1000000) / 1000000;
+                gn_action_active(function (sp) { if (sp.prev != 1) count++; });
+                var sum = Math.round(obj.summa.val() / count * 1000000) / 1000000;
                 gn_action_active(function (sp) {
-                    sp.cena = sum;
+                    if (sp.prev != 1) sp.cena = sum;
                     gnGet.find("#cena" + sp.uid).html(Math.round(sp.cena * 100) / 100);
                 });
                 break;
@@ -290,9 +299,9 @@ $.fn.gnGet = function (obj) {
     function sumGet() {
         sum = 0;
         gn_action_active(function (sp) {
-            sum += sp.cena;
+            if (sp.prev != 1) sum += sp.cena;
         });
-        return Math.round((sum - obj.paid) * 100) / 100;
+        return Math.round(sum * 100) / 100;
     }
 
     t.cenaSet = function (c) {

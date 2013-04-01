@@ -38,5 +38,19 @@ if ($_GET['p'] == 'ob') {
     }
 }
 
+
+if ($_GET['p'] == 'admin') {
+    if (VIEWER_ID != SA) {
+        echo 'No access. <a href="'.URL.'&p=ob">Back</a>';
+    } else {
+        include('view/admin/admin.php');
+        switch (@$_GET['d']) {
+            case 'ob': adminObSpisok(); break;
+            case 'visit':
+            default: adminVisit();  break;
+        }
+    }
+}
+
 _footer();
 ?>

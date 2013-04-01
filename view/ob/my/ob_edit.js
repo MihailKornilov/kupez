@@ -1,15 +1,16 @@
+$("BODY").append("<div id=dialog_my></div>");
 var myob = { spisok:[] };
 
-$("#spisok").click(function (e) {
+$("#obSpisok").click(function (e) {
     var val = $(e.target).attr('val');
     if (val) {
         var arr = val.split('_');
         var sp = myob.spisok[arr[1]];
         switch (arr[0]) {
-            case 'edit': G.obEdit(sp); break;
+            case 'edit':   G.obEdit(sp); break;
             case 'archiv': G.goArchiv(sp); break;
-            case 'del': G.obDel(sp); break;
-            case 'user': G.spisok.print({viewer_id:arr[1]}); break;
+            case 'del':    G.obDel(sp); break;
+            case 'user':   G.spisok.print({viewer_id:arr[1]}); break;
         }
     }
 });
@@ -225,15 +226,6 @@ G.obDel = function (sp) {
 };
 
 
-
-
-
-
-
-
-
-
-
 G.spisok.unit = function (sp) {
     var name = '';
     if (sp.viewer_id_show > 0) { name = "<A href='http://vk.com/id" + sp.viewer_id+"' target=_vk>" + sp.viewer_name + "</A>"; }
@@ -243,7 +235,7 @@ G.spisok.unit = function (sp) {
 
     return "<DIV class=head>" + sp.dtime + (sp.active == 1 ? "<TT>" + sp.day_last + "</TT>" : "<EM>В архиве</EM>") +
 
-    (G.spisok.values.type == 'all' ? "<A class=user val=user_" + sp.viewer_id+">" + sp.viewer_name + "</A>" : '') +
+    (G.spisok.values.viewer_id_add == 0 ? "<A class=user onclick=goUser(" + sp.viewer_id + "," + sp.num + ");>" + sp.viewer_name + "</A>" : '') +
 
     "<H2><A style=visibility:" + (sp.active == 1 ? 'visible' : 'hidden') + "; val=archiv_" + sp.num + ">в архив</A>" +
     "<DIV class=img_edit val=edit_" + sp.num + "></DIV>" +

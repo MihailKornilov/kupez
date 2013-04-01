@@ -1,16 +1,16 @@
-$("#links").infoLink({
-  spisok:[
-    {uid:0,title:'Все объявления'},
-    {uid:1,title:'Активные'},
-    {uid:2,title:'Архив'}],
-   func:function (uid) { G.spisok.print({menu:uid}); }
+$("#menu").vkRadio({
+    top:4,
+    light:1,
+    spisok:[
+        {uid:0,title:'Все объявления'},
+        {uid:1,title:'Активные'},
+        {uid:2,title:'Архив'}],
+    func:function (uid) { G.spisok.print({menu:uid}); }
 });
-
-
 
 G.spisok.create({
     //a:1,
-    view:$("#obSpisok"),
+    view:$(".left"),
     limit:10,
     url:"/view/ob/my/AjaxObSpisok.php",
     result_view:$("#findResult"),
@@ -20,7 +20,7 @@ G.spisok.create({
     nofind:"Объявлений не найдено.",
     values:{
         menu:0,
-        viewer_id_add:G.vk.viewer_id
+        viewer_id_add:G.viewer.id
     },
     callback:function (data) {
         if (data.length == 0)
@@ -38,4 +38,17 @@ G.spisok.create({
     }
 });
 
+// Переход к просмотру объявлений выбранного пользователя
+function goUser(id, n) {
+    var sp = myob.spisok[n];
+    var html = sp.viewer_name + "<br />" +
+        "<a href='http://vk.com/id" + sp.viewer_id + "' target=_blank><img src='" + sp.viewer_photo + "' /></a>" +
+        "<a onclick=hideUser();>Скрыть</a>";
+    $("#viewer").html(html);
+    G.spisok.print({viewer_id_add:id});
+}
 
+function hideUser() {
+    $("#viewer").html('');
+    G.spisok.print({viewer_id_add:0});
+}

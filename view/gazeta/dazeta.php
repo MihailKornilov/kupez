@@ -4,8 +4,7 @@ $gn = $VK->QueryObjectOne('SELECT
                                MIN(`general_nomer`) AS `first`,
                                MAX(`general_nomer`) AS `max`
                            FROM `gazeta_nomer` WHERE `day_print`>=DATE_FORMAT(NOW(),"%Y-%m-%d")');
-//define('GN_FIRST_ACTIVE', $gn->first);
-define('GN_FIRST_ACTIVE', 362);
+define('GN_FIRST_ACTIVE', $gn->first);
 define('GN_LAST_ACTIVE',  $gn->max);
 define('TXT_LEN_FIRST',   $G->txt_len_first);
 define('TXT_CENA_FIRST',  $G->txt_cena_first);
@@ -20,10 +19,12 @@ $zayavCategory = array(
 ?>
 <SCRIPT type="text/javascript">
 G.gn.first_active = <?=GN_FIRST_ACTIVE?>;
+G.gn.first_save = <?=GN_FIRST_ACTIVE?>;
 G.gn.last_active = <?=GN_LAST_ACTIVE?>;
 </SCRIPT>
 <SCRIPT type="text/javascript" src="/include/client/client.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/js/gnGet.js?<?=JS_VERSION?>"></SCRIPT>
+<SCRIPT type="text/javascript" src="/js/gazeta.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 
 // Основное горизонтальное меню
@@ -305,16 +306,6 @@ function zayavAdd() {
     <TABLE cellpadding=0 cellspacing=8>
         <TR><TD class=tdAbout>Итоговая стоимость:<TD><INPUT TYPE=text id=summa readonly value=0> руб.
                <SPAN id=sumSkidka></SPAN><INPUT TYPE=hidden id=skidka_sum value=0>
-        <TR><TD class=tdAbout>Оплата произведена?:<TD><INPUT TYPE=hidden id=oplata value=-1>
-    </TABLE>
-
-    <TABLE cellpadding=0 cellspacing=8 id=money_tab>
-        <TR><TD class=tdAbout>Cумма оплаты:<TD><INPUT TYPE=text id=money> руб.
-        <TR><TD class=tdAbout>Вид платежа:<TD><INPUT TYPE=hidden id=money_type>
-        <TR><TD class=tdAbout>Деньги поступили в кассу?:<TD><INPUT TYPE=hidden id=money_kassa value=-1>
-    </TABLE>
-
-    <TABLE cellpadding=0 cellspacing=8>
         <TR><TD class=tdAbout valign=top>Заметка:<TD><TEXTAREA id=note></TEXTAREA>
     </TABLE>
 
@@ -333,8 +324,9 @@ function zayavView() {
     if (!@$zayav->id) { nopage($_GET['p'], $_GET['d']); return; };
 
     if ($zayav->client_id > 0) {
-        $client = $VK->QRow("SELECT `fio` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
-        $client = "<TR><TD class=tdAbout>Клиент:<TD><A href='".URL."&p=gazeta&d=client&d1=info&id=".$zayav->client_id."'>".$client."</A>";
+        $client = $VK->QueryObjectOne("SELECT `fio`,`org_name` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
+        $client = "<TR><TD class=tdAbout>Клиент:".
+                      "<TD><A href='".URL."&p=gazeta&d=client&d1=info&id=".$zayav->client_id."'>".($client->org_name ? $client->org_name : $client->fio)."</A>";
     }
 
     switch ($zayav->category) {
@@ -400,21 +392,29 @@ function zayavView() {
     }
 
     // Список платежей
+    $moneySumma = 0; // общая сумма платежей
     $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_money` WHERE `zayav_id`=".$zayav->id.' ORDER BY `id`');
     if (count($spisok) > 0) {
         if ($zayav->client_id == 0 and $zayav_del == 1) $zayav_del = '<span id=del>Удалить заявку</span>';
         $type = $VK->QueryPtPArray("SELECT `id`,`name` FROM `setup_money_type`");
         $money = '<div id=money>'.
                 '<DIV class=headBlue>Список платежей</div>'.
-                '<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH>Сумма<TH>Описание<TH>Дата';
+                '<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH>Сумма<TH>Описание<TH>Дата<TH class=del>';
         foreach ($spisok as $sp) {
             $money .= '<tr><td class=sum>'.round($sp->sum, 2).
                           '<td class=about><b>'.$type[$sp->type].($sp->prim ? ':' : '').'</b> '.$sp->prim.
-                          '<td class=dtime>'.FullDataTime($sp->dtime_add);
+                          '<td class=dtime>'.FullDataTime($sp->dtime_add).
+                          '<td class=del><div class=img_del onclick=moneyDel('.$sp->id.');></div>';
+            $moneySumma += $sp->sum;
         }
         $money .= '</table></div>';
-
     }
+
+    // Если нет клиента, показано, сколько оплачено за заявку
+    if ($zayav->client_id == 0) {
+        $paided = "<TR><TD class=tdAbout>Оплачено:<TD>".round($moneySumma, 2)." руб.";
+    }
+
 
     if ($zayav_del == 1) {
         $zayav_del = '<a id=delete>Удалить заявку</a>';
@@ -423,6 +423,7 @@ function zayavView() {
 <DIV id=dopMenu>
     <A class=linkSel><I></I><B></B><DIV>Просмотр</DIV><B></B><I></I></A>
     <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=edit&id=<?=$zayav->id?>' class=link><I></I><B></B><DIV>Редактирование</DIV><B></B><I></I></A>
+    <A class=link onclick=moneyAdd({zayav_id:<?=$zayav->id?>,client_id:<?=$zayav->client_id?>});><I></I><B></B><DIV>Внести платёж</DIV><B></B><I></I></A>
     <?=$zayav_del?>
 </DIV>
 
@@ -437,6 +438,7 @@ function zayavView() {
             <?=@$txt?>
             <?=@$size?>
             <TR><TD class=tdAbout>Общая стоимость:<TD><B><?=round($zayav->summa, 2)?></B> руб.<?=@$manual.@$skidka?>
+            <?=@$paided?>
             <TR><TD class=tdAbout>Номера выпуска:<td>
         </TABLE>
         <?=@$public?>
@@ -449,6 +451,7 @@ function zayavView() {
 <SCRIPT type="text/javascript">
 G.zayav = {
     id:<?=$zayav->id?>,
+    client_id:<?=$zayav->client_id?>,
     category:<?=$zayav->category?>,
     image:"<?=$zayav->file?>"
 };
@@ -464,8 +467,8 @@ function zayavEdit() {
     if (!@$zayav->id) { nopage($_GET['p'], $_GET['d']); return; };
 
     if ($zayav->client_id > 0) {
-        $client = $VK->QRow("SELECT `fio` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
-        $client = '<a href="'.URL.'&p=gazeta&d=client&d1=info&id='.$zayav->client_id.'">'.$client.'</a>'.
+        $client = $VK->QueryObjectOne("SELECT `fio`,`org_name` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
+        $client = '<a href="'.URL.'&p=gazeta&d=client&d1=info&id='.$zayav->client_id.'">'.($client->org_name ? $client->org_name : $client->fio).'</a>'.
                   '<INPUT TYPE=hidden id=client_id value='.$zayav->client_id.'>';
     } else {
         $client = '<INPUT TYPE=hidden id=client_id>';
@@ -495,13 +498,9 @@ function zayavEdit() {
     }
     $gn = $VK->ObjectAss("SELECT `general_nomer` AS `id`,`dop`,`summa` FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav->id." AND `general_nomer`>=".GN_FIRST_ACTIVE);
 
-    // Вычисление суммы активных номеров, если таковые остались
-    $sum_active = 0;
-    foreach ($gn as $sp) { $sum_active += $sp->summa; }
-    if ($sum_active > 0) {
-        $gn_paid = '<TABLE cellpadding=0 cellspacing=8>'.
-                        '<TR><TD class=tdAbout>Оплаченные выходы:<td><input type=text id=gn_paid value="'.round($sum_active, 2).'" readonly>'.
-                   '</table>';
+    // Округление сумм выбранных номеров
+    foreach ($gn as $sp) {
+        $sp->summa = round($sp->summa, 2);
     }
 
     $catEdit = array(
@@ -535,26 +534,18 @@ function zayavEdit() {
     <DIV id=gn_spisok></DIV>
 
     <?=@$skidka?>
-    <?=@$gn_paid?>
 
     <TABLE cellpadding=0 cellspacing=8 id=manual_tab>
         <TR><TD class=tdAbout>Указать стоимость вручную:<TD><INPUT TYPE=hidden id=summa_manual value=<?=$zayav->summa_manual?>>
     </TABLE>
 
     <TABLE cellpadding=0 cellspacing=8>
-        <TR><TD class=tdAbout><?=$sum_active==0?'Итоговая стоимость':'Доплата'?>:<TD><INPUT TYPE=text id=summa readonly value=0> руб.
+        <TR><TD class=tdAbout>Итоговая стоимость:<TD><INPUT TYPE=text id=summa readonly value=0> руб.
                 <SPAN id=sumSkidka></SPAN><INPUT TYPE=hidden id=skidka_sum value=0>
-        <TR><TD class=tdAbout>Оплата произведена?:<TD><INPUT TYPE=hidden id=oplata value=-1>
-    </TABLE>
-
-    <TABLE cellpadding=0 cellspacing=8 id=money_tab>
-        <TR><TD class=tdAbout>Cумма оплаты:<TD><INPUT TYPE=text id=money> руб.
-        <TR><TD class=tdAbout>Вид платежа:<TD><INPUT TYPE=hidden id=money_type>
-        <TR><TD class=tdAbout>Деньги поступили в кассу?:<TD><INPUT TYPE=hidden id=money_kassa value=-1>
     </TABLE>
 
     <DIV class=vkButton><BUTTON onclick="zayavAddGo(this,<?=$zayav->id?>);">Сохранить</BUTTON></DIV>
-    <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=zayav'">Отмена</BUTTON></DIV>
+    <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=zayav&d1=view&id=<?=$zayav->id?>'">Отмена</BUTTON></DIV>
 </DIV>
 <SCRIPT type="text/javascript" src="/view/gazeta/zayav/add/zayavAddEdit.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript">zayavEdit(<?=$zayav->category.','.$zayav->client_id.','.json_encode($gn)?>);</SCRIPT>
@@ -638,7 +629,7 @@ function reportGet($d1) {
                     $prihod = 'Sel';
                     $send->content = '
 <div id=prihod>
-    <div id=summa>Сумма: <b id=itog></b> руб.<a onclick=prihodAdd();>Внести произвольную сумму</a></div>
+    <div id=summa>Сумма: <b id=itog></b> руб.<a onclick="moneyAdd({func:reportCalendarGet});">Внести произвольную сумму</a></div>
     <div id=spisokHead></div>
     <div id=spisok></div>
 </div>

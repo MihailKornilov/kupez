@@ -93,10 +93,8 @@ function rubrikaSet(uid, podrub) {
 
 
 G.spisok.unit = function (sp) {
-    var name = '';
-    if (sp.viewer_id > 0) { name = "<A href='http://vk.com/id"+sp.viewer_id+"' target=_vk>"+sp.viewer_name+"</A>"; }
-    var city = '';
-    if (sp.city_name) { city = sp.country_name + ", " + sp.city_name; }
+    var name = (sp.viewer_id > 0 ? "<A href='http://vk.com/id"+sp.viewer_id+"' target='_blank'>" + sp.viewer_name + "</A>" : '');
+    var city = (sp.city_name ? sp.country_name + ", " + sp.city_name : '');
     return "<DIV class='" + sp.dop + "'>" +
             "<TABLE cellpadding=0 cellspacing=0 width=100%>" +
             "<TR><TD class=txt>" +

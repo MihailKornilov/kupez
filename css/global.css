@@ -258,6 +258,23 @@ IMG { border:none; }
 
 
 
+/* Список элементов с условими с правой стороны */
+.MainSpisok { width:100%; }
+.MainSpisok .left { vertical-align:top; }
+.MainSpisok .right {
+    height:500px;
+    width:150px;
+    padding:8px;
+    vertical-align:top;
+    background-color:#F7F7F7;
+    border-left:#DAE1E8 solid 1px;
+}
+
+
+
+
+
+
 
 
 
@@ -502,7 +519,7 @@ IMG { border:none; }
     left:-115px;
     cursor:pointer;
 }
-#foto_upload_dialog IFRAME { display:block; }
+#foto_upload_dialog IFRAME { display:none; }
 #foto_upload_dialog #error_msg {
     border:#e6a393 solid 1px;
     background-color:#fdefea;
@@ -1170,10 +1187,11 @@ IMG { border:none; }
 #gnGet #linkMenu_dopDef { margin:0 0 2px 10px; }
 #gnGet #gns { overflow:hidden; }
 #gnGet #darr {
-    font-size:9px;
+    font-size:12px;
     text-align:center;
     color:#AAA;
-    width:240px;
+    height:15px;
+    width:245px;
     cursor:pointer;
 }
 #gnGet #darr:hover { background-color:#e1e7ed; color:#444; }
@@ -1214,6 +1232,7 @@ IMG { border:none; }
     cursor:pointer;
     color:#444;
 }
+#gnGet .prev { background-color:#FFB; }
 #gnGet .viewed {
     width:240px;
     background-color:#EEE;
@@ -1551,7 +1570,7 @@ IMG { border:none; }
 #zayavAdd .foto_create_button { width:150px; }
 #zayavAdd #gn_spisok { margin-left:44px; }
 #zayavAdd #sumSkidka { margin-left:5px; color:#999; font-size:10px; }
-#zayavAdd #money_tab, #zayavAdd #skidka_tab { display:none; }
+#zayavAdd #skidka_tab { display:none; }
 #zayavAdd #note {
     height:26px;
     width:350px;
@@ -1605,11 +1624,12 @@ IMG { border:none; }
 #zayavView .lost_spisok { text-align:center; background-color:#F9F9F9; }
 #zayavView .lost { background-color:#F9F9F9; display:none; }
 #zayavView .lost TD { color:#777; }
-#zayavView #money { width:400px; margin-top:20px; }
+#zayavView #money { width:450px; margin-top:20px; }
 #zayavView #money .tabSpisok { margin-top:6px; width:100%; }
 #zayavView #money .sum { font-weight:bold; text-align:right; width:60px; }
 #zayavView #money .dtime { font-size:10px; text-align:right; width:120px; color:#777; }
 #zayavView #money .about b { color:#777; }
+#zayavView #money .del { width:20px; padding:2px 0 0 0; text-align:center; }
 #zayavView #comm { margin-top:20px; }
 
 
@@ -1765,10 +1785,12 @@ IMG { border:none; }
 #report #prihod .tabSpisok .data { width:120px; }
 #report #prihod .tabSpisok TD.data {font-size:10px; color:#888; text-align:right; }
 #report #prihod .tabSpisok TD.data A {  font-size:10px; }
-#prihod_add_tab .tdAbout { text-align:right; }
-#prihod_add_tab .img_edit { float:right; position:relative; top:6px; }
-#prihod_add_tab #prihod_txt { width:200px; }
-#prihod_add_tab #prihod_sum { width:60px; }
+/* Внесение платежа */
+#prihod_add_tab .tdAbout { text-align:right; width:100px; }
+#prihod_add_tab .img_edit { position:relative; top:-3px; }
+#prihod_add_tab #prihod_txt { width:230px; }
+#prihod_add_tab #prihod_sum { width:60px; font:bold 16px Tahoma; }
+#prihod_add_tab #tr_kassa { display:none; }
 
 /* Отчёты - расход */
 #report #rashod { padding:15px 10px; }
@@ -1992,29 +2014,11 @@ IMG { border:none; }
 /* Список объявлений для пользователей VK */
 #obSpisok #tabFind { width:100%; border-bottom:#dae1e8 solid 1px; }
 #obSpisok #tabFind TD { background-color:#F7F7F7; padding:10px; }
-#obSpisok #tabFind TH {
-    background-color:#F7F7F7;
-    padding-right:8px;
-    text-align:right;
-    width:300px;
-}
-#obSpisok #spisok { vertical-align:top; padding-bottom:10px; }
-#obSpisok #right {
-    width:150px;
-    padding:8px;
-    vertical-align:top;
-    background-color:#F7F7F7;
-    border-left:#DAE1E8 solid 1px;
-}
+#obSpisok #tabFind TH { background-color:#F7F7F7; padding-right:8px; text-align:right; width:300px; }
 #obSpisok .infoLink B { float:right; color:#999; }
 #obSpisok .infoLink .sel B { color:#CCC; }
 #obSpisok #rubrika { margin-bottom:20px; }
-#obSpisok #rubrika IMG {
-    float:right;
-    position:relative;
-    top:3px;
-    left:-5px;
-}
+#obSpisok #rubrika IMG { float:right; position:relative; top:3px; left:-5px; }
 #obSpisok #podrubrika { margin-bottom:20px; }
 #obSpisok #check_foto_only { margin-top:10px; }
 #obSpisok .unit {
@@ -2054,41 +2058,25 @@ IMG { border:none; }
 #obSpisok .podrub { font:bold 17px Times New Roman; margin:5px 0 0 30px; }
 #obSpisok .enter { color:#B33; float:right; margin-right:10px; }
 
-
-
-
-/* Мои объявления */
-#vk-myOb #spisok { vertical-align:top; padding-bottom:10px; }
-#vk-myOb #right {
-    width:148px;
-    height:500px;
-    padding:10px 10px 10px 8px;
-    vertical-align:top;
-    background-color:#F7F7F7;
-    border-left:#DAE1E8 solid 1px;
-}
-#vk-myOb .head {
+/* Для редактирования */
+#myOb .unit { border-bottom:none; margin:2px 10px 10px 10px; } /* в личных объявлениях нижнего бордера нет */
+#obSpisok .head {
     padding-bottom:1px;
     margin-bottom:2px;
     border-bottom:#CCD solid 1px;
     color:#666;
     font-size:10px;
 }
-#vk-myOb .head .user { font-size:10px; margin-left:10px; color:#5988ab; }
-#vk-myOb .head .user:hover { color:#2B587A; text-decoration:none; }
-#vk-myOb .head H2 { display:none;float:right; }
-#vk-myOb .head H2 A {
-    font-size:10px;
-    color:#88B;
-    position:relative;
-    top:-3px;
-}
-#vk-myOb .head H2 A:hover { color:#468; }
-#vk-myOb .head EM, #vk-myOb .head TT { color:#999; margin-left:10px; font-size:10px; }
-#vk-myOb .head TT { color:#0A0; }
-#vk-myOb .unit { border-bottom:none; margin:2px 10px 10px 10px; }
-#vk-myOb .ob { padding-bottom:10px; }
-#vk-myOb .archiv { opacity:0.4; background-color:#DDD; }
+#obSpisok .head .user { font-size:10px; margin-left:10px; color:#5988ab; }
+#obSpisok .head .user:hover { color:#2B587A; text-decoration:none; }
+#obSpisok .head H2 { display:none;float:right; }
+#obSpisok .head H2 A { font-size:10px; color:#88B; position:relative; top:-3px; }
+#obSpisok .head H2 A:hover { color:#468; }
+#obSpisok .head EM, #obSpisok .head TT { color:#999; margin-left:10px; font-size:10px; }
+#obSpisok .head TT { color:#0A0; }
+#obSpisok .ob { padding-bottom:10px; }
+#obSpisok .archiv { opacity:0.4; background-color:#DDD; }
+
 
 /* редактирование объявление в диалоге */
 #dialog_my #ob_edit .tdAbout { text-align:right; width:130px; }
@@ -2122,54 +2110,24 @@ IMG { border:none; }
 
 
 
-
-/* СПИСОК ПОСЕТИТЕЛЕЙ */
-#vk-visit { width:100%; }
-#vk-visit #spisok {
-    width:445px;
-    height:500px;
-    vertical-align:top;
-}
-#vk-visit #cond {
-    padding:10px;
-    vertical-align:top;
-    background-color:#F7F7F7;
-    border-left:#DAE1E8 solid 1px;
-}
-#vk-visit .unit {
-    margin:7px 15px;
-    padding-bottom:7px;
-    border-bottom:#EEE solid 1px;
-}
-#vk-visit .unit .place {
-    margin:3px 0;
-    color:#888;
-}
-#vk-visit TABLE { width:100%; }
-#vk-visit .img {
-    width:60px;
-    height:50px;
-}
-#vk-visit .img IMG {
-    width:50px;
-    height:50px;
-}
-#vk-visit .time {
-    float:right;
-    color:#AAA;
-    font-size:10px;
-}
-#vk-visit SPAN {
-    margin-right:6px;
-    color:#A55;
-    font-size:10px;
-}
-#vk-visit .ob { margin-top:4px; }
-#vk-visit .ob A { color:#579; }
-#vk-visit .ob A:hover { color:#2B587A; }
+/* Список посетителей */
+#adminVisit #findRadio_radio { margin-top:20px; }
+#adminVisit .unit { margin:7px 15px; padding-bottom:7px; border-bottom:#EEE solid 1px; }
+#adminVisit .unit table { width:100%; }
+#adminVisit .unit .place { margin:3px 0; color:#888; }
+#adminVisit .img { width:60px; height:50px; }
+#adminVisit .img IMG { width:50px; height:50px; }
+#adminVisit .time { float:right; color:#AAA; font-size:10px; }
+#adminVisit SPAN { margin-right:6px; color:#A55; font-size:10px; }
+#adminVisit .ob { margin-top:4px; }
+#adminVisit .ob A { color:#579; }
+#adminVisit .ob A:hover { color:#2B587A; }
 
 
 
+/* Список объявлений */
+#adminOb #viewer { font-weight:bold; color:#31618C; margin-bottom:15px; }
+#adminOb #viewer img { margin:4px 4px 0 0; }
 
 
 

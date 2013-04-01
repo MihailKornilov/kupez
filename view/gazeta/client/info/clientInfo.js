@@ -11,7 +11,7 @@ $("#links").infoLink({
         switch (uid) {
             case '2': clientAdd(function () { vkMsgOk("Данные клиента изменены."); location.reload(); }, G.client); break;
             case '3': location.href = G.url + "&p=gazeta&d=zayav&d1=add&client_id=" + G.client.id; break;
-            case '4': prihodAdd(); break;
+            case '4': moneyAdd({client_id: G.client.id}); break;
             case '5': clientDel(); break;
         }
     }
@@ -122,63 +122,3 @@ function clientDel() {
     }).o;
 } // end of clientDel()
 
-
-// Внесение платежа
-function prihodAdd() {
-    var html = "<TABLE cellpadding=0 cellspacing=10 id=prihod_add_tab>" +
-        "<TR><TD class=tdAbout>Вид:<TD><a class=img_edit href='" + G.url + "&p=gazeta&d=setup&id=11'></a><INPUT type=hidden id=prihod_type>" +
-        "<TR><TD class=tdAbout>Описание:<TD><INPUT type=text id=prihod_txt maxlength=250>" +
-        "<TR><TD class=tdAbout>Сумма:<TD><INPUT type=text id=prihod_sum maxlength=8> руб." +
-        "<TR><TD class=tdAbout>Деньги поступили в кассу?:<TD><INPUT type=hidden id=prihod_kassa value='-1'>" +
-        "</TABLE>";
-    var dialog = $("#dialog_client").vkDialog({
-        top:50,
-        width:420,
-        head:"Внесение платежа",
-        content:html,
-        submit:submit
-    }).o;
-
-    $("#prihod_type").vkSel({width:190, title0:'Не указан', spisok:G.money_type_spisok});
-
-    $("#prihod_kassa").vkRadio({
-        display:'inline-block',
-        right:15,
-        spisok:[{uid:1, title:'да'},{uid:0, title:'нет'}],
-    });
-
-    $("#prihod_txt").focus();
-
-    function submit() {
-        var send = {
-            client_id:G.client.id,
-            type:$("#prihod_type").val(),
-            txt:$("#prihod_txt").val(),
-            sum:$("#prihod_sum").val(),
-            kassa:$("#prihod_kassa").val()
-        };
-
-        var msg;
-        if (send.type == 0) { msg = "Не указан вид платежа."; }
-        else if (!G.reg_sum.test(send.sum)) { msg = "Некорректно указана сумма."; $("#prihod_sum").focus(); }
-        else if (send.kassa == -1) { msg = "Укажите, деньги поступили в кассу или нет."; }
-        else {
-            dialog.process();
-            $.post("/view/gazeta/report/money/AjaxPrihodRashodAdd.php?" + G.values, send, function (res) {
-                dialog.close();
-                vkMsgOk("Платёж успешно внесён.");
-                location.reload();
-            }, 'html');
-        }
-        if (msg) {
-            $("#dialog_client .bottom:first").vkHint({
-                msg:"<SPAN class=red>" + msg + "</SPAN>",
-                remove:1,
-                indent:40,
-                show:1,
-                top:-48,
-                left:125
-            });
-        }
-    }
-} // end prihodAdd

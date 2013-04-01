@@ -6,7 +6,7 @@ $find .= " and dtime_add>='".$_GET['day_begin']." 00:00:00'";
 $find .= " and dtime_add<='".$_GET['day_end']." 23:59:59'";
 
 $send = AjaxSpisokCreate("SELECT * FROM `gazeta_kassa` ".$find, 'asc');
-$send->sum = round($VK->QRow("SELECT IFNULL(SUM(`sum`),0) FROM `gazeta_kassa` ".$find), 2) + KASSA_START;
+$send->sum = round($VK->QRow("SELECT IFNULL(SUM(`sum`),0) FROM `gazeta_kassa` ") + KASSA_START, 2);
 if (count($send->spisok) > 0) {
     $spisok = $send->spisok;
     $send->spisok = array();

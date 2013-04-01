@@ -3,7 +3,8 @@ $(".info A:first").click(function () {
     var html = "<DIV id=vk-create-rules>" +
         "<DIV class=headName>Рекомендации при создании объявления:</DIV>" +
         "<UL><LI>более подробно описывайте свой товар;" +
-        "<LI>по возможности прилагайте фотографию, таким образом пользователям будет визуально удобне определять то, что Вы предлагаете. Приложение позволяет загрузить до 4-х изображений на одно объявление;" +
+        "<LI>по возможности прилагайте фотографию, таким образом пользователям будет визуально удобней определять то, что Вы предлагаете;" +
+        //" Приложение позволяет загрузить до 4-х изображений на одно объявление;" +
         "<LI>обязательно указывайте реальную цену;" +
         "<LI>не подавайте одно и то же объявление повторно, для этого есть специальные недорогие платные сервисы. Повторные объявления будут удаляться;" +
         "<LI>не пишите объявление в ВЕРХНЕМ РЕГИСТРЕ;" +
@@ -123,27 +124,27 @@ var city = $("#cities").vkSel({
     func:preview
 }).o;
 
-if (G.vk.country != 1) citiesGet(G.vk.country);
+if (G.vk.country_id != 1) citiesGet(G.vk.country_id);
 
 // Вставка города, с которого зашёл пользователь
-if (G.vk.city > 0) {
+if (G.vk.city_id > 0) {
     var no_city = 1;
     for (var n = 0; n < G.cities_spisok.length; n++) {
-        if (G.cities_spisok[n].uid == G.vk.city) {
+        if (G.cities_spisok[n].uid == G.vk.city_id) {
             no_city = 0;
-            city.val(G.vk.city);
+            city.val(G.vk.city_id);
             break;
         }
     }
     if (no_city == 1) {
-        VK.api('places.getCityById', {cids:G.vk.city}, function (res) {
+        VK.api('places.getCityById', {cids:G.vk.city_id}, function (res) {
             G.cities_spisok.unshift({
                 uid:res.response[0].cid,
                 title:res.response[0].name,
                 content:"<B>" + res.response[0].name + "</B>"
             });
             city.spisok(G.cities_spisok);
-            city.val(G.vk.city);
+            city.val(G.vk.city_id);
         });
     }
 }
@@ -316,7 +317,7 @@ function vkCreateGo() {
             process = 1;
             $(".vkButton BUTTON").butProcess();
             $.post("/view/ob/create/AjaxObCreate.php?" + G.values, obj, function (res) {
-                location.href = "/index.php?" + G.values + "&p=ob&o=spisok";
+                location.href = "/index.php?" + G.values + "&p=ob";
             },'json');
         }
     }

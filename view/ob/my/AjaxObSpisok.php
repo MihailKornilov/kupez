@@ -7,11 +7,11 @@
 */
 require_once('../../../include/AjaxHeader.php');
 
-$find = "WHERE `id`";
+$find = "WHERE `viewer_id_add`>0";
 
 // показ объ€влений дл€ выбранного пользовател€ (администрирование)
-if (isset($_GET['viewer_id'])) {
-  $find .= " AND `viewer_id_add`=".$_GET['viewer_id'];
+if ($_GET['viewer_id_add'] > 0) {
+  $find .= " AND `viewer_id_add`=".$_GET['viewer_id_add'];
 }
 
 if ($_GET['menu'] == 1)
@@ -31,20 +31,21 @@ if (count($send->spisok) > 0) {
         array_push($viewers, $sp->viewer_id_add);
 
     if (count($viewers) > 0)
-        $viewers = $VK->QueryPtPArray("SELECT
-                                     `viewer_id`,CONCAT(`first_name`,' ',`last_name`)
+        $viewers = $VK->ObjectAss("SELECT
+                                     `viewer_id` AS `id`,
+                                     CONCAT(`first_name`,' ',`last_name`) AS `name`,
+                                     `photo`
                                    FROM `vk_user`
                                    WHERE `viewer_id` IN (".implode(',',array_unique($viewers)).")");
 
     foreach($spisok as $sp) {
-        if (!isset($viewers[$sp->viewer_id_add])) { $viewers[$sp->viewer_id_add] = ''; }
         $srok = strtotime($sp->day_active) - time() + 86400;
         $active = 0;
         $day_last = 0;
         if($srok > 0) {
             $active = 1;
             $day = floor($srok / 86400);
-            $day_last = utf8("ќстал".ends($day, 'с€', 'ось').$day.ends($day, 'день', 'дн€', 'дней'));
+            $day_last = utf8("ќстал".ends($day, 'с€ ', 'ось ').$day.ends($day, ' день', ' дн€', ' дней'));
         }
         array_push($send->spisok, array(
             'id' => $sp->id,
@@ -56,7 +57,8 @@ if (count($send->spisok) > 0) {
             'dop' => $sp->dop,
             'viewer_id' => $sp->viewer_id_add,
             'viewer_id_show' => $sp->viewer_id_show,
-            'viewer_name' => utf8($viewers[$sp->viewer_id_add]),
+            'viewer_name' => utf8($viewers[$sp->viewer_id_add]->name),
+            'viewer_photo' => $viewers[$sp->viewer_id_add]->photo,
             'dtime' => utf8(FullData($sp->dtime_add,1)),
             'active' => $active,
             'day_last' => $day_last,

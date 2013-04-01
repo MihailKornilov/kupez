@@ -142,44 +142,6 @@ $VK->Query('INSERT INTO
                 `summa`=VALUES(`summa`),
                 `gn_count`=VALUES(`gn_count`)');
 
-// Внесение платежа и кассы
-if ($_POST['oplata'] == 1 and $_POST['money'] > 0) {
-    $money_id = $VK->Query("INSERT INTO `gazeta_money` (
-       `type`,
-       `sum`,
-       `client_id`,
-       `zayav_id`,
-       `kassa`,
-       `viewer_id_add`
-    ) values (
-       ".$_POST['money_type'].",
-       ".$_POST['money'].",
-       ".$_POST['client_id'].",
-       ".$send->id.",
-       ".$_POST['money_kassa'].",
-       ".VIEWER_ID."
-    )");
-
-    $VK->Query('INSERT INTO `gazeta_log`
-                  (`type`,`zayav_id`,`value`,`viewer_id_add`)
-                VALUES
-                  (4'.$_POST['category'].','.$send->id.','.round($_POST['money'], 2).','.VIEWER_ID.')');
-
-    if ($_POST['money_kassa'] == 1) {
-        $VK->Query("INSERT INTO `gazeta_kassa` (
-            sum,
-            zayav_id,
-            money_id,
-            viewer_id_add
-            ) VALUES (
-            ".$_POST['money'].",
-            ".$send->id.",
-            ".$money_id.",
-            ".VIEWER_ID."
-        )");
-    }
-}
-
 // Обновление данных клиента
 if ($_POST['client_id'] > 0) {
     $VK->Query('INSERT INTO
@@ -192,7 +154,7 @@ if ($_POST['client_id'] > 0) {
                 ON DUPLICATE KEY UPDATE
                     `zayav_count`=VALUES(`zayav_count`),
                     `activity`=VALUES(`activity`)');
-    // Привенение всех платежей по этой заявке к клиенту
+    // Приведение всех платежей по этой заявке к клиенту
     $VK->Query('UPDATE `gazeta_money` SET `client_id`='.$_POST['client_id'].' WHERE `zayav_id`='.$send->id);
     setClientBalans($_POST['client_id']);
 }

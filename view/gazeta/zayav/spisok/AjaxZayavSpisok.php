@@ -63,7 +63,7 @@ if (count($send->spisok) > 0) {
 
         if ($sp->client_id > 0) {
             $push['client_id'] = $sp->client_id;
-            $push['client_fio'] = utf8($client[$sp->client_id]->fio);
+            $push['client_fio'] = utf8($client[$sp->client_id]->org_name ? $client[$sp->client_id]->org_name : $client[$sp->client_id]->fio);
         }
 
         if($_GET['input']) {

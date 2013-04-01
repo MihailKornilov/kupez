@@ -190,14 +190,13 @@ function fotoUpload() {
 
 // Обнуление списка номеров и суммы вручную
 function gnReload(id, gns) {
-    //if (!gns) var gns = null;
+    G.gn.first_active = id == 2 ? 362 : G.gn.first_save;
     zayav.gn = $("#gn_spisok").gnGet({
         category:id,
         gns:gns,
         manual:$("#summa_manual"),
         summa:$("#summa"),
-        skidka:$("#skidka"),
-        paid:$("#gn_paid").val()
+        skidka:$("#skidka")
     });
 
     $("#summa_manual").myCheck({func:function (id) {
@@ -226,30 +225,6 @@ function moneyCreate() {
             $(this).prev().remove('.hint');
             zayav.gn.cenaSet();
         }
-    });
-
-    $("#oplata").vkRadio({
-        display:'inline-block',
-        right:15,
-        spisok:[{uid:1, title:'да'},{uid:0, title:'нет'}],
-        func:function (id) {
-            $("#money_tab")[id == 1 ? 'show' : 'hide']();
-            var money = $("#summa").val();
-            $("#money").val(money);
-            frameBodyHeightSet();
-        }
-    });
-
-    $("#money_type").vkSel({
-        width:180,
-        title0:'Не указан',
-        spisok:G.money_type_spisok
-    });
-
-    $("#money_kassa").vkRadio({
-        display:'inline-block',
-        right:15,
-        spisok:[{uid:1, title:'да'},{uid:0, title:'нет'}],
     });
 } // end of moneyCreate()
 

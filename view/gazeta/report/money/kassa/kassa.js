@@ -53,7 +53,7 @@ function kassaGet() {
             txt:$("#kassa_txt").val()
         };
         var msg;
-        if (!/^[0-9]+$/.test(send.sum)) { msg = "Некорректно введена сумма."; }
+        if (!G.reg_sum.test(send.sum)) { msg = "Некорректно введена сумма."; }
         else if (send.sum > k_sum) { msg = "Введённая сумма превышает сумму в кассе."; }
         else if (!send.txt) { msg = "Не указан комментарий."; }
         else {
@@ -99,7 +99,7 @@ function kassaPut() {
             txt:$("#kassa_txt").val()
         };
         var msg;
-        if (!/^[0-9]+$/.test(send.sum)) { msg = "Некорректно введена сумма."; }
+        if (!G.reg_sum.test(send.sum)) { msg = "Некорректно введена сумма."; }
         else if (!send.txt) { msg = "Не указан комментарий."; }
         else {
             dialog.process();
@@ -126,7 +126,7 @@ function kassaPut() {
 // установка начального значения в кассе
 function kassaSet(but) {
     var send = { summa:$("#kassa_set_sum").val() };
-    if (!/^[\d]+$/.test(send.summa)) {
+    if (!G.reg_sum.test(send.summa)) {
         $("#kassa_set").vkHint({
             msg:"<SPAN class=red>Некорректно введена сумма.</SPAN>",
             remove:1,

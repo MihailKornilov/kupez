@@ -1329,9 +1329,10 @@ function setupObLenght() {
             var info = $("#obLen #info");
             if (!/^[0-9]+$/.test(send.val))
                 info.html("<SPAN class=red>Некорректрый ввод значения.<BR>Сохранение невозможно.</SPAN>");
-            else {
+            else if (res[send.name] != send.val) {
                 info.html("<SPAN style=color:#AA0>Сохранение... <IMG src=/img/upload.gif></SPAN>");
                 $.post("/view/gazeta/setup/ob_len/AjaxObLenSave.php?" + G.values, send, function () {
+                    res[send.name] = send.val;
                     info.html("<B style=color:#090>Сохранено!</B>");
                     info.find("B").delay(2000).fadeOut(500);
                 });

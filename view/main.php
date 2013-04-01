@@ -23,10 +23,11 @@ G.values = "<?=VALUES?>";
 G.url = "<?=URL?>";
 G.vk = {
     viewer_id:<?=$vku['viewer_id']?>,
+    name:"<?=$vku['first_name'].' '.$vku['last_name']?>",
     first_name:"<?=$vku['first_name']?>",
     last_name:"<?=$vku['last_name']?>",
-    country:<?=$vku['country']?>,
-    city:<?=$vku['city']?>
+    country_id:<?=$vku['country_id']?>,
+    city_id:<?=$vku['city_id']?>
 };
 </SCRIPT>
 <DIV id=frameBody>
@@ -53,7 +54,7 @@ function _footer()
     </DIV>
     <SCRIPT type="text/javascript">
         VK.init(frameBodyHeightSet);
-        VK.callMethod("setLocation","");
+        //VK.callMethod("setLocation","");
         VK.callMethod('scrollSubscribe');
         VK.addCallback('onScroll',function(top){ G.vkScroll = top; });
     </SCRIPT>
@@ -73,8 +74,8 @@ function vkUserCheck($vku, $update = false)
         $vku['last_name'] = win1251($res['response'][0]['last_name']);
         $vku['sex'] = $res['response'][0]['sex'];
         $vku['photo'] = $res['response'][0]['photo'];
-        $vku['country'] = isset($res['response'][0]['country']) ? $res['response'][0]['country'] : 0;
-        $vku['city'] = isset($res['response'][0]['city']) ? $res['response'][0]['city'] : 0;
+        $vku['country_id'] = isset($res['response'][0]['country']) ? $res['response'][0]['country'] : 0;
+        $vku['city_id'] = isset($res['response'][0]['city']) ? $res['response'][0]['city'] : 0;
         $vku['menu_left_set'] = 0;
         $vku['enter_last'] = curTime();
 
@@ -93,8 +94,8 @@ function vkUserCheck($vku, $update = false)
                     `photo`,
                     `app_setup`,
                     `menu_left_set`,
-                    `country`,
-                    `city`,
+                    `country_id`,
+                    `city_id`,
                     `enter_last`
                     ) values (
                     '.VIEWER_ID.',
@@ -104,8 +105,8 @@ function vkUserCheck($vku, $update = false)
                     "'.$vku['photo'].'",
                     '.$vku['app_setup'].',
                     '.$vku['menu_left_set'].',
-                    '.$vku['country'].',
-                    '.$vku['city'].',
+                    '.$vku['country_id'].',
+                    '.$vku['city_id'].',
                     current_timestamp)
                     ON DUPLICATE KEY UPDATE
                     `first_name`="'.$vku['first_name'].'",
@@ -114,8 +115,8 @@ function vkUserCheck($vku, $update = false)
                     `photo`="'.$vku['photo'].'",
                     `app_setup`='.$vku['app_setup'].',
                     `menu_left_set`='.$vku['menu_left_set'].',
-                    `country`='.$vku['country'].',
-                    `city`='.$vku['city'].',
+                    `country_id`='.$vku['country_id'].',
+                    `city_id`='.$vku['city_id'].',
                     `enter_last`=current_timestamp
                     ');
 

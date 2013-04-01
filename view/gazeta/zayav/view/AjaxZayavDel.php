@@ -9,7 +9,10 @@ $VK->Query('INSERT INTO `gazeta_log`
             VALUES
                 (6'.$_GET['category'].',"'.$_GET['id'].'",'.VIEWER_ID.')');
 
+if ($_GET['client_id']) setClientBalans($_GET['client_id']);
+
 $send->info = 1;
+
 echo json_encode($send);
 ?>
 
