@@ -127,34 +127,34 @@ function AjaxSpisokCreate($sql, $sort='') {
 // составление файла G_values.js
 function GvaluesCreate() {
     global $VK;
-    $save = 'function SpisokToAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a;}';
+    $save = "function SpisokToAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a;}\n";
 
     $save .= 'G.category_spisok = [{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}];G.category_ass = SpisokToAss(G.category_spisok);';
-    $save .= "G.rubrika_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rubrika` ORDER BY `sort`').";G.rubrika_ass = SpisokToAss(G.rubrika_spisok);";
-    $save .= "G.person_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`').";G.person_ass = SpisokToAss(G.person_spisok);";
-    $save .= "G.money_type_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_money_type` ORDER BY `sort`').";G.money_type_ass = SpisokToAss(G.money_type_spisok);";
-    $save .= "G.polosa_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').";G.polosa_ass = SpisokToAss(G.polosa_spisok);";
-    $save .= "G.polosa_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_polosa_cost` ORDER BY `id`').";G.polosa_cena_ass[0] = 0;";
-    $save .= "G.ob_dop_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_ass = SpisokToAss(G.ob_dop_spisok);";
-    $save .= "G.ob_dop_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_cena_ass[0] = 0;";
-    $save .= "G.skidka_spisok = ".$VK->vkSelJson('SELECT `razmer`,CONCAT(`razmer`,"%") FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
-    $save .= "G.rashod_category_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `id`').";G.rashod_category_ass = SpisokToAss(G.rashod_category_spisok);";
-    $save .= "G.txt_len_first = ".$VK->QRow("SELECT `txt_len_first` FROM `setup_global` LIMIT 1").";";
-    $save .= "G.txt_cena_first = ".$VK->QRow("SELECT `txt_cena_first` FROM `setup_global` LIMIT 1").";";
-    $save .= "G.txt_len_next = ".$VK->QRow("SELECT `txt_len_next` FROM `setup_global` LIMIT 1").";";
-    $save .= "G.txt_cena_next = ".$VK->QRow("SELECT `txt_cena_next` FROM `setup_global` LIMIT 1").";";
+    $save .= "\nG.rubrika_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rubrika` ORDER BY `sort`').";G.rubrika_ass = SpisokToAss(G.rubrika_spisok);";
+    $save .= "\nG.person_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`').";G.person_ass = SpisokToAss(G.person_spisok);";
+    $save .= "\nG.money_type_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_money_type` ORDER BY `sort`').";G.money_type_ass = SpisokToAss(G.money_type_spisok);";
+    $save .= "\nG.polosa_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').";G.polosa_ass = SpisokToAss(G.polosa_spisok);";
+    $save .= "\nG.polosa_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_polosa_cost` ORDER BY `id`').";G.polosa_cena_ass[0] = 0;";
+    $save .= "\nG.ob_dop_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_ass = SpisokToAss(G.ob_dop_spisok);";
+    $save .= "\nG.ob_dop_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_cena_ass[0] = 0;";
+    $save .= "\nG.skidka_spisok = ".$VK->vkSelJson('SELECT `razmer`,CONCAT(`razmer`,"%") FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
+    $save .= "\nG.rashod_category_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `id`').";G.rashod_category_ass = SpisokToAss(G.rashod_category_spisok);";
+    $save .= "\nG.txt_len_first = ".$VK->QRow("SELECT `txt_len_first` FROM `setup_global` LIMIT 1").";";
+    $save .= "\nG.txt_cena_first = ".$VK->QRow("SELECT `txt_cena_first` FROM `setup_global` LIMIT 1").";";
+    $save .= "\nG.txt_len_next = ".$VK->QRow("SELECT `txt_len_next` FROM `setup_global` LIMIT 1").";";
+    $save .= "\nG.txt_cena_next = ".$VK->QRow("SELECT `txt_cena_next` FROM `setup_global` LIMIT 1").";";
 
     $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`");
     if (count($spisok) > 0) {
         $gn = array();
         foreach ($spisok as $sp) {
-            array_push($gn, $sp->general_nomer.':{'.
+            array_push($gn, "\n".$sp->general_nomer.':{'.
                               'week:'.$sp->week_nomer.','.
                               'public:"'.$sp->day_public.'",'.
                               'txt:"'.FullData($sp->day_public, 0, 1).'"'.
                               '}');
         }
-        $save .= 'G.gn = {'.implode(',', $gn).'};';
+        $save .= "\nG.gn = {".implode(',', $gn)."};";
     }
 
     $spisok = $VK->QueryObjectArray("SELECT `id`,`name`,`rubrika_id` FROM `setup_pod_rubrika` ORDER BY `rubrika_id`,`sort`");
@@ -165,13 +165,13 @@ function GvaluesCreate() {
             array_push($podrubrika[$sp->rubrika_id], '{uid:'.$sp->id.',title:"'.$sp->name.'"}');
         }
         $v = array();
-        foreach ($podrubrika as $n => $sp) { array_push($v, $n.":[".implode(',',$sp)."]"); }
+        foreach ($podrubrika as $n => $sp) { array_push($v, $n.":[".implode(',',$sp)."]\n"); }
         $podrubrika = $v;
     }
-    $save .= "G.podrubrika_spisok = {".implode(',',$podrubrika)."};";
-    $save .= "G.podrubrika_ass = []; G.podrubrika_ass[0] = ''; for (var k in G.podrubrika_spisok) { for (var n = 0; n < G.podrubrika_spisok[k].length; n++) { var sp = G.podrubrika_spisok[k][n]; G.podrubrika_ass[sp.uid] = sp.title; } }";
+    $save .= "\nG.podrubrika_spisok = {".implode(',',$podrubrika)."};";
+    $save .= "\nG.podrubrika_ass = []; G.podrubrika_ass[0] = ''; for (var k in G.podrubrika_spisok) { for (var n = 0; n < G.podrubrika_spisok[k].length; n++) { var sp = G.podrubrika_spisok[k][n]; G.podrubrika_ass[sp.uid] = sp.title; } }";
 
-    $save .= "G.countries_spisok = [{uid:1,title:'Россия'},{uid:2,title:'Украина'},{uid:3,title:'Беларусь'},{uid:4,title:'Казахстан'},{uid:5,title:'Азербайджан'},{uid:6,title:'Армения'},{uid:7,title:'Грузия'},{uid:8,title:'Израиль'},{uid:11,title:'Кыргызстан'},{uid:12,title:'Латвия'},{uid:13,title:'Литва'},{uid:14,title:'Эстония'},{uid:15,title:'Молдова'},{uid:16,title:'Таджикистан'},{uid:17,title:'Туркмения'},{uid:18,title:'Узбекистан'}];";
+    $save .= "\nG.countries_spisok = [{uid:1,title:'Россия'},{uid:2,title:'Украина'},{uid:3,title:'Беларусь'},{uid:4,title:'Казахстан'},{uid:5,title:'Азербайджан'},{uid:6,title:'Армения'},{uid:7,title:'Грузия'},{uid:8,title:'Израиль'},{uid:11,title:'Кыргызстан'},{uid:12,title:'Латвия'},{uid:13,title:'Литва'},{uid:14,title:'Эстония'},{uid:15,title:'Молдова'},{uid:16,title:'Таджикистан'},{uid:17,title:'Туркмения'},{uid:18,title:'Узбекистан'}];";
 
     $fp = fopen(PATH."/js/G_values.js","w+");
     fwrite($fp, $save);

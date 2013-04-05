@@ -38,10 +38,12 @@ $VK->Query('INSERT INTO `gazeta_nomer` (
 `viewer_id_add`
 ) values '.implode(',', $gnArr));
 
+
+$VK->Query('INSERT INTO `gazeta_log`
+                (`type`,`value`,`viewer_id_add`)
+            VALUES
+                (1034,"'.$_POST['year'].'",'.VIEWER_ID.')');
+
 $send = 1;
 
 echo json_encode($send);
-?>
-
-
-

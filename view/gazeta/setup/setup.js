@@ -23,11 +23,11 @@ function setupSet(id) {
 // Заявители
 function setupPerson() {
     $(".razdel")
-        .find(".help").remove()
-        .end().append("<DIV class=help>Типы заявителей используются для разделения клиентов на категории, такие как '<B>Частный клиент</B>', '<B>Организация</B>' и тп.</DIV>");
+        .find(".help").remove();
+//        .end().append("<DIV class=help>Типы заявителей используются для разделения клиентов на категории, такие как '<B>Частный клиент</B>', '<B>Организация</B>' и тп.</DIV>");
     var html="<DIV id=person>" +
-        "<DIV class=headName>Настройки типов заявителей</div>" +
-        "<A onclick=personAdd();>Добавить новый тип заявителя</A>" +
+        "<DIV class=headName>Настройка категорий клиентов</div>" +
+        "<A onclick=personAdd();>Добавить новую категорию клиентов</A>" +
         "<DIV id=person_table></DIV>" +
         "</DIV>";
     $("#edit").html(html);
@@ -63,7 +63,7 @@ function setupPerson() {
                     $.getJSON("/view/gazeta/setup/person/AjaxPersonSort.php?" + G.values + "&val=" + VAL, progressHide);
                 }
             }});
-        } else $("#person_table").html("Список заявителей пуст.");
+        } else $("#person_table").html("Список пуст.");
         frameBodyHeightSet();
     });
 } // end of setupPerson()
@@ -74,7 +74,7 @@ function personAdd() {
         "<TR><TD class=tdAbout>Наименование:<TD><INPUT type=text id=person_name style=width:200px;>" +
         "</TABLE>";
     var dialog = $("#setup_dialog").vkDialog({
-        head:'Внесение нового заявителя',
+        head:'Внесение новой категории',
         content:html,
         focus:'#person_name',
         submit:function () {
@@ -86,7 +86,7 @@ function personAdd() {
                 $.post("/view/gazeta/setup/person/AjaxPersonAdd.php?" + G.values, send, function (res) {
                     dialog.close();
                     setupPerson();
-                    vkMsgOk("Новое наименование заявителя добавлено!");
+                    vkMsgOk("Новая категория добавлена.");
                 },'json');
             }
         }
@@ -142,10 +142,10 @@ function personDel(id) {
             };
             if(COLVO) send.ost = $("#person_ost").val();
             if(COLVO && send.ost == 0) {
-                $("#setup_dialog .bottom:first").vkHint({msg:'<SPAN class=red>Выберите новую категорию заявителя.</SPAN>',top:-47,left:128, top:-47, left:94, indent:40, show:1, remove:1});
+                $("#setup_dialog .bottom:first").vkHint({msg:'<SPAN class=red>Выберите новую категорию.</SPAN>',top:-47,left:128, top:-47, left:94, indent:40, show:1, remove:1});
             } else {
                 dialog.process();
-                $.post("/view/gazeta/setup/person/AjaxPersonDel.php?"+G.values, send, function () {
+                $.post("/view/gazeta/setup/person/AjaxPersonDel.php?"+G.values, send, function (res) {
                     for(var n = 0; n < G.person_spisok.length; n++) {
                         if (G.person_spisok[n].uid == id) {
                             G.person_spisok.splice(n, 1);
@@ -779,7 +779,7 @@ function gazNomerGet(year, id) {
                     "<TD align=right>" + sp.day_public +
                     "<TD align=center>" + (sp.zayav_count > 0 ? sp.zayav_count : '') +
                     "<TD class=set><DIV class=img_edit val=edit_" + n + "></DIV>" +
-                    "<DIV class=img_del  val=del_" + n + "></DIV>";
+                                  "<DIV class=img_del val=del_" + n + "></DIV>";
             }
             html += "</TABLE>";
             $("#spisok")
@@ -871,9 +871,6 @@ function gazNomerEdit(year, sp) {
         "<TR><TD class=tdAbout>Номер выпуска:<TD>" +
             "<INPUT type=text id=week_nomer style=width:15px;text-align:right; maxlength=2 value='" + sp.week_nomer + "'>&nbsp;" +
             "<INPUT type=text id=general_nomer style=width:20px;text-align:right; maxlength=3 value='" + sp.general_nomer + "'>" +
-//        "<TR><TD class=tdAbout>Дни недели:<TD>" +
-//            "<INPUT type=hidden id=day_begin value='" + sp.day_begin_val + "'> - " +
-//            "<INPUT type=hidden id=day_end value='" + sp.day_end_val + "'>" +
         "<TR><TD class=tdAbout>День отправки в печать:<TD><INPUT type=hidden id=day_print value='" + sp.day_print_val + "'>" +
         "<TR><TD class=tdAbout>День выхода:<TD><INPUT type=hidden id=day_public value='" + sp.day_public_val + "'>" +
         "</TABLE>";
@@ -887,8 +884,6 @@ function gazNomerEdit(year, sp) {
                 week_nomer:$("#week_nomer").val(),
                 general_nomer:$("#general_nomer").val(),
                 general_nomer_prev:sp.general_nomer,
-//                day_begin:$("#day_begin").val(),
-//                day_end:$("#day_end").val(),
                 day_print:$("#day_print").val(),
                 day_public:$("#day_public").val()
             };
@@ -927,8 +922,6 @@ function gazNomerEdit(year, sp) {
             }
         } // end of submit()
     }).o;
-    //$("#day_begin").vkCalendar({lost:1});
-    //$("#day_end").vkCalendar({lost:1});
     $("#day_print").vkCalendar({lost:1});
     $("#day_public").vkCalendar({lost:1});
 } // end of gazNomerEdit()
@@ -1049,7 +1042,7 @@ function setupSmKvCost() {
                     "<TD class=name>" + sp.name +
                     "<TD class=cena>" + sp.cena +
                     "<TD class=set><DIV class=img_edit onclick=polosaEdit(" + sp.id + ");></DIV>" +
-                                  "<DIV class=img_del onclick=polosaDel(" + sp.id + ");></DIV>" +
+                                 // "<DIV class=img_del onclick=polosaDel(" + sp.id + ");></DIV>" +
                     "</TABLE>";
                 }
             html+="</DL>";

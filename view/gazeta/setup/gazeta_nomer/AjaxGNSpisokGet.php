@@ -22,13 +22,6 @@ if(count($spisok) > 0) {
             'general_nomer' => $sp->general_nomer,
             'grey' => $curr > strtotime($sp->day_print) + 86400 ? 'grey' : '',
             'week_nomer' => $sp->week_nomer,
-//            'day_txt' => utf8(weekTxtCreate($sp->day_begin, $sp->day_end)),
-
-//            'day_begin_val' => $sp->day_begin,
-//            'day_begin' => utf8(FullData($sp->day_begin,1)),
-//            'day_end_val' => $sp->day_end,
-//            'day_end' => utf8(FullData($sp->day_end,1)),
-    
             'day_print' => utf8(FullData($sp->day_print,1)),
             'day_print_val' => $sp->day_print,
             'day_public' => utf8(FullData($sp->day_public,1)),

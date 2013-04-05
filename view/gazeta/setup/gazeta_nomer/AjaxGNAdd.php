@@ -18,8 +18,9 @@ if ($send->save == 1) {
         '".$_POST['day_public']."')");
 }
 
+$VK->Query('INSERT INTO `gazeta_log`
+                (`type`,`value`,`viewer_id_add`)
+            VALUES
+                (1031,"'.$_POST['general_nomer'].'",'.VIEWER_ID.')');
+
 echo json_encode($send);
-?>
-
-
-

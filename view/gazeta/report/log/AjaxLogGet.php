@@ -13,6 +13,7 @@ if ($_GET['type'] > 0) {
         case 3: $find .= ' AND type IN (31,32,33,34)'; break;
         case 4: $find .= ' AND type IN (41,42,43,44,45,46)'; break;
         case 6: $find .= ' AND type IN (61,62,63,64)'; break;
+        case 1000: $find .= ' AND `type`>1000 AND `type`<2000'; break;
     }
 }
 $send->all = $VK->QRow("SELECT COUNT(`id`) FROM `gazeta_log` ".$find);

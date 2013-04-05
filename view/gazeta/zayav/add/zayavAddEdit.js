@@ -70,7 +70,7 @@ function zayavAdd() {
         correct:0
     });
 
-    $("#txt").autosize().focus().keyup(calcSummaOb);
+    $("#txt").autosize({callback:frameBodyHeightSet}).focus().keyup(calcSummaOb);
 
     $("#size_x").keyup(calcSummaRek);
     $("#size_y").keyup(calcSummaRek);
@@ -110,7 +110,7 @@ function zayavEdit(category, client, gns) {
         case 1:
             rubrikaSet();
             podrubrikaSet(zayav.rubrika.val());
-            $("#txt").autosize().focus().keyup(calcSummaOb);
+            $("#txt").autosize({callback:frameBodyHeightSet}).focus().keyup(calcSummaOb);
             calcSummaOb();
             break;
         case 2:
@@ -283,7 +283,8 @@ function calcSummaRek() {
         var val_y = $("#size_y").val();
         var x = G.reg_sum.test(val_x) ? val_x : 0;
         var y = G.reg_sum.test(val_y) ? val_y : 0;
-        kv_sm = Math.round((x * y) * 100) / 100;
+        //kv_sm = Math.round((x * y) * 100) / 100;
+        kv_sm = Math.round(x * y);
         if (kv_sm > 0) $("#kv_sm").val(kv_sm);
     }
     zayav.gn.cenaSet(kv_sm);

@@ -118,7 +118,7 @@ function clientInfo() {
                 'txt' => utf8($sp->txt),
                 'size_x' => round($sp->size_x, 1),
                 'size_y' => round($sp->size_y, 1),
-                'kv_sm' => round($sp->size_x * $sp->size_y, 2),
+                'kv_sm' => round($sp->size_x * $sp->size_y),
                 'dtime' => utf8(FullDataTime($sp->dtime_add))
             ));
         }
@@ -144,7 +144,7 @@ function clientInfo() {
 <TABLE cellpadding=0 cellspacing=0 class=clientInfo>
     <TR><TD id=left>
         <TABLE cellpadding=0 cellspacing=4 id=info>
-            <tr><td class=tdAbout>Заявитель:<td><?=$person[$client->person]?>
+            <tr><td class=tdAbout>Категория:<td><?=$person[$client->person]?>
             <?=$fio?>
             <?=$org_name?>
             <?=$telefon?>
@@ -350,7 +350,7 @@ function zayavView() {
             $size = '<TR><TD class=tdAbout>Размер:'.
                         '<TD>'.round($zayav->size_x,1).' x '.
                                round($zayav->size_y,1).' = '.
-                         '<b>'.round($zayav->size_x * $zayav->size_y, 2).'</b> см&sup2;';
+                         '<b>'.round($zayav->size_x * $zayav->size_y).'</b> см&sup2;';
             if ($zayav->summa_manual == 1) $manual = "<SPAN class=manual>(указана вручную)</SPAN>";
             if ($zayav->skidka > 0)
                 $skidka = "<SPAN class=skidka>Скидка <B>".$zayav->skidka."</B>% (".round($zayav->skidka_sum, 2)." руб.)</SPAN>";
@@ -490,7 +490,7 @@ function zayavEdit() {
                            '<TD><INPUT TYPE=text id=size_x maxlength=5 value="'.round($zayav->size_x, 1).'">'.
                                '<B class=xb>x</B>'.
                                '<INPUT TYPE=text id=size_y maxlength=5 value="'.round($zayav->size_y, 1).'"> = '.
-                               '<INPUT TYPE=text id=kv_sm readonly value="'.round($zayav->size_x * $zayav->size_y, 2).'"> см<SUP>2</SUP>';
+                               '<INPUT TYPE=text id=kv_sm readonly value="'.round($zayav->size_x * $zayav->size_y).'"> см<SUP>2</SUP>';
             $skidka = '<TABLE cellpadding=0 cellspacing=8 id=skidka_tab>'.
                         '<TR><TD class=tdAbout>Скидка:<TD><INPUT TYPE=hidden id=skidka value='.$zayav->skidka.'>'.
                       '</TABLE>';
@@ -731,105 +731,6 @@ function reportGet($d1) {
 // Страница с настройками
 function setupView($admin) {
     global $VK;
-/*
-    // Удаление выходов газет всех заявок закреплёнными клиентами
-    $ids = $VK->ids("SELECT
-  IFNULL(pub.id,0) AS id
-FROM
-  gazeta_nomer_pub AS pub
-
-	RIGHT JOIN
-	  gazeta_zayav AS z
-	ON
-	  z.id=pub.zayav_id
-
-	RIGHT JOIN
-	  gazeta_client AS c
-	ON
-	  c.id=z.client_id
-
-WHERE
-  c.id>1
-GROUP BY pub.id");
-    $VK->Query("delete from gazeta_nomer_pub where id in (".$ids.")");
-
-
-    // Удаление платежей всех заявок закреплёнными клиентами
-    $ids = $VK->ids("SELECT
-  IFNULL(m.id,0) AS id
-FROM
-  gazeta_money AS m
-
-	RIGHT JOIN
-	  gazeta_zayav AS z
-	ON
-	  z.id=m.zayav_id
-
-	RIGHT JOIN
-	  gazeta_client AS c
-	ON
-	  c.id=z.client_id
-
-WHERE
-  c.id>1
-  GROUP BY m.id");
-    $VK->Query("delete from gazeta_money where id in (".$ids.")");
-
-
-    // Удаление платежей всех клиентов
-    $ids = $VK->ids("SELECT
-  IFNULL(m.id,0) AS id
-FROM
-  gazeta_money AS m
-
-	RIGHT JOIN
-	  gazeta_client AS c
-	ON
-	  c.id=m.client_id
-
-WHERE
-  c.id>1
-GROUP BY m.id");
-    $VK->Query("delete from gazeta_money where id in (".$ids.")");
-
-
-    // Удаление заявок с клиентами
-    $ids = $VK->ids("SELECT
-  IFNULL(z.id,0) AS id
-FROM
-  gazeta_zayav AS z
-
-	RIGHT JOIN
-	  gazeta_client AS c
-	ON
-	  c.id=z.client_id
-
-WHERE
-  c.id>1
-GROUP BY z.id");
-    $VK->Query("delete from gazeta_zayav where id in (".$ids.")");
-    $VK->Query("delete from gazeta_client where id>1");
-
-
-    // Удаление платежей заявок без выходов и самих заявок
-    $ids = $VK->ids("SELECT
-  IFNULL(m.id,0) AS id
-FROM
-  gazeta_money AS m
-
-	RIGHT JOIN
-	  gazeta_zayav AS z
-	ON
-	  m.zayav_id=z.id
-
-WHERE
-  z.gn_count=0
-GROUP BY
-  m.id");
-    $VK->Query("delete from gazeta_money where id in (".$ids.")");
-    $VK->Query("delete from gazeta_zayav where gn_count=0");
-*/
-
 
     // Получение начального и конечного года для настройки номеров газет
     $gn = $VK->QueryObjectOne("SELECT
@@ -854,15 +755,15 @@ $("#razdelSel").vkSel({
     width:300,
     spisok:[
         <?=($admin == 1 ? "{uid:8,title:'Доступ и права сотрудников'}," : '')?>
-        {uid:1,title:'Заявители'},
-        {uid:2,title:'Рубрики'},
-        {uid:7,title:'Подрубрики'},
-        {uid:9,title:'Стоимость длины объявления'},
-        {uid:6,title:'Дополнительные параметры объявления'},
-        {uid:4,title:'Стоимость см2 каждой полосы для рекламы',content:'Стоимость см&sup2; каждой полосы для рекламы'},
-        {uid:3,title:'Номера выпусков газеты'},
+        {uid:1, title:'Категории клиентов'},
+        {uid:2, title:'Рубрики'},
+        {uid:7, title:'Подрубрики'},
+        {uid:9, title:'Стоимость длины объявления'},
+        {uid:6, title:'Дополнительные параметры объявления'},
+        {uid:4, title:'Стоимость см2 каждой полосы для рекламы',content:'Стоимость см&sup2; каждой полосы для рекламы'},
+        {uid:3, title:'Номера выпусков газеты'},
         {uid:11,title:'Виды платежей'},
-        {uid:5,title:'Скидки'},
+        {uid:5, title:'Скидки'},
         {uid:10,title:'Категории расходов'}],
     func:setupSet
 });

@@ -56,7 +56,7 @@ if (count($send->spisok) > 0) {
             'txt' => utf8($sp->txt),
             'size_x' => round($sp->size_x, 1),
             'size_y' => round($sp->size_y, 1),
-            'kv_sm' => round($sp->size_x * $sp->size_y, 2),
+            'kv_sm' => round($sp->size_x * $sp->size_y),
             'file' => $sp->file,
             'dtime' => utf8(FullDataTime($sp->dtime_add))
         );
