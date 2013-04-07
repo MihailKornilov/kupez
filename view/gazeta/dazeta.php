@@ -223,7 +223,7 @@ function zayavSpisok() {
     foreach ($nomer as $n => $sp) { array_push($y_nomer, $n.":[".implode(',',$sp)."]"); }
 
     $year = @$_GET['year'] ? $_GET['year'] : strftime("%Y",time());
-    $gn = isset($_GET['gn']) ? $_GET['gn'] : 374;// GN_FIRST_ACTIVE;
+    $gn = isset($_GET['gn']) ? $_GET['gn'] : GN_FIRST_ACTIVE;
     $cat = @$_GET['cat'] ? $_GET['cat'] : 0;
 ?>
 <DIV id=findResult>&nbsp;</DIV>
@@ -579,6 +579,7 @@ echo $report->js;
 
 function reportGet($d1) {
     global $VK;
+    $send = array();
     switch ($d1) {
         case 'log':
             $ids = $VK->ids("SELECT DISTINCT(`viewer_id_add`) FROM `gazeta_log`");
