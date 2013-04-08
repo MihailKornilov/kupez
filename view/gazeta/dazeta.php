@@ -580,6 +580,7 @@ echo $report->js;
 
 function reportGet($d1) {
     global $VK;
+    $send = '';
     switch ($d1) {
         case 'log':
             $ids = $VK->ids("SELECT DISTINCT(`viewer_id_add`) FROM `gazeta_log`");
