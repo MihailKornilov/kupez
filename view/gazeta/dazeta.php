@@ -225,6 +225,7 @@ function zayavSpisok() {
     $year = @$_GET['year'] ? $_GET['year'] : strftime("%Y",time());
     $gn = isset($_GET['gn']) ? $_GET['gn'] : GN_FIRST_ACTIVE;
     $cat = @$_GET['cat'] ? $_GET['cat'] : 0;
+    //123
 ?>
 <DIV id=findResult>&nbsp;</DIV>
 <TABLE cellpadding=0 cellspacing=0 id=zayav>
