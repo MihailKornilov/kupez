@@ -492,15 +492,6 @@
 
 #setup #edit { padding:10px 20px; }
 
-#setup #person #person_table { margin:20px 0 20px 40px; }
-#setup #person .tabSpisok { margin-bottom:1px; }
-#setup #person .tabSpisok TD { background-color:#FFF; }
-#setup #person .tabSpisok .name { width:180px; }
-#setup #person .tabSpisok TD.name { cursor:move; }
-#setup #person .tabSpisok .colvo { width:60px; text-align:center; }
-#setup #person .tabSpisok .set { width:70px; text-align:center; }
-.person_ost { margin-top:10px; }
-.person_ost TD { padding-right:5px; }
 
 
 #setup #gazNomer .set { padding-left:19px; }

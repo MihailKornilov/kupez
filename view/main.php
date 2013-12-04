@@ -56,6 +56,7 @@ function _hashCookieSet() {
 }//_hashCookieSet()
 function _cacheClear() {
 	xcache_unset(CACHE_PREFIX.'setup_global');
+	GvaluesCreate();
 }//_cacheClear()
 
 function _header() {

@@ -380,14 +380,22 @@ function setup() {
 	$pageDef = 'worker';
 	$pages = array(
 		'worker' => 'Сотрудники',
-
+		'gn' => 'Номера выпусков газеты',
+		'person' => 'Категории клиентов',
+		'rubrika' => 'Рубрики',
+		'oblen' => 'Стоимость длины объявления',
+		'obdop' => 'Доп. параметры объявления',
+		'polosa' => 'Стоимость см&sup2; рекламы',
+		'money' => 'Виды платежей',
+		'skidka' => 'Скидки',
+		'rashod' => 'Категории расходов'
 	);
 
-	if(!RULES_WORKER)
+	if(!GAZETA_ADMIN)
 		unset($pages['worker']);
 
-	$d = empty($_GET['d']) ? $pageDef : $_GET['d'];
-	if(empty($_GET['d']) && !empty($pages) && empty($pages[$d])) {
+	$d = empty($_GET['d1']) ? $pageDef : $_GET['d1'];
+	if(empty($_GET['d1']) && !empty($pages) && empty($pages[$d])) {
 		foreach($pages as $p => $name) {
 			$d = $p;
 			break;
@@ -403,11 +411,20 @@ function setup() {
 			}
 			$left = setup_worker();
 			break;
+		case 'gn': break;
+		case 'person': $left = setup_person(); break;
+		case 'rubrika': break;
+		case 'oblen': break;
+		case 'obdop': break;
+		case 'polosa': break;
+		case 'money': break;
+		case 'skidka': break;
+		case 'rashod': break;
 	}
 	$links = '';
 	if($pages)
 		foreach($pages as $p => $name)
-			$links .= '<a href="'.URL.'&p=setup&d='.$p.'"'.($d == $p ? ' class="sel"' : '').'>'.$name.'</a>';
+			$links .= '<a href="'.URL.'&p=gazeta&d=setup&d1='.$p.'"'.($d == $p ? ' class="sel"' : '').'>'.$name.'</a>';
 	return
 	'<div id="setup">'.
 		'<table class="tabLR">'.
@@ -416,3 +433,76 @@ function setup() {
 		'</table>'.
 	'</div>';
 }//setup()
+
+function setup_worker() {
+	return
+	'<div id="setup_worker">'.
+		'<div class="headName">Управление сотрудниками<a class="add">Новый сотрудник</a></div>'.
+		'<div id="spisok">'.setup_worker_spisok().'</div>'.
+	'</div>';
+}//setup_worker()
+function setup_worker_spisok() {
+	$sql = "SELECT `viewer_id`,
+				   CONCAT(`first_name`,' ',`last_name`) AS `name`,
+				   `photo`,
+				   `gazeta_admin`
+			FROM `vk_user`
+			WHERE `gazeta_worker`=1
+			  AND `viewer_id`!=982006
+			ORDER BY `dtime_add`";
+	$q = query($sql);
+	$send = '';
+	while($r = mysql_fetch_assoc($q)) {
+		$send .=
+		'<table class="unit" val="'.$r['viewer_id'].'">'.
+			'<tr><td class="photo"><img src="'.$r['photo'].'">'.
+				'<td>'.($r['gazeta_admin'] ? '' : '<div class="img_del"></div>').
+					'<a class="name">'.$r['name'].'</a>'.
+//					($r['admin'] ? '' : '<a href="'.URL.'&p=setup&d=worker&id='.$r['viewer_id'].'" class="rules_set">Настроить права</a>').
+			'</table>';
+	}
+	return $send;
+}//setup_worker_spisok()
+
+function setup_person() {
+	return
+	'<div id="setup_person">'.
+		'<div class="headName">Категории клиентов<a class="add">Новая категория</a></div>'.
+		'<div id="spisok">'.setup_person_spisok().'</div>'.
+	'</div>';
+}//setup_person()
+function setup_person_spisok() {
+	$sql = "SELECT `p`.`id`,
+				   `p`.`name`,
+				   COUNT(`c`.`id`) AS `count`
+			FROM `setup_person` AS `p`
+			  LEFT JOIN `gazeta_client` AS `c`
+			  ON `p`.`id`=`c`.`person` AND `c`.`deleted`=0
+			GROUP BY `p`.`id`
+			ORDER BY `p`.`sort`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
+
+	$send =
+		'<table class="_spisok">'.
+			'<tr><th class="name">Наименование'.
+				'<th class="cl">Кол-во<br />клиентов'.
+				'<th class="set">'.
+		'</table>'.
+		'<dl class="_sort" val="setup_person">';
+	while($r = mysql_fetch_assoc($q))
+		$send .='<dd val="'.$r['id'].'">'.
+			'<table class="_spisok">'.
+				'<tr><td class="name">'.$r['name'].
+					'<td class="cl">'.$r['count'].
+					'<td class="set">'.
+						'<div class="img_edit"></div>'.
+						(!$r['count'] ? '<div class="img_del"></div>' : '').
+			'</table>';
+
+	$send .= '</dl>';
+	return $send;
+}//setup_person_spisok()
+
+

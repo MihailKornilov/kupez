@@ -44,6 +44,112 @@ $(document)
 		}, 'json');
 	})
 
+	.on('click', '#setup_worker .add', function() {
+		var html = '<div id="setup_worker_add">' +
+				'<h1>Ссылка на страницу или ID пользователя ВКонтакте:</h1>' +
+				'<input type="text" />' +
+				'<DIV class="vkButton"><BUTTON>Найти</BUTTON></DIV>' +
+				'</div>',
+			dialog = _dialog({
+				top:50,
+				width:360,
+				head:'Добавление нового сотрудника',
+				content:html,
+				butSubmit:'Добавить',
+				submit:submit
+			}),
+			user_id,
+			input = dialog.content.find('input'),
+			but = input.next();
+		input.focus().keyEnter(user_find);
+		but.click(user_find);
+
+		function user_find() {
+			if(but.hasClass('busy'))
+				return;
+			user_id = false;
+			var send = {
+				user_ids:$.trim(input.val()),
+				fields:'photo_50',
+				v:5.2
+			};
+			if(!send.user_ids)
+				return;
+			but.addClass('busy').next('.res').remove();
+			VK.api('users.get', send, function(data) {
+				but.removeClass('busy');
+				if(data.response) {
+					var u = data.response[0],
+						html = '<TABLE class="res">' +
+								'<TR><TD class="photo"><IMG src=' + u.photo_50 + '>' +
+									'<TD class="name">' + u.first_name + ' ' + u.last_name +
+							'</TABLE>';
+					but.after(html);
+					user_id = u.id;
+				}
+			});
+		}
+		function submit() {
+			if(!user_id) {
+				err('Не выбран пользователь', -47);
+				return;
+			}
+			var send = {
+				op:'setup_worker_add',
+				id:user_id
+			};
+			dialog.process();
+			$.post(AJAX_GAZ, send, function(res) {
+				dialog.abort();
+				if(res.success) {
+					dialog.close();
+					_msg('Новый сотрудник успешно добавлен.');
+					$('#spisok').html(res.html);
+				} else
+					err(res.text, -60);
+			}, 'json');
+		}
+		function err(msg, top) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class="red">' + msg + '</SPAN>',
+				remove:1,
+				indent:40,
+				show:1,
+				top:top,
+				left:92
+			});
+		}
+	})
+	.on('click', '#setup_worker .img_del', function() {
+		var u = $(this);
+		while(!u.hasClass('unit'))
+			u = u.parent();
+		var dialog = _dialog({
+			top:110,
+			width:250,
+			head:'Удаление сотрудника',
+			content:'<center>Подтвердите удаление сотрудника.</center>',
+			butSubmit:'Удалить',
+			submit:submit
+		});
+		function submit() {
+			var send = {
+				op:'setup_worker_del',
+				viewer_id:u.attr('val')
+			};
+			dialog.process();
+			$.post(AJAX_GAZ, send, function(res) {
+				if(res.success) {
+					dialog.close();
+					_msg('Сотрудник удален.');
+					$('#spisok').html(res.html);
+				} else
+					dialog.abort();
+			}, 'json');
+		}
+	})
+
+
 	.ready(function() {
 		if($('#client').length > 0) {
 			window.cFind = $('#find')._search({

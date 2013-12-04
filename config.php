@@ -42,6 +42,6 @@ function _getSetupGlobal() {//Получение глобальных данных
 function _getVkUser() {//Получение данных о пользователе
 	$u = _viewer();
 	define('VIEWER_NAME', $u['name']);
-	define('VIEWER_ADMIN', $u['gazeta_admin']);
-	define('AUTH', isset($u['gazeta_worker']));
+	define('GAZETA_ADMIN', $u['gazeta_admin']);
+	define('GAZETA_WORKER', $u['gazeta_worker']);
 }//end of _getVkUser()

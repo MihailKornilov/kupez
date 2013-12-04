@@ -8,7 +8,7 @@ if(empty($_GET['p'])) {
 	$_GET['p'] = 'gazeta';
 }
 
-if(!AUTH)
+if(!GAZETA_WORKER)
 	$html .= _noauth();
 else {
 	switch($_GET['p']) {
@@ -33,12 +33,9 @@ else {
 							$html .= client_list();
 					}
 				break;
-				case 'zayav':
-					break;
-				case 'report':
-					break;
-				case 'setup':
-					break;
+				case 'zayav': break;
+				case 'report': break;
+				case 'setup': $html .= setup(); break;
 			}
 			break;
 	}
