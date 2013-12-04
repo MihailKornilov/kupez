@@ -44,7 +44,7 @@ where id=".$id);
 		$_POST['day_begin']=strftime("%Y-%m-%d",$timeStart);
 		}
 	}
-
+GvaluesCreate();
 
 $send=1;
 

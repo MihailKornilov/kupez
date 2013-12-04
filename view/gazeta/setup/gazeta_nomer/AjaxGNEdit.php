@@ -25,5 +25,6 @@ if ($send->save == 1) {
                 (1032,"'.$_POST['general_nomer'].'",'.VIEWER_ID.')');
 }
 
+GvaluesCreate();
 
 echo json_encode($send);

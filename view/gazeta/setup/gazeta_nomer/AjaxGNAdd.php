@@ -18,6 +18,8 @@ if ($send->save == 1) {
         '".$_POST['day_public']."')");
 }
 
+GvaluesCreate();
+
 $VK->Query('INSERT INTO `gazeta_log`
                 (`type`,`value`,`viewer_id_add`)
             VALUES

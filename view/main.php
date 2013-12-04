@@ -1,67 +1,155 @@
 <?php
-// Заголовок Header
-function _header($vku)
-{
-?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<HTML xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
-<HEAD>
-<meta http-equiv="content-type" content="text/html; charset=windows-1251">
-<?=(SA==VIEWER_ID)?'<SCRIPT type="text/javascript" src="http://nyandoma.ru/js/errors.js?'.JS_VERSION.'"></SCRIPT>':''?>
-<SCRIPT type="text/javascript" src="/js/jquery-1.9.1.min.js"></SCRIPT>
-<SCRIPT type="text/javascript" src="/js/xd_connection.js"></SCRIPT>
-<SCRIPT type="text/javascript" src="/js/global.js?<?=JS_VERSION?>"></SCRIPT>
-<SCRIPT type="text/javascript" src="/js/G_values.js?<?=G_VALUES_VERSION?>"></SCRIPT>
-<SCRIPT type="text/javascript" src="/include/foto/foto.js?<?=JS_VERSION?>"></SCRIPT>
-<LINK href="/css/global.css?<?=CSS_VERSION?>" rel="stylesheet" type="text/css">
-<TITLE> Приложение КупецЪ </TITLE>
-</HEAD>
-<BODY>
-<SCRIPT type="text/javascript">
-<?=(DOMAIN == 'kupez')?'for(var i in VK)if(typeof VK[i]=="function")VK[i]=function(){return false;};':''?>
-G.domen = "<?=DOMAIN?>";
-G.values = "<?=VALUES?>";
-G.url = "<?=URL?>";
-G.vk = {
-    viewer_id:<?=$vku['viewer_id']?>,
-    name:"<?=$vku['first_name'].' '.$vku['last_name']?>",
-    first_name:"<?=$vku['first_name']?>",
-    last_name:"<?=$vku['last_name']?>",
-    country_id:<?=$vku['country_id']?>,
-    city_id:<?=$vku['city_id']?>
-};
-</SCRIPT>
-<DIV id=frameBody>
-<?
-} // end of _header()
+function _hashRead() {
+	$_GET['p'] = isset($_GET['p']) ? $_GET['p'] : 'gazeta';
+	if(empty($_GET['hash'])) {
+		define('HASH_VALUES', false);
+		if(isset($_GET['start'])) {// восстановление последней посещённой страницы
+			$_GET['p'] = isset($_COOKIE['p']) ? $_COOKIE['p'] : $_GET['p'];
+			$_GET['d'] = isset($_COOKIE['d']) ? $_COOKIE['d'] : '';
+			$_GET['d1'] = isset($_COOKIE['d1']) ? $_COOKIE['d1'] : '';
+			$_GET['id'] = isset($_COOKIE['id']) ? $_COOKIE['id'] : '';
+		} else
+			_hashCookieSet();
+		return;
+	}
+	$ex = explode('.', $_GET['hash']);
+	$r = explode('_', $ex[0]);
+	unset($ex[0]);
+	define('HASH_VALUES', empty($ex) ? false : implode('.', $ex));
+	$_GET['p'] = $r[0];
+	unset($_GET['d']);
+	unset($_GET['d1']);
+	unset($_GET['id']);
+	switch($_GET['p']) {
+		case 'client':
+			if(isset($r[1]))
+				if(preg_match(REGEXP_NUMERIC, $r[1])) {
+					$_GET['d'] = 'info';
+					$_GET['id'] = intval($r[1]);
+				}
+			break;
+		case 'zayav':
+			if(isset($r[1]))
+				if(preg_match(REGEXP_NUMERIC, $r[1])) {
+					$_GET['d'] = 'info';
+					$_GET['id'] = intval($r[1]);
+				} else {
+					$_GET['d'] = $r[1];
+					if(isset($r[2]))
+						$_GET['id'] = intval($r[2]);
+				}
+			break;
+		default:
+			if(isset($r[1])) {
+				$_GET['d'] = $r[1];
+				if(isset($r[2]))
+					$_GET['d1'] = $r[2];
+			}
+	}
+	_hashCookieSet();
+}//_hashRead()
+function _hashCookieSet() {
+	setcookie('p', $_GET['p'], time() + 2592000, '/');
+	setcookie('d', isset($_GET['d']) ? $_GET['d'] : '', time() + 2592000, '/');
+	setcookie('d1', isset($_GET['d1']) ? $_GET['d1'] : '', time() + 2592000, '/');
+	setcookie('id', isset($_GET['id']) ? $_GET['id'] : '', time() + 2592000, '/');
+}//_hashCookieSet()
+function _cacheClear() {
+	xcache_unset(CACHE_PREFIX.'setup_global');
+}//_cacheClear()
 
-// Завершение страницы Footer
-function _footer()
-{
-    if(SA == VIEWER_ID) {
-?>      <DIV id=admin>
-            <A href='<?=URL?>'>Admin</A> ::
-            <A id=script_style>Стили и скрипты (<?=JS_VERSION?>)</A> ::
-            php <?=(round(microtime(true) - TIME, 3))?> ::
-            js <span id=js_time></span>
-        </DIV>
-        <SCRIPT type='text/javascript'>
-            $('#script_style').click(function () {
-                $.getJSON('/view/superadmin/AjaxScriptStyleUp.php?' + G.values, function () { location.reload(); });
-            });
-            $("#js_time").html(((new Date()).getTime() - G.T)/1000);
-        </SCRIPT>
-<?php } ?>
-    </DIV>
-    <SCRIPT type="text/javascript">
-        VK.init(frameBodyHeightSet);
-        //VK.callMethod("setLocation","");
-        VK.callMethod('scrollSubscribe');
-        VK.addCallback('onScroll',function(top){ G.vkScroll = top; });
-    </SCRIPT>
-    </BODY></HTML>
-<?php
-}  // end of _footer()
+function _header() {
+	global $html;
+	$html =
+		'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'.
+		'<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">'.
 
+		'<head>'.
+		'<meta http-equiv="content-type" content="text/html; charset=windows-1251" />'.
+		'<title>КупецЪ - Приложение '.API_ID.'</title>'.
+
+		//Отслеживание ошибок в скриптах
+		(SA ? '<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/js/errors.js?'.VERSION.'"></script>' : '').
+
+		//Стороние скрипты
+		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/js/jquery-2.0.3.min.js"></script>'.
+		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/'.(DEBUG ? '' : 'min/').'xd_connection.js"></script>'.
+
+		//Установка начального значения таймера.
+		(SA ? '<script type="text/javascript">var TIME=(new Date()).getTime();</script>' : '').
+
+		'<script type="text/javascript">'.
+			(LOCAL ? 'for(var i in VK)if(typeof VK[i]=="function")VK[i]=function(){return false};' : '').
+			'var DOMAIN="'.DOMAIN.'",'.
+				'VALUES="'.VALUES.'",'.
+				'VIEWER_ID='.VIEWER_ID.';'.
+		'</script>'.
+
+		//Подключение api VK. Стили VK должны стоять до основных стилей сайта
+		'<link href="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/'.(DEBUG ? '' : 'min/').'vk.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
+		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/'.(DEBUG ? '' : 'min/').'vk.js?'.VERSION.'"></script>'.
+
+		'<link href="'.SITE.'/css/main.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
+		'<script type="text/javascript" src="'.SITE.'/js/main.js?'.VERSION.'"></script>'.
+		($_GET['p'] == 'gazeta' ? '<script type="text/javascript" src="'.SITE.'/js/gazeta.js?'.VERSION.'"></script>' : '').
+		'<script type="text/javascript" src="'.SITE.'/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
+
+		'</head>'.
+		'<body>'.
+			'<div id="frameBody">'.
+				'<iframe id="frameHidden" name="frameHidden"></iframe>';
+}//_header()
+function _footer() {
+	global $html, $sqlQuery, $sqlCount, $sqlTime;
+	if(SA) {
+		$d = empty($_GET['d']) ? '' :'&pre_d='.$_GET['d'];
+		$d1 = empty($_GET['d1']) ? '' :'&pre_d1='.$_GET['d1'];
+		$id = empty($_GET['id']) ? '' :'&pre_id='.$_GET['id'];
+		$html .= '<div id="admin">'.
+			//  ($_GET['p'] != 'sa' && !SA_VIEWER_ID ? '<a href="'.URL.'&p=sa&pre_p='.$_GET['p'].$d.$d1.$id.'">Admin</a> :: ' : '').
+			'<a class="debug_toggle'.(DEBUG ? ' on' : '').'">В'.(DEBUG ? 'ы' : '').'ключить Debug</a> :: '.
+			'<a id="cache_clear">Очисить кэш ('.VERSION.')</a> :: '.
+			'sql <b>'.$sqlCount.'</b> ('.round($sqlTime, 3).') :: '.
+			'php '.round(microtime(true) - TIME, 3).' :: '.
+			'js <EM></EM>'.
+			'</div>'
+			.(DEBUG ? $sqlQuery : '');
+	}
+	$getArr = array(
+		'start' => 1,
+		'api_url' => 1,
+		'api_id' => 1,
+		'api_settings' => 1,
+		'viewer_id' => 1,
+		'viewer_type' => 1,
+		'sid' => 1,
+		'secret' => 1,
+		'access_token' => 1,
+		'user_id' => 1,
+		'group_id' => 1,
+		'is_app_user' => 1,
+		'auth_key' => 1,
+		'language' => 1,
+		'parent_language' => 1,
+		'ad_info' => 1,
+		'is_secure' => 1,
+		'referrer' => 1,
+		'lc_name' => 1,
+		'hash' => 1
+	);
+	$gValues = array();
+	foreach($_GET as $k => $val) {
+		if(isset($getArr[$k]) || empty($_GET[$k])) continue;
+		$gValues[] = '"'.$k.'":"'.$val.'"';
+	}
+	$html .= '<script type="text/javascript">hashSet({'.implode(',', $gValues).'})</script>'.
+		'</div></body></html>';
+}//_footer()
+
+
+
+
+/*
 // Проверка пользователя на наличие в базе. Также обновление при первом входе в Контакт
 function vkUserCheck($vku, $update = false)
 {
@@ -146,4 +234,79 @@ function nopage($p, $d)
 </DIV>
 <?php
 }
-?>
+
+// установка баланса клиента
+function setClientBalans($client_id = 0) {
+	if ($client_id > 0) {
+		global $VK;
+		$rashod = $VK->QRow("SELECT SUM(`summa`) FROM `gazeta_zayav` WHERE `client_id`=".$client_id);
+		$prihod = $VK->QRow("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `status`=1 AND `client_id`=".$client_id);
+		$balans = $prihod - $rashod;
+		$zayav_count = $VK->QRow("SELECT COUNT(`id`) FROM `gazeta_zayav` WHERE `client_id`=".$client_id);
+		$VK->Query("UPDATE `gazeta_client` SET
+                        `balans`=".$balans.",
+                        `zayav_count`=".$zayav_count." WHERE `id`=".$client_id);
+		return $balans;
+	} else {
+		return 0;
+	}
+}
+
+$zayavCategory = array(
+  1 => 'Объявление',
+  2 => 'Реклама',
+  3 => 'Поздравление',
+  4 => 'Статья'
+);
+
+
+// форматирование текста для внесения в базу
+function textFormat($txt) {
+	$txt = str_replace("'","&#039;", $txt);
+	$txt = str_replace("<","&lt;", $txt);
+	$txt = str_replace(">","&gt;", $txt);
+	return str_replace("\n","<BR>", $txt);
+}
+
+function textUnFormat($txt) {
+	$txt=str_replace("&#039;","'",$txt);
+	$txt=str_replace("&lt;","<",$txt);
+	$txt=str_replace("&gt;",">",$txt);
+	return str_replace("<BR>","\n",$txt);
+}
+
+
+
+// установка баланса клиента
+function setClientBalans($client_id = 0) {
+	if ($client_id > 0) {
+		global $VK;
+		$rashod = $VK->QRow("select sum(summa) from zayav where client_id=".$client_id);
+		$prihod = $VK->QRow("select sum(summa) from oplata where status=1 and client_id=".$client_id);
+		$balans = $prihod - $rashod;
+		$VK->Query("update client set balans=".$balans." where id=".$client_id);
+		return $balans;
+	} else {
+		return 0;
+	}
+}
+
+$WeekName = array(
+	1=>'пн',
+	2=>'вт',
+	3=>'ср',
+	4=>'чт',
+	5=>'пт',
+	6=>'сб',
+	0=>'вс'
+);
+// обновление количества объявлений для рубрики
+function rubrikaCountUpdate($rub) {
+	global $VK;
+	$count = $VK->QRow("select count(id) from zayav where rubrika=".$rub." and status=1 and category=1 and active_day>='".strftime("%Y-%m-%d",time())."'");
+	$VK->Query("update setup_rubrika set ob_count=".$count." where id=".$rub);
+	xcache_unset('rubrikaCount');
+	xcache_unset('obSpisokFirst');
+}
+
+*/

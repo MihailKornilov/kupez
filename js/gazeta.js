@@ -1,3 +1,109 @@
+var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
+	clientFilter = function() {
+		var v = {
+			fast:cFind.inp(),
+			person:$('#person').val(),
+			order:$('#order').val(),
+			skidka:$('#skidka').val(),
+			dolg:$('#dolg').val()
+		};
+		$('.filter')[v.fast ? 'hide' : 'show']();
+		return v;
+	},
+	clientSpisokLoad = function() {
+		var send = clientFilter(),
+			result = $('.result');
+		send.op = 'client_spisok';
+		if(result.hasClass('busy'))
+			return;
+		result.addClass('busy');
+		$.post(AJAX_GAZ, send, function (res) {
+			result.removeClass('busy');
+			if(res.success) {
+				result.html(res.result);
+				$('.left').html(res.spisok);
+			}
+		}, 'json');
+	};
+
+$(document)
+	.on('click', '#client .ajaxNext', function() {
+		if($(this).hasClass('busy'))
+			return;
+		var next = $(this),
+			send = clientFilter();
+		send.op = 'client_next';
+		send.page = next.attr('val');
+		next.addClass('busy');
+		$.post(AJAX_GAZ, send, function (res) {
+			if(res.success) {
+				next.remove();
+				$('#client .left').append(res.spisok);
+			} else
+				next.removeClass('busy');
+		}, 'json');
+	})
+
+	.ready(function() {
+		if($('#client').length > 0) {
+			window.cFind = $('#find')._search({
+				width:602,
+				focus:1,
+				enter:1,
+				txt:'Введите данные клиента и нажмите Enter',
+				func:clientSpisokLoad
+			});
+			//$('#buttonCreate').click(clientAdd);
+			$('#order')._radio({
+				light:1,
+				spisok:[
+					{uid:1,title:'По дате добавления'},
+					{uid:2,title:'По активности'}
+				],
+				func:clientSpisokLoad
+
+			});
+			$('#order_radio').vkHint({
+				width:210,
+				msg:'<div style="text-align:justify">' +
+						'<b>По дате добавления:</b><br> клиенты, добавленные последними, стоят в списке первыми.<br><br>' +
+						'<b>По активности:</b><br> сортировка по дате выхода последней заявки клиента. ' +
+						'Также показывается дополнительное поле "Активность", в котором содержится дата последнего выхода заявки.' +
+					'</div>',
+				ugol:'right',
+				indent:15,
+				top:-34,
+				left:-246,
+				delayShow:1000
+			});
+			$('#person').vkSel({
+				width:150,
+				spisok:PERSON_SPISOK,
+				title0:'Категория не выбрана',
+				func:clientSpisokLoad
+			});
+			$('#skidka').vkSel({
+				width:150,
+				spisok:SKIDKA_SPISOK,
+				title0:'Скидка не выбрана',
+				func:clientSpisokLoad
+			});
+			$('#dolg')._check(clientSpisokLoad);
+			$('#dolg_check').vkHint({
+				msg:'<b>Список должников.</b><br /><br />' +
+					'Выводятся клиенты, у которых баланс менее 0. Также в результате отображается общая сумма долга.',
+				ugol:'right',
+				width:150,
+				top:-6,
+				left:-185,
+				indent:20,
+				delayShow:1000,
+				correct:0
+			});
+		}
+	});
+
+/*
 // Внесение платежа
 function moneyAdd(obj) {
     $("#dialog_prihod").remove();
@@ -95,3 +201,4 @@ function moneyDel(id) {
         }
     }).o;
 } // end moneyDel()
+*/

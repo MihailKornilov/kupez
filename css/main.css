@@ -1,0 +1,15 @@
+#client #find{background-color:#F7F7F7;padding:10px;border-bottom:#dae1e8 solid 1px}
+#client .left{padding:0 8px 8px 8px}
+#client .right{width:150px}
+#client .dolg{color:#777;margin-left:10px;font-size:10px}
+#client #vkSel_person{margin:7px 0}
+#client #vkSel_skidka{margin:7px 0}
+#client #dolg_check{margin-top:20px}
+#client .unit{margin-top:8px;border-bottom:#dae1e8 solid 1px;padding:5px}
+#client .unit em{background-color:#FFC; border-bottom:#FE2 solid 1px}
+#client .label{width:80px}
+#client .dop_fio{color:#999;margin-left:6px;font-size:10px}
+#client .dop_fio em{font-size:10px}
+#client .balans{float:right;width:110px;color:#888}
+#client .balans b{float:right;color:#090}
+#client b.minus{color:#a00}

@@ -38,6 +38,7 @@ $VK->Query('INSERT INTO `gazeta_nomer` (
 `viewer_id_add`
 ) values '.implode(',', $gnArr));
 
+GvaluesCreate();
 
 $VK->Query('INSERT INTO `gazeta_log`
                 (`type`,`value`,`viewer_id_add`)

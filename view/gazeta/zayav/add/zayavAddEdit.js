@@ -190,7 +190,7 @@ function fotoUpload() {
 
 // Обнуление списка номеров и суммы вручную
 function gnReload(id, gns) {
-    G.gn.first_active = id == 2 ? 362 : G.gn.first_save;
+    G.gn.first_active = id == 2 ? 400 : G.gn.first_save;
     zayav.gn = $("#gn_spisok").gnGet({
         category:id,
         gns:gns,

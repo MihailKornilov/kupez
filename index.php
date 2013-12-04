@@ -1,11 +1,56 @@
 <?php
 require_once('config.php');
-include('include/global_functions.php');
-include('view/main.php');
-$vku = (array)$VK->QueryObjectOne('SELECT * FROM `vk_user` WHERE `viewer_id`='.VIEWER_ID);
-$vku = vkUserCheck($vku, isset($_GET['start']));
-_header($vku);
-//GvaluesCreate();
+
+_hashRead();
+_header();
+
+if(empty($_GET['p'])) {
+	$_GET['p'] = 'gazeta';
+}
+
+if(!AUTH)
+	$html .= _noauth();
+else {
+	switch($_GET['p']) {
+		default:
+		case 'gazeta':
+			require_once(DOCUMENT_ROOT.'/view/gazeta.php');
+			if(empty($_GET['d']))
+				$_GET['d'] = 'client';
+			_mainLinks();
+			switch(@$_GET['d']) {
+				default:
+				case 'client':
+					switch(@$_GET['d1']) {
+						case 'info':
+							if(!preg_match(REGEXP_NUMERIC, $_GET['id'])) {
+								$html .= 'Страницы не существует';
+								break;
+							}
+							$html .= client_info(intval($_GET['id']));
+							break;
+						default:
+							$html .= client_list();
+					}
+				break;
+				case 'zayav':
+					break;
+				case 'report':
+					break;
+				case 'setup':
+					break;
+			}
+			break;
+	}
+}
+
+_footer();
+mysql_close();
+echo $html;
+
+
+
+/*
 
 if (!isset($_GET['p'])) {
     $_GET['p'] = 'ob';
@@ -13,19 +58,6 @@ if (!isset($_GET['p'])) {
         $_GET['p'] = 'gazeta';
 }
 
-if ($_GET['p'] == 'gazeta') {
-    if ($vku['gazeta_worker'] == 0) {
-        echo 'No access. <a href="'.URL.'&p=ob">Back</a>';
-    } else {
-        include('view/gazeta/dazeta.php');
-        switch (main_links(@$_GET['d'])) {
-            case 'client': clientSpisok(); break;
-            case 'zayav': zayavSpisok(); break;
-            case 'report': reportView(); break;
-            case 'setup': setupView($vku['gazeta_admin']); break;
-        }
-    }
-}
 
 
 if ($_GET['p'] == 'ob') {
@@ -51,6 +83,4 @@ if ($_GET['p'] == 'admin') {
         }
     }
 }
-
-_footer();
-?>
+*/

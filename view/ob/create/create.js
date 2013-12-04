@@ -317,6 +317,7 @@ function vkCreateGo() {
             process = 1;
             $(".vkButton BUTTON").butProcess();
             $.post("/view/ob/create/AjaxObCreate.php?" + G.values, obj, function (res) {
+                wallPost(obj);
                 location.href = "/index.php?" + G.values + "&p=ob";
             },'json');
         }
@@ -334,8 +335,21 @@ function vkCreateGo() {
     }
 }
 
-
 VK.addCallback('onOrderSuccess', function(order_id) {
     create.order.id = order_id;
     vkCreateGo();
 });
+
+function wallPost(obj) {
+    var msg = $("#vkSel_rubrika INPUT:first").val() + ' » ' +
+        (obj.podrubrika > 0 ? $("#vkSel_podrubrika INPUT:first").val() + ' » ' : '') +
+        obj.txt +
+        (obj.telefon ? '\nТел.: ' + obj.telefon : '') +
+        '\n\n\n&#128221; vk.com/kupezz';
+    var send = {
+        message:msg
+    };
+    VK.api('wall.post', send, function(data) {
+        vkMsgOk('Объявление размещено на стене Вашей страницы.');
+    });
+}

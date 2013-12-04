@@ -27,61 +27,6 @@ G.gn.last_active = <?=GN_LAST_ACTIVE?>;
 <SCRIPT type="text/javascript" src="/js/gazeta.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 
-// Основное горизонтальное меню
-function main_links($g) {
-    $name = array('Клиенты', 'Заявки', 'Отчёты', 'Настройки');
-    $page = array('client',  'zayav',  'report', 'setup');
-
-    $g_page = 'zayav';
-    for ($n = 0; $n < count($page); $n++) {
-        if ($g == $page[$n])
-            $g_page = $g;
-    }
-    $links = '<A href="'.URL.'&p=ob"style="float:right;margin:5px 5px 0 15px;" onclick="setCookie(\'enter\',0);">Выход</A>';
-    for ($n = 0; $n < count($page); $n++) {
-        $links .=
-            '<A HREF="'.URL.'&p=gazeta&d='.$page[$n].'" class="la'.($page[$n] == $g_page ? ' sel' : '').'">'.
-                "<DIV class=l1></DIV>".
-                "<DIV class=l2></DIV>".
-                "<DIV class=l3>".$name[$n]."</DIV>".
-            "</A>";
-    }
-
-    echo '<DIV id=main_links>'.$links.'</DIV>';
-    return $g_page;
-} // end of main_links()
-
-// Список клиентов
-function clientSpisok() {
-    if (@$_GET['d1'] == 'info') { clientInfo(); return; }
-    global $VK;
-?>
-<div id=client>
-    <DIV id=clientFind></DIV>
-    <DIV id=findResult>&nbsp;</DIV>
-    <TABLE cellpadding="0" cellspacing="0">
-    <TR>
-        <TD id=spisok>&nbsp;
-        <TD id=right>
-            <DIV id=buttonCreate><A>Новый клиент</A></DIV>
-
-            <div class=findHead>Сортировка<div>
-            <INPUT TYPE=hidden id=order value=1>
-
-            <div class=findHead>Категория<div>
-            <INPUT TYPE=hidden id=person>
-
-            <div class=findHead>Скидка<div>
-            <INPUT TYPE=hidden id=skidka>
-
-            <INPUT TYPE=hidden id=dolg>
-
-    </TABLE>
-</div>
-<SCRIPT type="text/javascript" src="/view/gazeta/client/spisok/clientSpisok.js?<?=JS_VERSION?>"></SCRIPT>
-<?php
-} // end of clientSpisok()
-
 // Просмотр информации о клиенте
 function clientInfo() {
     global $VK;
@@ -733,7 +678,21 @@ function reportGet($d1) {
 // Страница с настройками
 function setupView($admin) {
     global $VK;
-
+/*
+    $rek = $VK->QueryObjectArray("SELECT `id` FROM `gazeta_zayav` WHERE `category`=2 AND `dtime_add`<'2013-11-07 00:00:00'");
+    $ids = array();
+    foreach($rek as $r)
+        $ids[] = $r->id;
+    $ids = implode(',', $ids);
+    $VK->Query("DELETE FROM `gazeta_zayav` WHERE `id` IN (".$ids.")");
+    $VK->Query("DELETE FROM `gazeta_kassa` WHERE `zayav_id` IN (".$ids.")");
+    $VK->Query("DELETE FROM `gazeta_log` WHERE `zayav_id` IN (".$ids.")");
+    $VK->Query("DELETE FROM `gazeta_money` WHERE `zayav_id` IN (".$ids.")");
+    $VK->Query("DELETE FROM `gazeta_nomer_pub` WHERE `zayav_id` IN (".$ids.")");
+    $rek = $VK->QueryObjectArray("SELECT `id` FROM `gazeta_client`");
+    foreach($rek as $r)
+        setClientBalans($r->id);
+*/
     // Получение начального и конечного года для настройки номеров газет
     $gn = $VK->QueryObjectOne("SELECT
             SUBSTR(MIN(`day_public`),1,4) AS `begin`,

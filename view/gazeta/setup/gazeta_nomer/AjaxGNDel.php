@@ -3,6 +3,8 @@ require_once('../../../../include/AjaxHeader.php');
 
 $VK->Query("delete from gazeta_nomer where general_nomer=".$_POST['general_nomer']);
 
+GvaluesCreate();
+
 $VK->Query('INSERT INTO `gazeta_log`
                 (`type`,`value`,`viewer_id_add`)
             VALUES

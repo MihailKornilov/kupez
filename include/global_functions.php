@@ -1,23 +1,4 @@
 <?php
-// Формирование окончаний
-function ends($count, $e1, $e2, $e5 = '') {
-    if (!$e5) { $e5 = $e2; }
-    if($count/10%10 == 1) { return $e5; }
-    else {
-        switch($count%10) {
-            case '1': return $e1;
-            case '2': return $e2;
-            case '3': return $e2;
-            case '4': return $e2;
-            default: return $e5;
-        }
-    }
-} // end of ends()
-
-function win1251($txt) { return iconv("UTF-8", "WINDOWS-1251", $txt); }
-function utf8($txt) { return iconv("WINDOWS-1251", "UTF-8", $txt); }
-function curTime() { return strftime("%Y-%m-%d %H:%M:%S", time()); }
-
 /* форматирование текста для внесения в базу */
 function textFormat($txt) {
     $txt = str_replace("'", "&#039;", $txt);
@@ -33,54 +14,6 @@ function textUnFormat($txt) {
     $txt = str_replace("&gt;", ">", $txt);
     return str_replace("<BR>", "\n", $txt);
 }
-
-$MonthFull = array(
-    1=>'января',
-    2=>'февраля',
-    3=>'марта',
-    4=>'апреля',
-    5=>'мая',
-    6=>'июня',
-    7=>'июля',
-    8=>'августа',
-    9=>'сентября',
-    10=>'октября',
-    11=>'ноября',
-    12=>'декабря',
-    '01'=>'января',
-    '02'=>'февраля',
-    '03'=>'марта',
-    '04'=>'апреля',
-    '05'=>'мая',
-    '06'=>'июня',
-    '07'=>'июля',
-    '08'=>'августа',
-    '09'=>'сентября'
-);
-
-$MonthCut = array(
-    1=>'янв',
-    2=>'фев',
-    3=>'мар',
-    4=>'апр',
-    5=>'мая',
-    6=>'июн',
-    7=>'июл',
-    8=>'авг',
-    9=>'сент',
-    10=>'окт',
-    11=>'ноя',
-    12=>'дек',
-    '01'=>'янв',
-    '02'=>'фев',
-    '03'=>'мар',
-    '04'=>'апр',
-    '05'=>'мая',
-    '06'=>'июн',
-    '07'=>'июл',
-    '08'=>'авг',
-    '09'=>'сен'
-);
 
 $WeekName = array(
     1=>'пн',
@@ -124,59 +57,4 @@ function AjaxSpisokCreate($sql, $sort='') {
     return $send;
 } // end of AjaxSpisokCreate()
 
-// составление файла G_values.js
-function GvaluesCreate() {
-    global $VK;
-    $save = "function SpisokToAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a;}\n";
-
-    $save .= 'G.category_spisok = [{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}];G.category_ass = SpisokToAss(G.category_spisok);';
-    $save .= "\nG.rubrika_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rubrika` ORDER BY `sort`').";G.rubrika_ass = SpisokToAss(G.rubrika_spisok);";
-    $save .= "\nG.person_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`').";G.person_ass = SpisokToAss(G.person_spisok);";
-    $save .= "\nG.money_type_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_money_type` ORDER BY `sort`').";G.money_type_ass = SpisokToAss(G.money_type_spisok);";
-    $save .= "\nG.polosa_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').";G.polosa_ass = SpisokToAss(G.polosa_spisok);";
-    $save .= "\nG.polosa_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_polosa_cost` ORDER BY `id`').";G.polosa_cena_ass[0] = 0;";
-    $save .= "\nG.ob_dop_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_ass = SpisokToAss(G.ob_dop_spisok);";
-    $save .= "\nG.ob_dop_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_cena_ass[0] = 0;";
-    $save .= "\nG.skidka_spisok = ".$VK->vkSelJson('SELECT `razmer`,CONCAT(`razmer`,"%") FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
-    $save .= "\nG.rashod_category_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `id`').";G.rashod_category_ass = SpisokToAss(G.rashod_category_spisok);";
-    $save .= "\nG.txt_len_first = ".$VK->QRow("SELECT `txt_len_first` FROM `setup_global` LIMIT 1").";";
-    $save .= "\nG.txt_cena_first = ".$VK->QRow("SELECT `txt_cena_first` FROM `setup_global` LIMIT 1").";";
-    $save .= "\nG.txt_len_next = ".$VK->QRow("SELECT `txt_len_next` FROM `setup_global` LIMIT 1").";";
-    $save .= "\nG.txt_cena_next = ".$VK->QRow("SELECT `txt_cena_next` FROM `setup_global` LIMIT 1").";";
-
-    $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`");
-    if (count($spisok) > 0) {
-        $gn = array();
-        foreach ($spisok as $sp) {
-            array_push($gn, "\n".$sp->general_nomer.':{'.
-                              'week:'.$sp->week_nomer.','.
-                              'public:"'.$sp->day_public.'",'.
-                              'txt:"'.FullData($sp->day_public, 0, 1).'"'.
-                              '}');
-        }
-        $save .= "\nG.gn = {".implode(',', $gn)."};";
-    }
-
-    $spisok = $VK->QueryObjectArray("SELECT `id`,`name`,`rubrika_id` FROM `setup_pod_rubrika` ORDER BY `rubrika_id`,`sort`");
-    $podrubrika = array();
-    if (count($spisok) > 0) {
-        foreach ($spisok as $sp) {
-            if (!isset($podrubrika[$sp->rubrika_id])) { $podrubrika[$sp->rubrika_id] = array(); }
-            array_push($podrubrika[$sp->rubrika_id], '{uid:'.$sp->id.',title:"'.$sp->name.'"}');
-        }
-        $v = array();
-        foreach ($podrubrika as $n => $sp) { array_push($v, $n.":[".implode(',',$sp)."]\n"); }
-        $podrubrika = $v;
-    }
-    $save .= "\nG.podrubrika_spisok = {".implode(',',$podrubrika)."};";
-    $save .= "\nG.podrubrika_ass = []; G.podrubrika_ass[0] = ''; for (var k in G.podrubrika_spisok) { for (var n = 0; n < G.podrubrika_spisok[k].length; n++) { var sp = G.podrubrika_spisok[k][n]; G.podrubrika_ass[sp.uid] = sp.title; } }";
-
-    $save .= "\nG.countries_spisok = [{uid:1,title:'Россия'},{uid:2,title:'Украина'},{uid:3,title:'Беларусь'},{uid:4,title:'Казахстан'},{uid:5,title:'Азербайджан'},{uid:6,title:'Армения'},{uid:7,title:'Грузия'},{uid:8,title:'Израиль'},{uid:11,title:'Кыргызстан'},{uid:12,title:'Латвия'},{uid:13,title:'Литва'},{uid:14,title:'Эстония'},{uid:15,title:'Молдова'},{uid:16,title:'Таджикистан'},{uid:17,title:'Туркмения'},{uid:18,title:'Узбекистан'}];";
-
-    $fp = fopen(PATH."/js/G_values.js","w+");
-    fwrite($fp, $save);
-    fclose($fp);
-
-    $VK->Query("update setup_global set g_values=g_values+1");
-} // end of GvaluesCreate()
 ?>
