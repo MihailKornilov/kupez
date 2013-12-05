@@ -147,6 +147,67 @@ function _footer() {
 		'</div></body></html>';
 }//_footer()
 
+function GvaluesCreate() {// составление файла G_values.js
+	$sql = "SELECT * FROM `setup_global` LIMIT 1";
+	$g = mysql_fetch_assoc(query($sql));
+
+	$save = //'function _toSpisok(s){var a=[];for(k in s)a.push({uid:k,title:s[k]});return a}'.
+		//'function _toAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a}'.
+
+		'var CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],'.
+		"\n".'PERSON_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`").','.
+		"\n".'SKIDKA_SPISOK='.query_selJson("SELECT `razmer`,CONCAT(`razmer`,'%') FROM `setup_skidka` ORDER BY `id`").','.
+		"\n".'RUBRIC_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_rubric` ORDER BY `sort`").','.
+		"\n".'MONEY_TYPE_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_money_type` ORDER BY `sort`").','.
+		"\n".'TXT_LEN_FIRST='.$g['txt_len_first'].','.
+		"\n".'TXT_CENA_FIRST='.$g['txt_cena_first'].','.
+		"\n".'TXT_LEN_NEXT='.$g['txt_len_next'].','.
+		"\n".'TXT_CENA_NEXT='.$g['txt_cena_next'].',';
+
+
+	$sql = "SELECT * FROM `setup_rubric_sub` ORDER BY `rubric_id`,`sort`";
+	$q = query($sql);
+	$sub = array();
+	while($r = mysql_fetch_assoc($q)) {
+		if(!isset($sub[$r['rubric_id']]))
+			$sub[$r['rubric_id']] = array();
+		$sub[$r['rubric_id']][] = '{uid:'.$r['id'].',title:"'.$r['name'].'"}';
+	}
+	$v = array();
+	foreach($sub as $n => $sp)
+		$v[] = $n.':['.implode(',', $sp).']';
+	$save .= "\n".'RUBRIC_SUB_SPISOK={'.implode(',', $v).'};';
+
+
+	/*	$save .= "\nG.polosa_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').";G.polosa_ass = SpisokToAss(G.polosa_spisok);";
+		$save .= "\nG.polosa_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_polosa_cost` ORDER BY `id`').";G.polosa_cena_ass[0] = 0;";
+		$save .= "\nG.ob_dop_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_ass = SpisokToAss(G.ob_dop_spisok);";
+		$save .= "\nG.ob_dop_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_cena_ass[0] = 0;";
+		$save .= "\nG.skidka_spisok = ".$VK->vkSelJson('SELECT `razmer`,CONCAT(`razmer`,"%") FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
+		$save .= "\nG.rashod_category_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `id`').";G.rashod_category_ass = SpisokToAss(G.rashod_category_spisok);";
+
+		$spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`");
+		if (count($spisok) > 0) {
+			$gn = array();
+			foreach ($spisok as $sp) {
+				array_push($gn, "\n".$sp->general_nomer.':{'.
+					'week:'.$sp->week_nomer.','.
+					'public:"'.$sp->day_public.'",'.
+					'txt:"'.FullData($sp->day_public, 0, 1).'"'.
+					'}');
+			}
+			$save .= "\nG.gn = {".implode(',', $gn)."};";
+		}
+
+		$save .= "\nG.countries_spisok = [{uid:1,title:'Россия'},{uid:2,title:'Украина'},{uid:3,title:'Беларусь'},{uid:4,title:'Казахстан'},{uid:5,title:'Азербайджан'},{uid:6,title:'Армения'},{uid:7,title:'Грузия'},{uid:8,title:'Израиль'},{uid:11,title:'Кыргызстан'},{uid:12,title:'Латвия'},{uid:13,title:'Литва'},{uid:14,title:'Эстония'},{uid:15,title:'Молдова'},{uid:16,title:'Таджикистан'},{uid:17,title:'Туркмения'},{uid:18,title:'Узбекистан'}];";
+	*/
+	$fp = fopen(PATH.'/js/G_values.js', 'w+');
+	fwrite($fp, $save);
+	fclose($fp);
+
+	query("UPDATE `setup_global` SET `g_values`=`g_values`+1");
+	xcache_unset(CACHE_PREFIX.'setup_global');
+} // end of GvaluesCreate()
 
 
 

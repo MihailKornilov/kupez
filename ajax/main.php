@@ -12,11 +12,6 @@ switch(@$_POST['op']) {
 		while($r = mysql_fetch_assoc($q))
 			xcache_unset(CACHE_PREFIX.'viewer_'.$r['viewer_id']);
 		query("UPDATE `setup_global` SET `version`=`version`+1");
-
-		//todo удалить
-		require_once(DOCUMENT_ROOT.'/view/gazeta.php');
-		GvaluesCreate();
-
 		_cacheClear();
 		jsonSuccess();
 		break;

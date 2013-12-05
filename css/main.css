@@ -24,6 +24,8 @@
 #setup .rightLink a.sel{border-color:#6B8EB5}
 #setup ._spisok{margin-bottom:1px}
 
+.setup-tab{border-spacing:10px}
+.setup-tab input{width:250px}
 
 #setup_worker .headName{margin-bottom:15px}
 #setup_worker .unit,#setup_worker_add table{border-spacing:10px;border:#DDE solid 1px;width:300px;margin:6px 0 6px 20px}
@@ -38,8 +40,29 @@
 #setup_worker_add input{width:240px;padding:5px;height:13px;margin:7px 5px 0 0}
 #setup_worker_add .res{margin:10px 0 0 20px}
 
-
 #setup_person .name{width:180px}
 #setup_person td.name{cursor:move}
 #setup_person .cl{width:60px;text-align:center}
 #setup_person .set{width:40px}
+
+#setup_rubric .name{width:150px}
+#setup_rubric td.name{cursor:move}
+#setup_rubric .sub{width:75px;text-align:center}
+#setup_rubric .ob{width:75px;text-align:center}
+#setup_rubric .set{width:40px}
+
+#setup_rubric_sub .headName{margin-top:10px}
+#setup_rubric_sub .name{width:180px}
+#setup_rubric_sub td.name{cursor:move}
+#setup_rubric_sub .ob{width:75px;text-align:center}
+#setup_rubric_sub .set{width:40px}
+
+#setup_oblen table{border-spacing:6px;margin:30px 0 0 50px}
+#setup_oblen td{text-align:right}
+#setup_oblen input{width:20px;text-align:right}
+#setup_oblen .vkButton{margin:10px 0 0 150px}
+
+#setup_money .name{width:200px}
+#setup_money td.name{cursor:move}
+#setup_money .opl{width:60px;text-align:center}
+#setup_money .set{width:40px}

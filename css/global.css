@@ -496,13 +496,6 @@
 
 #setup #gazNomer .set { padding-left:19px; }
 
-#setup #rubrika #rubrika_table { margin:20px 0 20px 40px; }
-#setup #rubrika .tabSpisok { margin-bottom:1px; }
-#setup #rubrika .tabSpisok TD { background-color:#FFF; }
-#setup #rubrika .tabSpisok .name { width:180px; }
-#setup #rubrika .tabSpisok TD.name { cursor:move; }
-#setup #rubrika .tabSpisok .set { width:70px; text-align:center; }
-
 
 #setup #gazNomer #dopMenu {
     background-color:#FFF;

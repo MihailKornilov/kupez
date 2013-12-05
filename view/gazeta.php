@@ -36,66 +36,6 @@ function _mainLinks() {
 }//_mainLinks()
 
 
-function GvaluesCreate() {// составление файла G_values.js
-	$save = //'function _toSpisok(s){var a=[];for(k in s)a.push({uid:k,title:s[k]});return a}'.
-		//'function _toAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a}'.
-
-	'var CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],'.
-    "\n".'PERSON_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`").
-	"\n".'SKIDKA_SPISOK='.query_selJson('SELECT `razmer`,CONCAT(`razmer`,"%") FROM `setup_skidka` ORDER BY `id`').';';
-
-	/*	$save .= "\nG.rubrika_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rubrika` ORDER BY `sort`').";G.rubrika_ass = SpisokToAss(G.rubrika_spisok);";
-		$save .= "\nG.money_type_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_money_type` ORDER BY `sort`').";G.money_type_ass = SpisokToAss(G.money_type_spisok);";
-		$save .= "\nG.polosa_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').";G.polosa_ass = SpisokToAss(G.polosa_spisok);";
-		$save .= "\nG.polosa_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_polosa_cost` ORDER BY `id`').";G.polosa_cena_ass[0] = 0;";
-		$save .= "\nG.ob_dop_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_ass = SpisokToAss(G.ob_dop_spisok);";
-		$save .= "\nG.ob_dop_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_cena_ass[0] = 0;";
-		$save .= "\nG.skidka_spisok = ".$VK->vkSelJson('SELECT `razmer`,CONCAT(`razmer`,"%") FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
-		$save .= "\nG.rashod_category_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `id`').";G.rashod_category_ass = SpisokToAss(G.rashod_category_spisok);";
-		$save .= "\nG.txt_len_first = ".$VK->QRow("SELECT `txt_len_first` FROM `setup_global` LIMIT 1").";";
-		$save .= "\nG.txt_cena_first = ".$VK->QRow("SELECT `txt_cena_first` FROM `setup_global` LIMIT 1").";";
-		$save .= "\nG.txt_len_next = ".$VK->QRow("SELECT `txt_len_next` FROM `setup_global` LIMIT 1").";";
-		$save .= "\nG.txt_cena_next = ".$VK->QRow("SELECT `txt_cena_next` FROM `setup_global` LIMIT 1").";";
-
-		$spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`");
-		if (count($spisok) > 0) {
-			$gn = array();
-			foreach ($spisok as $sp) {
-				array_push($gn, "\n".$sp->general_nomer.':{'.
-					'week:'.$sp->week_nomer.','.
-					'public:"'.$sp->day_public.'",'.
-					'txt:"'.FullData($sp->day_public, 0, 1).'"'.
-					'}');
-			}
-			$save .= "\nG.gn = {".implode(',', $gn)."};";
-		}
-
-		$spisok = $VK->QueryObjectArray("SELECT `id`,`name`,`rubrika_id` FROM `setup_pod_rubrika` ORDER BY `rubrika_id`,`sort`");
-		$podrubrika = array();
-		if (count($spisok) > 0) {
-			foreach ($spisok as $sp) {
-				if (!isset($podrubrika[$sp->rubrika_id])) { $podrubrika[$sp->rubrika_id] = array(); }
-				array_push($podrubrika[$sp->rubrika_id], '{uid:'.$sp->id.',title:"'.$sp->name.'"}');
-			}
-			$v = array();
-			foreach ($podrubrika as $n => $sp) { array_push($v, $n.":[".implode(',',$sp)."]\n"); }
-			$podrubrika = $v;
-		}
-		$save .= "\nG.podrubrika_spisok = {".implode(',',$podrubrika)."};";
-		$save .= "\nG.podrubrika_ass = []; G.podrubrika_ass[0] = ''; for (var k in G.podrubrika_spisok) { for (var n = 0; n < G.podrubrika_spisok[k].length; n++) { var sp = G.podrubrika_spisok[k][n]; G.podrubrika_ass[sp.uid] = sp.title; } }";
-
-		$save .= "\nG.countries_spisok = [{uid:1,title:'Россия'},{uid:2,title:'Украина'},{uid:3,title:'Беларусь'},{uid:4,title:'Казахстан'},{uid:5,title:'Азербайджан'},{uid:6,title:'Армения'},{uid:7,title:'Грузия'},{uid:8,title:'Израиль'},{uid:11,title:'Кыргызстан'},{uid:12,title:'Латвия'},{uid:13,title:'Литва'},{uid:14,title:'Эстония'},{uid:15,title:'Молдова'},{uid:16,title:'Таджикистан'},{uid:17,title:'Туркмения'},{uid:18,title:'Узбекистан'}];";
-	*/
-	$fp = fopen(PATH.'/js/G_values.js', 'w+');
-	fwrite($fp, $save);
-	fclose($fp);
-
-	query("UPDATE `setup_global` SET `g_values`=`g_values`+1");
-	xcache_unset(CACHE_PREFIX.'setup_global');
-} // end of GvaluesCreate()
-
-
-
 // ---===! client !===--- Секция клиентов
 
 function clientFilter($v=array()) {
@@ -382,7 +322,7 @@ function setup() {
 		'worker' => 'Сотрудники',
 		'gn' => 'Номера выпусков газеты',
 		'person' => 'Категории клиентов',
-		'rubrika' => 'Рубрики',
+		'rubric' => 'Рубрики объявлений',
 		'oblen' => 'Стоимость длины объявления',
 		'obdop' => 'Доп. параметры объявления',
 		'polosa' => 'Стоимость см&sup2; рекламы',
@@ -404,22 +344,22 @@ function setup() {
 
 	switch($d) {
 		default: $d = $pageDef;
-		case 'worker':
+		case 'worker':  $left = setup_worker(); break;
+		case 'gn': $left = ''; break;
+		case 'person': $left = setup_person(); break;
+		case 'rubric':
 			if(preg_match(REGEXP_NUMERIC, @$_GET['id'])) {
-				$left = setup_worker_rules(intval($_GET['id']));
+				$left = setup_rubric_sub(intval($_GET['id']));
 				break;
 			}
-			$left = setup_worker();
+			$left = setup_rubric();
 			break;
-		case 'gn': break;
-		case 'person': $left = setup_person(); break;
-		case 'rubrika': break;
-		case 'oblen': break;
-		case 'obdop': break;
-		case 'polosa': break;
-		case 'money': break;
-		case 'skidka': break;
-		case 'rashod': break;
+		case 'oblen': $left = setup_oblen(); break;
+		case 'obdop': $left = ''; break;
+		case 'polosa': $left = ''; break;
+		case 'money': $left = setup_money(); break;
+		case 'skidka': $left = ''; break;
+		case 'rashod': $left = ''; break;
 	}
 	$links = '';
 	if($pages)
@@ -495,7 +435,7 @@ function setup_person_spisok() {
 		$send .='<dd val="'.$r['id'].'">'.
 			'<table class="_spisok">'.
 				'<tr><td class="name">'.$r['name'].
-					'<td class="cl">'.$r['count'].
+					'<td class="cl">'.($r['count'] ? $r['count'] : '').
 					'<td class="set">'.
 						'<div class="img_edit"></div>'.
 						(!$r['count'] ? '<div class="img_del"></div>' : '').
@@ -505,4 +445,167 @@ function setup_person_spisok() {
 	return $send;
 }//setup_person_spisok()
 
+function setup_rubric() {
+	return
+	'<div id="setup_rubric">'.
+		'<div class="headName">Рубрики объявлений<a class="add">Новая рубрика</a></div>'.
+		'<div id="spisok">'.setup_rubric_spisok().'</div>'.
+	'</div>';
+}//setup_rubric()
+function setup_rubric_spisok() {
+	$sql = "SELECT `r`.`id`,
+				   `r`.`name`,
+				   COUNT(`rs`.`id`) AS `sub`
+			FROM `setup_rubric` AS `r`
+			  LEFT JOIN `setup_rubric_sub` AS `rs`
+			  ON `r`.`id`=`rs`.`rubric_id`
+			GROUP BY `r`.`id`
+			ORDER BY `r`.`sort`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
 
+	$rubric = array();
+	while($r = mysql_fetch_assoc($q))
+		$rubric[$r['id']] = $r;
+
+	$sql = "SELECT `r`.`id`,
+				   COUNT(`z`.`id`) AS `ob`
+			FROM `setup_rubric` AS `r`,
+			  	 `gazeta_zayav` AS `z`
+			WHERE `r`.`id`=`z`.`rubric_id`
+			GROUP BY `r`.`id`";
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q))
+		$rubric[$r['id']]['ob'] = $r['ob'];
+
+	$send =
+		'<table class="_spisok">'.
+			'<tr><th class="name">Наименование'.
+				'<th class="sub">Подрубрики'.
+				'<th class="ob">Кол-во<br />объявлений'.
+				'<th class="set">'.
+		'</table>'.
+		'<dl class="_sort" val="setup_rubric">';
+	foreach($rubric as $id => $r)
+		$send .='<dd val="'.$id.'">'.
+			'<table class="_spisok">'.
+				'<tr><td class="name"><a href="'.URL.'&p=gazeta&d=setup&d1=rubric&id='.$id.'">'.$r['name'].'</a>'.
+					'<td class="sub">'.($r['sub'] ? $r['sub'] : '').
+					'<td class="ob">'.(isset($r['ob']) ? $r['ob'] : '').
+					'<td class="set">'.
+						'<div class="img_edit"></div>'.
+						(!$r['sub'] && empty($r['ob']) ? '<div class="img_del"></div>' : '').
+			'</table>';
+
+	$send .= '</dl>';
+	return $send;
+}//setup_rubric_spisok()
+
+function setup_rubric_sub($id) {
+	$sql = "SELECT * FROM `setup_rubric` WHERE `id`=".$id." LIMIT 1";
+	if(!$rub = mysql_fetch_assoc(query($sql)))
+		return 'Рубрики id = '.$id.' не существует. <a href="'.URL.'&p=gazeta&d=setup&d1=rubric">Назад</a>';
+	return
+	'<script type="text/javascript">var RUBRIC_ID='.$id.';</script>'.
+	'<a href="'.URL.'&p=gazeta&d=setup&d1=rubric"><< назад к списку рубрик</a>'.
+	'<div id="setup_rubric_sub">'.
+		'<div class="headName">Список подрубрик для "'.$rub['name'].'"<a class="add">Новая подрубрика</a></div>'.
+		'<div id="spisok">'.setup_rubric_sub_spisok($id).'</div>'.
+	'</div>';
+}//setup_rubric_sub()
+function setup_rubric_sub_spisok($rubric_id) {
+	$sql = "SELECT `rs`.`id`,
+				   `rs`.`name`,
+				   COUNT(`z`.`id`) AS `count`
+			FROM `setup_rubric_sub` AS `rs`
+			  LEFT JOIN `gazeta_zayav` AS `z`
+			  ON `rs`.`id`=`z`.`rubric_sub_id`
+			WHERE `rs`.`rubric_id`=".$rubric_id."
+			GROUP BY `rs`.`id`
+			ORDER BY `rs`.`sort`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
+
+	$send =
+		'<table class="_spisok">'.
+			'<tr><th class="name">Наименование'.
+				'<th class="ob">Кол-во<br />объявлений'.
+				'<th class="set">'.
+		'</table>'.
+		'<dl class="_sort" val="setup_rubric_sub">';
+	while($r = mysql_fetch_assoc($q))
+		$send .='<dd val="'.$r['id'].'">'.
+			'<table class="_spisok">'.
+				'<tr><td class="name">'.$r['name'].
+					'<td class="ob">'.($r['count'] ? $r['count'] : '').
+					'<td class="set">'.
+						'<div class="img_edit"></div>'.
+						(!$r['count'] ? '<div class="img_del"></div>' : '').
+			'</table>';
+
+	$send .= '</dl>';
+	return $send;
+}//setup_rubric_sub_spisok()
+
+function setup_oblen() {
+	$sql = "SELECT * FROM `setup_global` LIMIT 1";
+	$r = mysql_fetch_assoc(query($sql));
+	return
+	'<div id="setup_oblen">'.
+		'<div class="headName">Настройка стоимости длины объявления</div>'.
+		'<table>'.
+            '<tr><td>Первые'.
+				'<td><input type="text" maxlength="3" value="'.$r['txt_len_first'].'" id="txt_len_first" />'.
+				'<td>символов:'.
+                '<td><input type="text" maxlength="3" value="'.$r['txt_cena_first'].'" id="txt_cena_first" /> руб.'.
+            '<tr><td>Последующие'.
+				'<td><input type="text" maxlength="3" value="'.$r['txt_len_next'].'" id="txt_len_next" />'.
+				'<td>символов:'.
+                '<td><input type="text" maxlength="3" value="'.$r['txt_cena_next'].'" id="txt_cena_next" /> руб.'.
+        '</table>'.
+		'<div class="vkButton"><button>Сохранить</button></div>'.
+	'</div>';
+}//setup_oblen()
+
+function setup_money() {
+	return
+	'<div id="setup_money">'.
+		'<div class="headName">Виды платежей<a class="add">Добавить</a></div>'.
+		'<div id="spisok">'.setup_money_spisok().'</div>'.
+	'</div>';
+}//setup_money()
+function setup_money_spisok() {
+	$sql = "SELECT `s`.`id`,
+				   `s`.`name`,
+				   COUNT(`g`.`id`) AS `count`
+			FROM `setup_money_type` AS `s`
+			  LEFT JOIN `gazeta_money` AS `g`
+			  ON `s`.`id`=`g`.`type`
+			GROUP BY `s`.`id`
+			ORDER BY `s`.`sort`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
+
+	$send =
+		'<table class="_spisok">'.
+		'<tr><th class="name">Наименование'.
+		'<th class="opl">Кол-во<br />платежей'.
+		'<th class="set">'.
+		'</table>'.
+		'<dl class="_sort" val="setup_money_type">';
+	while($r = mysql_fetch_assoc($q))
+		$send .='<dd val="'.$r['id'].'">'.
+			'<table class="_spisok">'.
+				'<tr><td class="name">'.$r['name'].
+					'<td class="opl">'.($r['count'] ? $r['count'] : '').
+					'<td class="set">'.
+						'<div class="img_edit"></div>'.
+						(!$r['count'] ? '<div class="img_del"></div>' : '').
+			'</table>';
+
+	$send .= '</dl>';
+	return $send;
+}//setup_money_spisok()

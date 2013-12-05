@@ -1,3 +1,10 @@
 var CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],
-PERSON_SPISOK=[{uid:1,title:"Частное лицо"},{uid:12,title:"ИП"},{uid:13,title:"ООО"}]
-SKIDKA_SPISOK=[{uid:5,title:"5%"},{uid:10,title:"10%"},{uid:15,title:"15%"},{uid:20,title:"20%"},{uid:30,title:"30%"}];
+PERSON_SPISOK=[{uid:1,title:"Частное лицо"},{uid:12,title:"ИП"},{uid:13,title:"ООО"}],
+SKIDKA_SPISOK=[{uid:5,title:"5%"},{uid:10,title:"10%"},{uid:15,title:"15%"},{uid:20,title:"20%"},{uid:30,title:"30%"}],
+RUBRIC_SPISOK=[{uid:1,title:"Продам"},{uid:11,title:"Куплю"},{uid:3,title:"Меняю"},{uid:7,title:"Сниму"},{uid:6,title:"Сдам"},{uid:8,title:"Услуги"},{uid:10,title:"Требуется"},{uid:9,title:"Разное"}],
+MONEY_TYPE_SPISOK=[{uid:1,title:"Наличный"},{uid:2,title:"Безналичный"},{uid:3,title:"Взаимозачёт"},{uid:4,title:"На телефон Юре"},{uid:5,title:"На телефон Маше"}],
+TXT_LEN_FIRST=21,
+TXT_CENA_FIRST=4,
+TXT_LEN_NEXT=11,
+TXT_CENA_NEXT=11,
+RUBRIC_SUB_SPISOK={1:[{uid:4,title:"Техника"},{uid:1,title:"Недвижимость"},{uid:9,title:"Земля"},{uid:3,title:"Бытовая и оргтехника"},{uid:6,title:"Мебель"},{uid:7,title:"Одежда"},{uid:12,title:"Спорт-Отдых"},{uid:10,title:"Детям"},{uid:11,title:"Разное"},{uid:2,title:"Стройматериалы"},{uid:8,title:"Пиломатериалы"},{uid:5,title:"Животные"}],6:[{uid:16,title:"Комнату"}],11:[{uid:14,title:"Машина"}]};

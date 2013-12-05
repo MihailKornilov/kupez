@@ -29,7 +29,7 @@ _getVkUser();
 
 function _getSetupGlobal() {//Получение глобальных данных
 	$key = CACHE_PREFIX.'setup_global';
-	//$g = xcache_get($key);
+	$g = xcache_get($key);
 	if(empty($g)) {
 		$sql = "SELECT * FROM `setup_global` LIMIT 1";
 		$g = mysql_fetch_assoc(query($sql));
