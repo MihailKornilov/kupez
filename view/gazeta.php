@@ -345,7 +345,7 @@ function setup() {
 	switch($d) {
 		default: $d = $pageDef;
 		case 'worker':  $left = setup_worker(); break;
-		case 'gn': $left = ''; break;
+		case 'gn': $left = setup_gn(); break;
 		case 'person': $left = setup_person(); break;
 		case 'rubric':
 			if(preg_match(REGEXP_NUMERIC, @$_GET['id'])) {
@@ -355,11 +355,11 @@ function setup() {
 			$left = setup_rubric();
 			break;
 		case 'oblen': $left = setup_oblen(); break;
-		case 'obdop': $left = ''; break;
-		case 'polosa': $left = ''; break;
+		case 'obdop': $left = setup_obdop(); break;
+		case 'polosa': $left = setup_polosa(); break;
 		case 'money': $left = setup_money(); break;
-		case 'skidka': $left = ''; break;
-		case 'rashod': $left = ''; break;
+		case 'skidka': $left = setup_skidka(); break;
+		case 'rashod': $left = setup_rashod(); break;
 	}
 	$links = '';
 	if($pages)
@@ -404,6 +404,66 @@ function setup_worker_spisok() {
 	return $send;
 }//setup_worker_spisok()
 
+function setup_gn() {
+	define('CURRENT_YEAR', strftime('%Y', time()));
+	return
+	'<div id="setup_gn">'.
+		'<div class="headName">Номера выпусков газеты<a class="add">Новый номер</a></div>'.
+		'<div id="dopLinks">'.setup_gn_year().'</div>'.
+		'<div id="spisok">'.setup_gn_spisok().'</div>'.
+	'</div>';
+}//setup_gn()
+function setup_gn_year($y=CURRENT_YEAR) {
+	$sql = "SELECT
+            	SUBSTR(MIN(`day_public`),1,4) AS `begin`,
+            	SUBSTR(MAX(`day_public`),1,4) AS `end`,
+            	MAX(`general_nomer`) AS `max`
+            FROM `gazeta_nomer`
+            LIMIT 1";
+	$r = mysql_fetch_assoc(query($sql));
+	if(!$r['begin'])
+		$r = array(
+			'begin' => CURRENT_YEAR,
+			'end' => CURRENT_YEAR
+		);
+	$send = '';
+	for($n = $r['begin']; $n <= $r['end'] + 1; $n++)
+		$send .= '<a class="link'.($n == $y ? ' sel' : '').'">'.$n.'</a>';
+	return $send;
+}//setup_gn_year()
+function setup_gn_spisok($y=CURRENT_YEAR) {
+	$sql = "SELECT
+				`gn`.*,
+				COUNT(`pub`.`id`) AS `count`
+			FROM `gazeta_nomer` AS `gn`
+				LEFT JOIN `gazeta_nomer_pub` AS `pub`
+				ON `gn`.`general_nomer`=`pub`.`general_nomer`
+			WHERE `day_public` LIKE '".$y."-%'
+			GROUP BY `general_nomer`
+			ORDER BY `general_nomer`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Номера газет, которые будут выходить в '.$y.' году, не определены.'.
+			'<div class="vkButton"><button>Создать список</button></div>';
+	$send =
+		'<table class="_spisok">'.
+			'<tr><th>Номер<br />выпуска'.
+				'<th>День отправки<br />в печать'.
+				'<th>День выхода'.
+				'<th>Заявки'.
+				'<th>';
+	$cur = time() - 86400;
+	while($r = mysql_fetch_assoc($q))
+		$send .= '<tr'.($cur > strtotime($r['day_print']) ? ' class="grey"' : '').'>'.
+			'<td class="nomer"><b>'.$r['week_nomer'].'</b> (<span>'.$r['general_nomer'].'</span>)'.
+			'<td class="print">'.FullData($r['day_print'], 0, 1, 1).
+			'<td class="pub">'.FullData($r['day_public'], 0, 1, 1).
+			'<td class="z">'.($r['count'] ? $r['count'] : '').
+			'<td><div class="img_edit"></div><div class="img_del"></div>';
+	$send .= '</table>';
+	return $send;
+}//setup_gn_spisok()
+
 function setup_person() {
 	return
 	'<div id="setup_person">'.
@@ -440,7 +500,6 @@ function setup_person_spisok() {
 						'<div class="img_edit"></div>'.
 						(!$r['count'] ? '<div class="img_del"></div>' : '').
 			'</table>';
-
 	$send .= '</dl>';
 	return $send;
 }//setup_person_spisok()
@@ -569,6 +628,64 @@ function setup_oblen() {
 	'</div>';
 }//setup_oblen()
 
+function setup_obdop() {
+	return
+	'<div id="setup_obdop">'.
+		'<div class="headName">Дополнительные параметры объявлений</div>'.
+		'<div id="spisok">'.setup_obdop_spisok().'</div>'.
+	'</div>';
+}//setup_obdop()
+function setup_obdop_spisok() {
+	$sql = "SELECT * FROM `setup_ob_dop` ORDER BY `id`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
+
+	$send =
+		'<table class="_spisok">'.
+			'<tr><th>Наименование'.
+				'<th>Стоимость<br />руб.'.
+				'<th>';
+	while($r = mysql_fetch_assoc($q))
+		$send .= '<tr val="'.$r['id'].'">'.
+			'<td class="name">'.$r['name'].
+			'<td class="cena">'.round($r['cena'], 2).
+			'<td><div class="img_edit"></div>';
+	$send .= '</table>';
+	return $send;
+}//setup_obdop_spisok()
+
+function setup_polosa() {
+	return
+	'<div id="setup_polosa">'.
+		'<div class="headName">Стоимость см&sup2; рекламы для каждой полосы<a class="add">Новая полоса</a></div>'.
+		'<div id="spisok">'.setup_polosa_spisok().'</div>'.
+	'</div>';
+}//setup_polosa()
+function setup_polosa_spisok() {
+	$sql = "SELECT * FROM `setup_polosa_cost` ORDER BY `sort`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
+
+	$send =
+		'<table class="_spisok">'.
+			'<tr><th class="name">Полоса'.
+				'<th class="cena">Цена за см&sup2;<br />руб.'.
+				'<th class="set">'.
+		'</table>'.
+		'<dl class="_sort" val="setup_polosa_cost">';
+	while($r = mysql_fetch_assoc($q))
+		$send .='<dd val="'.$r['id'].'">'.
+			'<table class="_spisok">'.
+				'<tr><td class="name">'.$r['name'].
+					'<td class="cena">'.round($r['cena'], 2).
+					'<td class="set"><div class="img_edit"></div>'.
+			'</table>';
+	$send .= '</dl>';
+	return $send;
+}//setup_polosa_spisok()
+
 function setup_money() {
 	return
 	'<div id="setup_money">'.
@@ -609,3 +726,77 @@ function setup_money_spisok() {
 	$send .= '</dl>';
 	return $send;
 }//setup_money_spisok()
+
+function setup_skidka() {
+	return
+	'<div id="setup_skidka">'.
+		'<div class="headName">Настройка скидок<a class="add">Добавить</a></div>'.
+		'<div id="spisok">'.setup_skidka_spisok().'</div>'.
+	'</div>';
+}//setup_skidka()
+function setup_skidka_spisok() {
+	$sql = "SELECT `s`.*,
+				   COUNT(`c`.`id`) AS `count`
+			FROM `setup_skidka` AS `s`
+			  LEFT JOIN `gazeta_client` AS `c`
+			  ON `s`.`razmer`=`c`.`skidka` AND `c`.`deleted`=0
+			GROUP BY `s`.`razmer`
+			ORDER BY `s`.`razmer`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
+
+	$send = '<table class="_spisok">'.
+		'<tr><th>Размер скидки'.
+			'<th>Описание'.
+			'<th>Клиенты'.
+			'<th>';
+	while($r = mysql_fetch_assoc($q))
+		$send .=
+		'<tr><td class="razmer"><b>'.$r['razmer'].'</b>%'.
+			'<td class="about">'.$r['about'].
+			'<td class="cl">'.($r['count'] ? $r['count'] : '').
+			'<td><div class="img_edit"></div>'.
+				 (!$r['count'] ? '<div class="img_del"></div>' : '');
+	$send .= '</table>';
+	return $send;
+}//setup_skidka_spisok()
+
+function setup_rashod() {
+	return
+	'<div id="setup_rashod">'.
+		'<div class="headName">Категории расходов<a class="add">Добавить</a></div>'.
+		'<div id="spisok">'.setup_rashod_spisok().'</div>'.
+	'</div>';
+}//setup_rashod()
+function setup_rashod_spisok() {
+	$sql = "SELECT `r`.*,
+				   COUNT(`m`.`id`) AS `count`
+			FROM `setup_rashod_category` AS `r`
+			  LEFT JOIN `gazeta_money` AS `m`
+			  ON `r`.`id`=`m`.`rashod_category` AND `m`.`deleted`=0
+			GROUP BY `r`.`id`
+			ORDER BY `r`.`sort`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
+
+	$send =
+	'<table class="_spisok">'.
+		'<tr><th class="name">Наименование'.
+			'<th class="opl">Кол-во<br />платежей'.
+			'<th class="set">'.
+	'</table>'.
+	'<dl class="_sort" val="setup_rashod_category">';
+	while($r = mysql_fetch_assoc($q))
+		$send .='<dd val="'.$r['id'].'">'.
+			'<table class="_spisok">'.
+				'<tr><td class="name">'.$r['name'].
+					'<td class="opl">'.($r['count'] ? $r['count'] : '').
+					'<td class="set">'.
+						'<div class="img_edit"></div>'.
+						(!$r['count'] ? '<div class="img_del"></div>' : '').
+			'</table>';
+	$send .= '</dl>';
+	return $send;
+}//setup_rashod_spisok()

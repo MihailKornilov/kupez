@@ -156,13 +156,18 @@ function GvaluesCreate() {// составление файла G_values.js
 
 		'var CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],'.
 		"\n".'PERSON_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`").','.
-		"\n".'SKIDKA_SPISOK='.query_selJson("SELECT `razmer`,CONCAT(`razmer`,'%') FROM `setup_skidka` ORDER BY `id`").','.
 		"\n".'RUBRIC_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_rubric` ORDER BY `sort`").','.
 		"\n".'MONEY_TYPE_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_money_type` ORDER BY `sort`").','.
+		"\n".'SKIDKA_SPISOK='.query_selJson("SELECT `razmer`,CONCAT(`razmer`,'%') FROM `setup_skidka` ORDER BY `razmer`").','.
 		"\n".'TXT_LEN_FIRST='.$g['txt_len_first'].','.
 		"\n".'TXT_CENA_FIRST='.$g['txt_cena_first'].','.
 		"\n".'TXT_LEN_NEXT='.$g['txt_len_next'].','.
-		"\n".'TXT_CENA_NEXT='.$g['txt_cena_next'].',';
+		"\n".'TXT_CENA_NEXT='.$g['txt_cena_next'].','.
+		"\n".'POLOSA_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').','.
+		"\n".'POLOSA_CENA_ASS='.query_ptpJson('SELECT `id`,ROUND(`cena`) FROM `setup_polosa_cost` ORDER BY `id`').','.
+		"\n".'OBDOP_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').','.
+		"\n".'OBDOP_CENA_ASS='.query_ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').','.
+		"\n".'RASHOD_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `sort`').',';
 
 
 	$sql = "SELECT * FROM `setup_rubric_sub` ORDER BY `rubric_id`,`sort`";
@@ -179,14 +184,7 @@ function GvaluesCreate() {// составление файла G_values.js
 	$save .= "\n".'RUBRIC_SUB_SPISOK={'.implode(',', $v).'};';
 
 
-	/*	$save .= "\nG.polosa_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').";G.polosa_ass = SpisokToAss(G.polosa_spisok);";
-		$save .= "\nG.polosa_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_polosa_cost` ORDER BY `id`').";G.polosa_cena_ass[0] = 0;";
-		$save .= "\nG.ob_dop_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_ass = SpisokToAss(G.ob_dop_spisok);";
-		$save .= "\nG.ob_dop_cena_ass = ".$VK->ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').";G.ob_dop_cena_ass[0] = 0;";
-		$save .= "\nG.skidka_spisok = ".$VK->vkSelJson('SELECT `razmer`,CONCAT(`razmer`,"%") FROM `setup_skidka` ORDER BY `id`').";G.skidka_ass = SpisokToAss(G.skidka_spisok);";
-		$save .= "\nG.rashod_category_spisok = ".$VK->vkSelJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `id`').";G.rashod_category_ass = SpisokToAss(G.rashod_category_spisok);";
-
-		$spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`");
+	/*	$spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`");
 		if (count($spisok) > 0) {
 			$gn = array();
 			foreach ($spisok as $sp) {
@@ -286,17 +284,6 @@ function vkUserCheck($vku, $update = false)
     return $vku;
 }
 
-// Несуществующая страница
-function nopage($p, $d)
-{
-?>
-<DIV class=nopage>
-    Ошибка: несуществующая страница.<BR><BR>
-    <DIV class=vkButton onclick="location.href='<?=URL.'&p='.@$p.'&d='.@$d?>'";><BUTTON>Назад</BUTTON></DIV>
-</DIV>
-<?php
-}
-
 // установка баланса клиента
 function setClientBalans($client_id = 0) {
 	if ($client_id > 0) {
@@ -352,23 +339,4 @@ function setClientBalans($client_id = 0) {
 		return 0;
 	}
 }
-
-$WeekName = array(
-	1=>'пн',
-	2=>'вт',
-	3=>'ср',
-	4=>'чт',
-	5=>'пт',
-	6=>'сб',
-	0=>'вс'
-);
-// обновление количества объявлений для рубрики
-function rubrikaCountUpdate($rub) {
-	global $VK;
-	$count = $VK->QRow("select count(id) from zayav where rubrika=".$rub." and status=1 and category=1 and active_day>='".strftime("%Y-%m-%d",time())."'");
-	$VK->Query("update setup_rubrika set ob_count=".$count." where id=".$rub);
-	xcache_unset('rubrikaCount');
-	xcache_unset('obSpisokFirst');
-}
-
 */

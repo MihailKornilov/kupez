@@ -149,6 +149,50 @@ $(document)
 		}
 	})
 
+	.on('click', '#setup_gn .link', function() {
+		var t = $(this),
+			send = {
+				op:'setup_gn_spisok',
+				year:t.html()
+			};
+		t.parent().find('.sel').removeClass('sel');
+		t.addClass('sel');
+		$.post(AJAX_GAZ, send, function(res) {
+			if(res.success)
+				$('#spisok').html(res.html);
+		}, 'json');
+	})
+	.on('click', '#setup_gn .img_del', function() {
+		var t = $(this);
+		while(t[0].tagName != 'TR')
+			t = t.parent();
+		var dialog = _dialog({
+			top:90,
+			width:300,
+			head:'Удаление номера газеты',
+			content:'<center>Подтвердите удаление номера газеты ' + t.find('.nomer').html() + '.</center>',
+			butSubmit:'Удалить',
+			submit:submit
+		});
+		function submit() {
+			var send = {
+				op:'setup_gn_del',
+				general:t.find('.nomer span').html(),
+				year:$('#dopLinks .sel').html()
+			};
+			dialog.process();
+			$.post(AJAX_GAZ, send, function(res) {
+				if(res.success) {
+					$('#dopLinks').html(res.year);
+					$('#spisok').html(res.html);
+					dialog.close();
+					_msg('Удалено!');
+				} else
+					dialog.abort();
+			}, 'json');
+		}
+	})
+
 	.on('click', '#setup_person .add', function() {
 		var t = $(this),
 			html = '<table class="setup-tab">' +
@@ -552,6 +596,169 @@ $(document)
 		}
 	})
 
+	.on('click', '#setup_obdop .img_edit', function() {
+		var t = $(this);
+		while(t[0].tagName != 'TR')
+			t = t.parent();
+		var id = t.attr('val'),
+			name = t.find('.name').html(),
+			cena = t.find('.cena').html(),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label">Наименование:<td><b>' + name + '</b>' +
+				'<tr><td class="label">Стоимость:<td><input id="cena" type="text" maxlength="6" value="' + cena + '" /> руб.' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:390,
+				head:'Редактирование параметра',
+				content:html,
+				butSubmit:'Сохранить',
+				submit:submit
+			});
+		$('#cena').keyEnter(submit);
+		function submit() {
+			var send = {
+				op:'setup_obdop_edit',
+				id:id,
+				cena:$('#cena').val()
+			};
+			if(!REGEXP_NUMERIC.test(send.cena) || send.cena == 0) {
+				err('Некорректно указана цена');
+				$('#cena').focus();
+			} else{
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Сохранено!');
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class=red>' + msg + '</SPAN>',
+				top:-47,
+				left:99,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
+	})
+
+	.on('click', '#setup_polosa .add', function() {
+		var t = $(this),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" />' +
+				'<tr><td class="label">Цена за см&sup2;:<td><input id="cena" type="text" maxlength="6" /> руб.' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:390,
+				head:'Внесение новой полосы',
+				content:html,
+				submit:submit
+			});
+		$('#name').focus();
+		$('#name,#cena').keyEnter(submit);
+		function submit() {
+			var send = {
+				op:'setup_polosa_add',
+				name:$('#name').val(),
+				cena:$('#cena').val()
+			};
+			if(!send.name) {
+				err('Не указано наименование');
+				$('#name').focus();
+			} else if(!REGEXP_CENA.test(send.cena)) {
+				err('Некорректно указана цена');
+				$('#cena').focus();
+			} else{
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Внесено!');
+						sortable();
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class=red>' + msg + '</SPAN>',
+				top:-47,
+				left:99,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
+	})
+	.on('click', '#setup_polosa .img_edit', function() {
+		var t = $(this);
+		while(t[0].tagName != 'DD')
+			t = t.parent();
+		var id = t.attr('val'),
+			name = t.find('.name').html(),
+			cena = t.find('.cena').html(),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" value="' + name + '" />' +
+				'<tr><td class="label">Цена за см&sup2;:<td><input id="cena" type="text" maxlength="6" value="' + cena + '" /> руб.' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:390,
+				head:'Редактирование данных полосы',
+				content:html,
+				butSubmit:'Сохранить',
+				submit:submit
+			});
+		$('#name').focus();
+		$('#name,#cena').keyEnter(submit);
+		function submit() {
+			var send = {
+				op:'setup_polosa_edit',
+				id:id,
+				name:$('#name').val(),
+				cena:$('#cena').val()
+			};
+			if(!send.name) {
+				err('Не указано наименование');
+				$('#name').focus();
+			} else if(!REGEXP_CENA.test(send.cena)) {
+				err('Некорректно указана цена');
+				$('#cena').focus();
+			} else{
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Сохранено!');
+						sortable();
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class=red>' + msg + '</SPAN>',
+				top:-47,
+				left:99,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
+	})
+
 	.on('click', '#setup_money .add', function() {
 		var t = $(this),
 			html = '<table class="setup-tab">' +
@@ -672,6 +879,247 @@ $(document)
 		}
 	})
 
+	.on('click', '#setup_skidka .add', function() {
+		var t = $(this),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label">Размер:<td><input id="razmer" type="text" maxlength="3" /> %' +
+				'<tr><td class="label">Описание:<td><input id="about" type="text" maxlength="200" />' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:390,
+				head:'Внесение новой скидки',
+				content:html,
+				submit:submit
+			});
+		$('#razmer').focus();
+		$('#razmer,#about').keyEnter(submit);
+		function submit() {
+			var send = {
+				op:'setup_skidka_add',
+				razmer:$('#razmer').val(),
+				about:$('#about').val()
+			};
+			if(!REGEXP_NUMERIC.test(send.razmer) || send.razmer == 0 || send.razmer > 100) {
+				dialog.bottom.vkHint({
+					msg:'<SPAN class=red>Некорректно указан размер скидки</SPAN>',
+					top:-47,
+					left:99,
+					indent:50,
+					show:1,
+					remove:1
+				});
+				$('#razmer').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Внесено!');
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+	})
+	.on('click', '#setup_skidka .img_edit', function() {
+		var t = $(this);
+		while(t[0].tagName != 'TR')
+			t = t.parent();
+		var razmer = t.find('.razmer b').html(),
+			about = t.find('.about').html(),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label">Размер:<td><b>' + razmer + '</b>%' +
+				'<tr><td class="label">Описание:<td><input id="about" type="text" maxlength="200" value="' + about + '" />' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:390,
+				head:'Редактирование скидки',
+				content:html,
+				butSubmit:'Сохранить',
+				submit:submit
+			});
+		$('#razmer').focus();
+		$('#razmer,#about').keyEnter(submit);
+		function submit() {
+			var send = {
+				op:'setup_skidka_edit',
+				razmer:razmer,
+				about:$('#about').val()
+			};
+			if(!REGEXP_NUMERIC.test(send.razmer) || send.razmer == 0 || send.razmer > 100) {
+				dialog.bottom.vkHint({
+					msg:'<SPAN class=red>Некорректно указан размер скидки</SPAN>',
+					top:-47,
+					left:99,
+					indent:50,
+					show:1,
+					remove:1
+				});
+				$('#razmer').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Сохранено!');
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+	})
+	.on('click', '#setup_skidka .img_del', function() {
+		var t = $(this),
+			dialog = _dialog({
+				top:90,
+				width:300,
+				head:'Удаление скидки',
+				content:'<center><b>Подтвердите удаление скидки.</b></center>',
+				butSubmit:'Удалить',
+				submit:submit
+			});
+		function submit() {
+			while(t[0].tagName != 'TR')
+				t = t.parent();
+			var send = {
+				op:'setup_skidka_del',
+				razmer:t.find('.razmer b').html()
+			};
+			dialog.process();
+			$.post(AJAX_GAZ, send, function(res) {
+				if(res.success) {
+					$('#spisok').html(res.html);
+					dialog.close();
+					_msg('Удалено!');
+				} else
+					dialog.abort();
+			}, 'json');
+		}
+	})
+
+	.on('click', '#setup_rashod .add', function() {
+		var t = $(this),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="200" />' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:390,
+				head:'Внесение новой категории расхода',
+				content:html,
+				submit:submit
+			});
+		$('#name').focus().keyEnter(submit);
+		function submit() {
+			var send = {
+				op:'setup_rashod_add',
+				name:$('#name').val()
+			};
+			if(!send.name) {
+				dialog.bottom.vkHint({
+					msg:'<SPAN class=red>Не указано наименование</SPAN>',
+					top:-47,
+					left:99,
+					indent:50,
+					show:1,
+					remove:1
+				});
+				$('#name').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Внесено!');
+						sortable();
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+	})
+	.on('click', '#setup_rashod .img_edit', function() {
+		var t = $(this);
+		while(t[0].tagName != 'DD')
+			t = t.parent();
+		var id = t.attr('val'),
+			name = t.find('.name').html(),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="200" value="' + name + '" />' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:390,
+				head:'Редактирование категории расхода',
+				content:html,
+				butSubmit:'Сохранить',
+				submit:submit
+			});
+		$('#name').focus().keyEnter(submit);
+		function submit() {
+			var send = {
+				op:'setup_rashod_edit',
+				id:id,
+				name:$('#name').val()
+			};
+			if(!send.name) {
+				dialog.bottom.vkHint({
+					msg:'<SPAN class=red>Не указано наименование</SPAN>',
+					top:-47,
+					left:99,
+					indent:50,
+					show:1,
+					remove:1
+				});
+				$('#name').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Сохранено!');
+						sortable();
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+	})
+	.on('click', '#setup_rashod .img_del', function() {
+		var t = $(this),
+			dialog = _dialog({
+				top:90,
+				width:300,
+				head:'Удаление категории расхода',
+				content:'<center><b>Подтвердите удаление категории расхода.</b></center>',
+				butSubmit:'Удалить',
+				submit:submit
+			});
+		function submit() {
+			while(t[0].tagName != 'DD')
+				t = t.parent();
+			var send = {
+				op:'setup_rashod_del',
+				id:t.attr('val')
+			};
+			dialog.process();
+			$.post(AJAX_GAZ, send, function(res) {
+				if(res.success) {
+					$('#spisok').html(res.html);
+					dialog.close();
+					_msg('Удалено!');
+					sortable();
+				} else
+					dialog.abort();
+			}, 'json');
+		}
+	})
 
 	.ready(function() {
 		if($('#client').length > 0) {

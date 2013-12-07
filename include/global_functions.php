@@ -15,15 +15,6 @@ function textUnFormat($txt) {
     return str_replace("<BR>", "\n", $txt);
 }
 
-$WeekName = array(
-    1=>'пн',
-    2=>'вт',
-    3=>'ср',
-    4=>'чт',
-    5=>'пт',
-    6=>'сб',
-    0=>'вс'
-);
 
 function FullData($value, $cut = 0, $week = 0, $yYear = 0) {
     // 14 апреля 2010

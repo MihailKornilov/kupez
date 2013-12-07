@@ -26,6 +26,8 @@
 
 .setup-tab{border-spacing:10px}
 .setup-tab input{width:250px}
+.setup-tab #razmer{width:30px}
+.setup-tab #cena{width:50px}
 
 #setup_worker .headName{margin-bottom:15px}
 #setup_worker .unit,#setup_worker_add table{border-spacing:10px;border:#DDE solid 1px;width:300px;margin:6px 0 6px 20px}
@@ -39,6 +41,16 @@
 #setup_worker_add h1{font-weight:bold;color:#31618C}
 #setup_worker_add input{width:240px;padding:5px;height:13px;margin:7px 5px 0 0}
 #setup_worker_add .res{margin:10px 0 0 20px}
+
+#setup_gn .headName{margin-bottom:0}
+#setup_gn #dopLinks{margin-bottom:10px}
+#setup_gn .vkButton{margin:20px 0 0 160px}
+#setup_gn ._spisok{width:100%}
+#setup_gn .grey *{color:#888}
+#setup_gn .nomer{text-align:center}
+#setup_gn .print{text-align:right}
+#setup_gn .pub{text-align:right}
+#setup_gn .z{text-align:center}
 
 #setup_person .name{width:180px}
 #setup_person td.name{cursor:move}
@@ -62,7 +74,23 @@
 #setup_oblen input{width:20px;text-align:right}
 #setup_oblen .vkButton{margin:10px 0 0 150px}
 
+#setup_obdop .name{width:180px}
+#setup_obdop .cena{width:80px;text-align:center}
+
+#setup_polosa .name{width:230px}
+#setup_polosa td.name{cursor:move}
+#setup_polosa .cena{width:80px;text-align:center}
+#setup_polosa .set{width:40px}
+
 #setup_money .name{width:200px}
 #setup_money td.name{cursor:move}
 #setup_money .opl{width:60px;text-align:center}
 #setup_money .set{width:40px}
+
+#setup_skidka .razmer,#setup_skidka .cl{text-align:center}
+#setup_skidka .about{width:160px}
+
+#setup_rashod .name{width:250px}
+#setup_rashod td.name{cursor:move}
+#setup_rashod .opl{width:60px;text-align:center}
+#setup_rashod .set{width:40px}

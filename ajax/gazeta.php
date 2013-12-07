@@ -60,18 +60,46 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 
+	case 'setup_gn_spisok':
+		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+			jsonError();
+		$year = intval($_POST['year']);
+		$send['html'] = utf8(setup_gn_spisok($year));
+		jsonSuccess($send);
+		break;
+	case 'setup_gn_del':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['general']))
+			jsonError();
+		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+			jsonError();
+		$general = intval($_POST['general']);
+		$year = intval($_POST['year']);
+
+		$sql = "SELECT * FROM `gazeta_nomer` WHERE `general_nomer`=".$general;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$sql = "DELETE FROM `gazeta_nomer` WHERE `general_nomer`=".$general;
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'gn');
+		GvaluesCreate();
+
+		$send['year'] = utf8(setup_gn_year($year));
+		$send['html'] = utf8(setup_gn_spisok($year));
+		jsonSuccess($send);
+		break;
+
 	case 'setup_person_add':
 		$name = win1251(htmlspecialchars(trim($_POST['name'])));
 		if(empty($name))
 			jsonError();
 		$sql = "INSERT INTO `setup_person` (
 					`name`,
-					`sort`,
-					`viewer_id_add`
+					`sort`
 				) VALUES (
 					'".addslashes($name)."',
-					"._maxSql('setup_person', 'sort').",
-					".VIEWER_ID."
+					"._maxSql('setup_person', 'sort')."
 				)";
 		query($sql);
 
@@ -328,6 +356,82 @@ switch(@$_POST['op']) {
 		jsonSuccess();
 		break;
 
+	case 'setup_obdop_edit':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		if(!preg_match(REGEXP_CENA, $_POST['cena']))
+			jsonError();
+		$id = intval($_POST['id']);
+		$cena = intval($_POST['cena']);
+
+		$sql = "SELECT * FROM `setup_ob_dop` WHERE `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$sql = "UPDATE `setup_ob_dop`
+				SET `cena`=".$cena."
+				WHERE `id`=".$id;
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'obdop');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_obdop_spisok());
+		jsonSuccess($send);
+		break;
+
+	case 'setup_polosa_add':
+		if(!preg_match(REGEXP_CENA, $_POST['cena']))
+			jsonError();
+		$cena = round($_POST['cena'], 2);
+		$name = win1251(htmlspecialchars(trim($_POST['name'])));
+		if(empty($name))
+			jsonError();
+		$sql = "INSERT INTO `setup_polosa_cost` (
+					`name`,
+					`cena`,
+					`sort`
+				) VALUES (
+					'".addslashes($name)."',
+					".$cena.",
+					"._maxSql('setup_polosa_cost', 'sort')."
+				)";
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'polosa');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_polosa_spisok());
+		jsonSuccess($send);
+		break;
+	case 'setup_polosa_edit':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		if(!preg_match(REGEXP_CENA, $_POST['cena']))
+			jsonError();
+		$id = intval($_POST['id']);
+		$cena = round($_POST['cena'], 2);
+		$name = win1251(htmlspecialchars(trim($_POST['name'])));
+		if(empty($name))
+			jsonError();
+
+		$sql = "SELECT * FROM `setup_polosa_cost` WHERE `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$sql = "UPDATE `setup_polosa_cost`
+				SET `name`='".addslashes($name)."',
+					`cena`=".$cena."
+				WHERE `id`=".$id;
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'polosa');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_polosa_spisok());
+		jsonSuccess($send);
+		break;
+
 	case 'setup_money_add':
 		$name = win1251(htmlspecialchars(trim($_POST['name'])));
 		if(empty($name))
@@ -388,6 +492,129 @@ switch(@$_POST['op']) {
 		GvaluesCreate();
 
 		$send['html'] = utf8(setup_money_spisok());
+		jsonSuccess($send);
+		break;
+
+	case 'setup_skidka_add':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['razmer']) || $_POST['razmer'] == 0 || $_POST['razmer'] > 100)
+			jsonError();
+		$razmer = intval($_POST['razmer']);
+		$about = win1251(htmlspecialchars(trim($_POST['about'])));
+		if(query_value("SELECT * FROM `setup_skidka` WHERE `razmer`=".$razmer))
+			jsonError();
+		$sql = "INSERT INTO `setup_skidka` (
+					`razmer`,
+					`about`
+				) VALUES (
+					".$razmer.",
+					'".addslashes($about)."'
+				)";
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'skidka');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_skidka_spisok());
+		jsonSuccess($send);
+		break;
+	case 'setup_skidka_edit':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['razmer']) || $_POST['razmer'] == 0 || $_POST['razmer'] > 100)
+			jsonError();
+		$razmer = intval($_POST['razmer']);
+		$about = win1251(htmlspecialchars(trim($_POST['about'])));
+		if(!query_value("SELECT * FROM `setup_skidka` WHERE `razmer`=".$razmer))
+			jsonError();
+		$sql = "UPDATE `setup_skidka`
+				SET `about`='".addslashes($about)."'
+				WHERE `razmer`=".$razmer."
+				LIMIT 1";
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'skidka');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_skidka_spisok());
+		jsonSuccess($send);
+		break;
+	case 'setup_skidka_del':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['razmer']))
+			jsonError();
+		$razmer = intval($_POST['razmer']);
+		if(!query_value("SELECT * FROM `setup_skidka` WHERE `razmer`=".$razmer))
+			jsonError();
+
+		if(query_value("SELECT COUNT(`id`) FROM `gazeta_client` WHERE `skidka`=".$razmer))
+			jsonError();
+		$sql = "DELETE FROM `setup_skidka` WHERE `razmer`=".$razmer;
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'skidka');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_skidka_spisok());
+		jsonSuccess($send);
+		break;
+
+	case 'setup_rashod_add':
+		$name = win1251(htmlspecialchars(trim($_POST['name'])));
+		if(empty($name))
+			jsonError();
+		$sql = "INSERT INTO `setup_rashod_category` (
+					`name`,
+					`sort`
+				) VALUES (
+					'".addslashes($name)."',
+					"._maxSql('setup_rashod_category', 'sort')."
+				)";
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'rashod_category');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_rashod_spisok());
+		jsonSuccess($send);
+		break;
+	case 'setup_rashod_edit':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		$id = intval($_POST['id']);
+		$name = win1251(htmlspecialchars(trim($_POST['name'])));
+		if(empty($name))
+			jsonError();
+
+		$sql = "SELECT * FROM `setup_rashod_category` WHERE `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$sql = "UPDATE `setup_rashod_category`
+				SET `name`='".addslashes($name)."'
+				WHERE `id`=".$id;
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'rashod_category');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_rashod_spisok());
+		jsonSuccess($send);
+		break;
+	case 'setup_rashod_del':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		$id = intval($_POST['id']);
+
+		$sql = "SELECT * FROM `setup_rashod_category` WHERE `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		if(query_value("SELECT COUNT(`id`) FROM `gazeta_money` WHERE `rashod_category`=".$id))
+			jsonError();
+		$sql = "DELETE FROM `setup_rashod_category` WHERE `id`=".$id;
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'rashod_category');
+		GvaluesCreate();
+
+		$send['html'] = utf8(setup_rashod_spisok());
 		jsonSuccess($send);
 		break;
 }
