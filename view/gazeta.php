@@ -407,6 +407,7 @@ function setup_worker_spisok() {
 function setup_gn() {
 	define('CURRENT_YEAR', strftime('%Y', time()));
 	return
+	'<script type="text/javascript">var GN_MAX="'.query_value("SELECT MAX(`general_nomer`)+1 FROM `gazeta_nomer`").'";</script>'.
 	'<div id="setup_gn">'.
 		'<div class="headName">Номера выпусков газеты<a class="add">Новый номер</a></div>'.
 		'<div id="dopLinks">'.setup_gn_year().'</div>'.
@@ -431,7 +432,7 @@ function setup_gn_year($y=CURRENT_YEAR) {
 		$send .= '<a class="link'.($n == $y ? ' sel' : '').'">'.$n.'</a>';
 	return $send;
 }//setup_gn_year()
-function setup_gn_spisok($y=CURRENT_YEAR) {
+function setup_gn_spisok($y=CURRENT_YEAR, $gnedit=0) {
 	$sql = "SELECT
 				`gn`.*,
 				COUNT(`pub`.`id`) AS `count`
@@ -453,13 +454,17 @@ function setup_gn_spisok($y=CURRENT_YEAR) {
 				'<th>Заявки'.
 				'<th>';
 	$cur = time() - 86400;
-	while($r = mysql_fetch_assoc($q))
-		$send .= '<tr'.($cur > strtotime($r['day_print']) ? ' class="grey"' : '').'>'.
+	while($r = mysql_fetch_assoc($q)) {
+		$grey = $cur > strtotime($r['day_print']) ? 'grey' : '';
+		$edit = $gnedit == $r['general_nomer'] ? ' edit' : '';
+		$class = $grey || $edit ? ' class="'.$grey.$edit.'"' : '';
+		$send .= '<tr'.$class.'>'.
 			'<td class="nomer"><b>'.$r['week_nomer'].'</b> (<span>'.$r['general_nomer'].'</span>)'.
-			'<td class="print">'.FullData($r['day_print'], 0, 1, 1).
-			'<td class="pub">'.FullData($r['day_public'], 0, 1, 1).
+			'<td class="print">'.FullData($r['day_print'], 0, 1, 1).'<s>'.$r['day_print'].'</s>'.
+			'<td class="pub">'.FullData($r['day_public'], 0, 1, 1).'<s>'.$r['day_public'].'</s>'.
 			'<td class="z">'.($r['count'] ? $r['count'] : '').
 			'<td><div class="img_edit"></div><div class="img_del"></div>';
+	}
 	$send .= '</table>';
 	return $send;
 }//setup_gn_spisok()

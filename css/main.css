@@ -51,6 +51,19 @@
 #setup_gn .print{text-align:right}
 #setup_gn .pub{text-align:right}
 #setup_gn .z{text-align:center}
+#setup_gn .edit{background-color:#ffa}
+#setup_gn s{display:none}
+.setup-gn-tab{border-spacing:8px}
+.setup-gn-tab #week_nomer{width:15px;text-align:right;margin-right:6px}
+.setup-gn-tab #general_nomer{width:30px;text-align:right}
+.setup-gn-tab .gn-info{
+	border:#ddd solid 1px;
+	padding:6px 10px;
+	background-color:#ffe;
+	text-align:justify;
+	margin-bottom:10px;
+}
+.setup-gn-tab .label{width:135px;text-align:right}
 
 #setup_person .name{width:180px}
 #setup_person td.name{cursor:move}

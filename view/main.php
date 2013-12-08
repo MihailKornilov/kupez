@@ -181,24 +181,23 @@ function GvaluesCreate() {// составление файла G_values.js
 	$v = array();
 	foreach($sub as $n => $sp)
 		$v[] = $n.':['.implode(',', $sp).']';
-	$save .= "\n".'RUBRIC_SUB_SPISOK={'.implode(',', $v).'};';
+	$save .= "\n".'RUBRIC_SUB_SPISOK={'.implode(',', $v).'},';
 
 
-	/*	$spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`");
-		if (count($spisok) > 0) {
-			$gn = array();
-			foreach ($spisok as $sp) {
-				array_push($gn, "\n".$sp->general_nomer.':{'.
-					'week:'.$sp->week_nomer.','.
-					'public:"'.$sp->day_public.'",'.
-					'txt:"'.FullData($sp->day_public, 0, 1).'"'.
-					'}');
-			}
-			$save .= "\nG.gn = {".implode(',', $gn)."};";
-		}
+	$sql = "SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`";
+	$q = query($sql);
+	$gn = array();
+	while($r = mysql_fetch_assoc($q))
+		array_push($gn, "\n".$r['general_nomer'].':{'.
+			'week:'.$r['week_nomer'].','.
+			'pub:"'.$r['day_public'].'",'.
+			'txt:"'.FullData($r['day_public'], 0, 0, 1).'"}');
 
-		$save .= "\nG.countries_spisok = [{uid:1,title:'Россия'},{uid:2,title:'Украина'},{uid:3,title:'Беларусь'},{uid:4,title:'Казахстан'},{uid:5,title:'Азербайджан'},{uid:6,title:'Армения'},{uid:7,title:'Грузия'},{uid:8,title:'Израиль'},{uid:11,title:'Кыргызстан'},{uid:12,title:'Латвия'},{uid:13,title:'Литва'},{uid:14,title:'Эстония'},{uid:15,title:'Молдова'},{uid:16,title:'Таджикистан'},{uid:17,title:'Туркмения'},{uid:18,title:'Узбекистан'}];";
+	$save .= "\n".'GN={'.implode(',', $gn).'};';
+	/*
+	$save .= "\nG.countries_spisok = [{uid:1,title:'Россия'},{uid:2,title:'Украина'},{uid:3,title:'Беларусь'},{uid:4,title:'Казахстан'},{uid:5,title:'Азербайджан'},{uid:6,title:'Армения'},{uid:7,title:'Грузия'},{uid:8,title:'Израиль'},{uid:11,title:'Кыргызстан'},{uid:12,title:'Латвия'},{uid:13,title:'Литва'},{uid:14,title:'Эстония'},{uid:15,title:'Молдова'},{uid:16,title:'Таджикистан'},{uid:17,title:'Туркмения'},{uid:18,title:'Узбекистан'}];";
 	*/
+
 	$fp = fopen(PATH.'/js/G_values.js', 'w+');
 	fwrite($fp, $save);
 	fclose($fp);

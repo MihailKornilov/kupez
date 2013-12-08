@@ -60,11 +60,151 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 
-	case 'setup_gn_spisok':
+	case 'setup_gn_spisok_get':
 		if(!preg_match(REGEXP_YEAR, $_POST['year']))
 			jsonError();
 		$year = intval($_POST['year']);
 		$send['html'] = utf8(setup_gn_spisok($year));
+		jsonSuccess($send);
+		break;
+	case 'setup_gn_spisok_create':
+		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['week_nomer']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['general_nomer']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['day_print']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['day_public']))
+			jsonError();
+		if(!preg_match(REGEXP_DATE, $_POST['day_first']))
+			jsonError();
+		$year = intval($_POST['year']);
+		$week_nomer = intval($_POST['week_nomer']);
+		$general_nomer = intval($_POST['general_nomer']);
+		$day_print = intval($_POST['day_print']);
+		$day_public = intval($_POST['day_public']);
+		$day_first = $_POST['day_first'];
+
+		$sql = "SELECT `general_nomer` FROM `gazeta_nomer` WHERE `general_nomer`=".$general_nomer;
+		if(query_value($sql))
+			jsonError('Номер газеты <b>'.$general_nomer.'</b> уже есть в списке');
+
+		// Первая неделя
+		$weekFirst = strtotime($day_first);
+		// Номер дня первой недели
+		$printFirst = date('w', $weekFirst);
+		if($printFirst == 0)
+			$printFirst = 7;
+		// Приведение первой недели к понедельнику
+		if($printFirst != 1)
+			$weekFirst -= 86400 * ($printFirst - 1);
+		// Определение первого дня следующего года, если цикл за него уходит, то остановка
+		$timeEnd = strtotime($year.'-12-31');
+		$gnArr = array();
+		while($weekFirst < $timeEnd) {
+			array_push($gnArr, '('.
+		        $general_nomer++.','.
+		        $week_nomer++.','.
+		        'DATE_ADD("'.strftime('%Y-%m-%d', $weekFirst).'", INTERVAL '.$day_print.' DAY),'.
+		        'DATE_ADD("'.strftime('%Y-%m-%d', $weekFirst).'", INTERVAL '.$day_public.' DAY))'
+			);
+			$weekFirst += 604800;
+		}
+
+		$sql = 'INSERT INTO `gazeta_nomer` (
+					`general_nomer`,
+					`week_nomer`,
+					`day_print`,
+					`day_public`
+				) VALUES '.implode(',', $gnArr);
+		query($sql);
+
+		GvaluesCreate();
+
+		$send['year'] = utf8(setup_gn_year($year));
+		$send['html'] = utf8(setup_gn_spisok($year));
+		jsonSuccess($send);
+		break;
+	case 'setup_gn_add':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['week_nomer']))
+			jsonError('Некорректно указан номер недели выпуска');
+		if(!preg_match(REGEXP_NUMERIC, $_POST['general_nomer']))
+			jsonError('Некорректно указан общий номер выпуска');
+		if(!preg_match(REGEXP_DATE, $_POST['day_print']))
+			jsonError('Некорректно указана дата отправки в печать');
+		if(!preg_match(REGEXP_DATE, $_POST['day_public']))
+			jsonError('Некорректно указана дата выхода газеты');
+		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+			jsonError();
+		$week_nomer = intval($_POST['week_nomer']);
+		$general_nomer = intval($_POST['general_nomer']);
+		$day_print = $_POST['day_print'];
+		$day_public = $_POST['day_public'];
+		$year = intval($_POST['year']);
+
+		if(query_value("SELECT `general_nomer` FROM `gazeta_nomer` WHERE `general_nomer`=".$general_nomer))
+			jsonError('Номер газеты <b>'.$general_nomer.'</b> уже есть в списке');
+
+		$sql = "INSERT INTO `gazeta_nomer` (
+					`week_nomer`,
+					`general_nomer`,
+					`day_print`,
+					`day_public`
+				) VALUES (
+					".$week_nomer.",
+					".$general_nomer.",
+					'".$day_print."',
+					'".$day_public."'
+				)";
+		query($sql);
+
+		GvaluesCreate();
+
+		$send['year'] = utf8(setup_gn_year($year));
+		$send['html'] = utf8(setup_gn_spisok($year, $general_nomer));
+		jsonSuccess($send);
+		break;
+	case 'setup_gn_edit':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['gn']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['week_nomer']))
+			jsonError('Некорректно указан номер недели выпуска');
+		if(!preg_match(REGEXP_NUMERIC, $_POST['general_nomer']))
+			jsonError('Некорректно указан общий номер выпуска');
+		if(!preg_match(REGEXP_DATE, $_POST['day_print']))
+			jsonError('Некорректно указана дата отправки в печать');
+		if(!preg_match(REGEXP_DATE, $_POST['day_public']))
+			jsonError('Некорректно указана дата выхода газеты');
+		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+			jsonError();
+		$gn = intval($_POST['gn']);
+		$week_nomer = intval($_POST['week_nomer']);
+		$general_nomer = intval($_POST['general_nomer']);
+		$day_print = $_POST['day_print'];
+		$day_public = $_POST['day_public'];
+		$year = intval($_POST['year']);
+
+		if($gn != $general_nomer) {
+			$sql = "SELECT `general_nomer` FROM `gazeta_nomer` WHERE `general_nomer`=".$general_nomer;
+			if(query_value($sql))
+				jsonError('Номер газеты <b>'.$general_nomer.'</b> уже есть в списке');
+		}
+
+		$sql = "UPDATE `gazeta_nomer`
+				SET `week_nomer`=".$week_nomer.",
+					`general_nomer`=".$general_nomer.",
+					`day_print`='".$day_print."',
+					`day_public`='".$day_public."'
+				WHERE `general_nomer`=".$gn."
+				LIMIT 1";
+		query($sql);
+
+		GvaluesCreate();
+
+		$send['year'] = utf8(setup_gn_year($year));
+		$send['html'] = utf8(setup_gn_spisok($year, $general_nomer));
 		jsonSuccess($send);
 		break;
 	case 'setup_gn_del':
@@ -82,7 +222,6 @@ switch(@$_POST['op']) {
 		$sql = "DELETE FROM `gazeta_nomer` WHERE `general_nomer`=".$general;
 		query($sql);
 
-		xcache_unset(CACHE_PREFIX.'gn');
 		GvaluesCreate();
 
 		$send['year'] = utf8(setup_gn_year($year));

@@ -152,7 +152,7 @@ $(document)
 	.on('click', '#setup_gn .link', function() {
 		var t = $(this),
 			send = {
-				op:'setup_gn_spisok',
+				op:'setup_gn_spisok_get',
 				year:t.html()
 			};
 		t.parent().find('.sel').removeClass('sel');
@@ -161,6 +161,217 @@ $(document)
 			if(res.success)
 				$('#spisok').html(res.html);
 		}, 'json');
+	})
+	.on('click', '#setup_gn .vkButton', function() {
+		var t = $(this),
+			year = $('#dopLinks .sel').html(),
+			html = '<table class="setup-gn-tab">' +
+				'<tr><td colspan="2">' +
+					'<div class="gn-info">' +
+						'Для создания списка номеров газет <b>' + year + '</b> года ' +
+						'укажите данные <b>первого номера</b>, который будет выходить в этом году.<br />' +
+						'Все поля обязательны для заполнения.' +
+					'</div>' +
+				'<tr><td class="label">Первый номер выпуска:' +
+					'<td><input type="text" id="week_nomer" maxlength="2" value="1" />' +
+						'<input type="text" id="general_nomer" maxlength="4" value="' + GN_MAX + '" />' +
+				'<tr><td class="label">Дни отправки в печать:<td><input type="hidden" id="day_print" />' +
+				'<tr><td class="label">Дни выхода:<td><input type="hidden" id="day_public" />' +
+				'<tr><td class="label">Первый день выхода:<td><input type="hidden" id="day_first" value="' + year + '-01-01" />' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:310,
+				head:'Создание списка номеров газеты',
+				content:html,
+				butSubmit:'Создать',
+				submit:submit
+			}),
+			weeks = [
+				{uid:0,title:'Понедельник'},
+				{uid:1,title:'Вторник'},
+				{uid:2,title:'Среда'},
+				{uid:3,title:'Четверг'},
+				{uid:4,title:'Пятница'},
+				{uid:5,title:'Суббота'},
+				{uid:6,title:'Воскресенье'}
+			];
+		$('#week_nomer').focus();
+		$('#week_nomer,#general_nomer').keyEnter(submit);
+		$('#day_print').vkSel({width:100, value:1, spisok:weeks});
+		$('#day_public').vkSel({width:100, value:4, spisok:weeks});
+		$('#day_first')._calendar({lost:1});
+		function submit() {
+			var send = {
+				op:'setup_gn_spisok_create',
+				year:year,
+				week_nomer:$('#week_nomer').val(),
+				general_nomer:$('#general_nomer').val(),
+				day_print:$('#day_print').val(),
+				day_public:$('#day_public').val(),
+				day_first:$('#day_first').val()
+			};
+			if(!REGEXP_NUMERIC.test(send.week_nomer)) {
+				err('Некорректно указан номер недели выпуска');
+				$('#week_nomer').focus();
+			} else if(!REGEXP_NUMERIC.test(send.general_nomer)) {
+				err('Некорректно указан общий номер выпуска');
+				$('#general_nomer').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#dopLinks').html(res.year);
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Внесено!');
+					} else {
+						dialog.abort();
+						err(res.text);
+					}
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class=red>' + msg + '</SPAN>',
+				top:-47,
+				left:58,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
+	})
+	.on('click', '#setup_gn .add', function() {
+		var t = $(this),
+			html = '<table class="setup-gn-tab">' +
+				'<tr><td class="label r">Номер выпуска:' +
+					'<td><input type="text" id="week_nomer" maxlength="2" />' +
+						'<input type="text" id="general_nomer" maxlength="4" />' +
+				'<tr><td class="label r">День отправки в печать:<td><input type="hidden" id="day_print" />' +
+				'<tr><td class="label r">День выхода:<td><input type="hidden" id="day_public" />' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:310,
+				head:'Добавление номера газеты',
+				content:html,
+				submit:submit
+			});
+		$('#week_nomer').focus();
+		$('#week_nomer,#general_nomer').keyEnter(submit);
+		$('#day_print')._calendar({lost:1});
+		$('#day_public')._calendar({lost:1});
+		function submit() {
+			var send = {
+				op:'setup_gn_add',
+				week_nomer:$('#week_nomer').val(),
+				general_nomer:$('#general_nomer').val(),
+				day_print:$('#day_print').val(),
+				day_public:$('#day_public').val(),
+				year:$('#dopLinks .sel').html()
+			};
+			if(!REGEXP_NUMERIC.test(send.week_nomer)) {
+				err('Некорректно указан номер недели выпуска');
+				$('#week_nomer').focus();
+			} else if(!REGEXP_NUMERIC.test(send.general_nomer)) {
+				err('Некорректно указан общий номер выпуска');
+				$('#general_nomer').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#dopLinks').html(res.year);
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Внесено!');
+					} else {
+						dialog.abort();
+						err(res.text);
+					}
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class=red>' + msg + '</SPAN>',
+				top:-47,
+				left:58,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
+	})
+	.on('click', '#setup_gn .img_edit', function() {
+		var t = $(this);
+		while(t[0].tagName != 'TR')
+			t = t.parent();
+		var week = t.find('.nomer b').html(),
+			general = t.find('.nomer span').html(),
+			print = t.find('.print s').html(),
+			pub = t.find('.pub s').html(),
+			html = '<table class="setup-gn-tab">' +
+				'<tr><td class="label r">Номер выпуска:' +
+				'<td><input type="text" id="week_nomer" maxlength="2" value="' + week + '" />' +
+				'<input type="text" id="general_nomer" maxlength="4"  value="' + general + '" />' +
+				'<tr><td class="label r">День отправки в печать:<td><input type="hidden" id="day_print" value="' + print + '" />' +
+				'<tr><td class="label r">День выхода:<td><input type="hidden" id="day_public" value="' + pub + '" />' +
+				'</table>',
+			dialog = _dialog({
+				top:60,
+				width:310,
+				head:'Редактирование номера газеты',
+				content:html,
+				butSubmit:'Сохранить',
+				submit:submit
+			});
+		$('#week_nomer').focus();
+		$('#week_nomer,#general_nomer').keyEnter(submit);
+		$('#day_print')._calendar({lost:1});
+		$('#day_public')._calendar({lost:1});
+		function submit() {
+			var send = {
+				op:'setup_gn_edit',
+				gn:general,
+				week_nomer:$('#week_nomer').val(),
+				general_nomer:$('#general_nomer').val(),
+				day_print:$('#day_print').val(),
+				day_public:$('#day_public').val(),
+				year:$('#dopLinks .sel').html()
+			};
+			if(!REGEXP_NUMERIC.test(send.week_nomer)) {
+				err('Некорректно указан номер недели выпуска');
+				$('#week_nomer').focus();
+			} else if(!REGEXP_NUMERIC.test(send.general_nomer)) {
+				err('Некорректно указан общий номер выпуска');
+				$('#general_nomer').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('#dopLinks').html(res.year);
+						$('#spisok').html(res.html);
+						dialog.close();
+						_msg('Изменено!');
+					} else {
+						dialog.abort();
+						err(res.text);
+					}
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class=red>' + msg + '</SPAN>',
+				top:-47,
+				left:58,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
 	})
 	.on('click', '#setup_gn .img_del', function() {
 		var t = $(this);
