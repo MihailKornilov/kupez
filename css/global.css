@@ -77,124 +77,19 @@
 
 
 
-
-
-
-
-
-
-
-/* Окно внесения нового клиента */
-#dialog_client_add .tdAbout { text-align:right; }
-#dialog_client_add .img_edit { float:right; position:relative; top:6px; left:-63px; }
-#dialog_client_add
-    #client_fio,
-#client_telefon,
-#org_name,
-#client_adres,
-#inn,
-#kpp,
-#email { width:250px; }
-
-
-
-
-
-
-/* Информация о клиенте */
-.clientInfo { width:100%; }
-.clientInfo #left { vertical-align:top; }
-.clientInfo #info { margin:15px; }
-.clientInfo .tdAbout { width:90px; }
-.clientInfo #right {
-    background-color:#F7F7F7;
-    border-left:#DAE1E8 solid 1px;
-    width:140px;
-    padding:8px;
-    vertical-align:top;
-}
-.clientInfo .right2 { height:300px; }
-.clientInfo #dopMenu { border-top:#DAE1E8 solid 1px; }
-.clientInfo #dopMenu #result { float:right; color:#555; margin-top:4px; }
-.clientInfo #links { margin-bottom:20px; }
-.clientInfo #money { margin:10px; }
-.clientInfo #money .tabSpisok .sum { width:50px; }
-.clientInfo #money .tabSpisok TD.sum { text-align:right; }
-.clientInfo #money .tabSpisok .about b { color:#777; }
-.clientInfo #money .tabSpisok .data { width:120px; }
-.clientInfo #money .tabSpisok TD.data {font-size:10px; color:#888; text-align:right; }
-.clientInfo #money .tabSpisok TD.data A {  font-size:10px; }
-
-
-
-
-
-
-
-
-
-
-
-
 /* Список объявлений */
-#zayav { width:100%; }
-#zayav #spisok { vertical-align:top; background-color:#F7F7F7; }
-#zayav #right {
-    width:147px;
-    height:600px;
-    padding:10px 10px 10px 0;
-    vertical-align:top;
-    background-color:#F7F7F7;
-}
-#zayav #buttonCreate { margin-bottom:10px; }
 #zayav #nofast { margin-top:20px; }
 #zayav #category { margin-bottom:20px; }
 #zayav .img_word { float:right; position:relative; top:-1px; left:10px; }
 #zayav #vkSel_gazeta_nomer TT { color:#666; font-size:10px; margin-left:4px; }
 #zayav #vkSel_gazeta_nomer .over TT { color:#DDD; }
 #zayav #vkSel_gazeta_nomer .grey { color:#777; }
-#zayav .unit {
-    border:#DAE1E8 solid 1px;
-    background-color:#FFF;
-    margin:8px;
-    padding:6px 8px;
-}
-#zayav .unit H1 { margin-bottom:3px; }
-#zayav .unit H1 A { font:bold 13px Tahoma; }
-#zayav .unit H1 EM {
-    font-size:10px;
-    color:#888;
-    float:right;
-}
-#zayav .unit TABLE { width:100%; }
-#zayav .unit .tdAbout { width:80px; }
-#zayav .unit .txt {
-    border:#EEE solid 1px;
-    font:14px Times New Roman;
-    background-color:#FFFFF0;
-    padding:2px 4px;
-    display:inline-block;
-}
-#zayav .unit .txt TT { font:14px Times New Roman; }
-#zayav .unit .ug {
-    margin:0 5px;
-    color:#666;
-}
 #zayav .unit .image {
     width:80px;
     vertical-align:top;
     text-align:center;
     cursor:pointer;
 }
-#zayav .unit .manual {
-    font-size:10px;
-    color:#888;
-    margin-left:5px;
-}
-#zayav .unit TT {
-    background-color:#e1e7ed;
-}
-
 
 
 

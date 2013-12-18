@@ -1,4 +1,84 @@
 var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
+	clientAdd = function(callback) {
+		var html = '<table class="client-add">' +
+			'<tr><td class="label">Категория:<td><input type="hidden" id="cperson">' +
+				'<a href="' + URL + '&p=gazeta&d=setup&d1=person" class="img_edit"></a>' +
+			'<tr><td class="label">Контактное лицо (фио):<td><input type="text" id="fio" maxlength="200">' +
+			'<tr><td class="label">Название организации:<td><input type="text" id="org_name" maxlength="200">' +
+			'<tr><td class="label">Телефоны:<td><input type="text" id="telefon" maxlength="300">' +
+			'<tr><td class="label">Адрес:<td><input type="text" id="adres" maxlength="200">' +
+			'<tr><td class="label">ИНН:<td><input type="text" id="inn" maxlength="100">' +
+			'<tr><td class="label">КПП:<td><input type="text" id="kpp" maxlength="100">' +
+			'<tr><td class="label">E-mail:<td><input type="text" id="email" maxlength="100">' +
+			'<tr><td class="label">Скидка:<td><input type="hidden" id="cskidka">' +
+			'</table>',
+			dialog = _dialog({
+				top:40,
+				width:440,
+				head:'Добавление нoвого клиента',
+				content:html,
+				submit:submit
+			});
+		$('#cperson').vkSel({
+			width:180,
+			display:'inline-block',
+			title0:'Не выбрана',
+			spisok:PERSON_SPISOK
+		});
+		$('.client-add .img_edit:first').vkHint({
+			msg:"Перейти к настройкам заявителей",
+			indent:110,
+			top:-76,
+			left:75
+		});
+		$('#cskidka').vkSel({
+			width:60,
+			title0:'Нет',
+			spisok:SKIDKA_SPISOK
+		});
+		$('#fio').focus();
+		$('#fio,#org_name,#telefon,#adres,#inn,#kpp,#email').keyEnter(submit);
+		function submit() {
+			var send = {
+				op:'client_add',
+				person:$('#cperson').val(),
+				fio:$('#fio').val(),
+				telefon:$('#telefon').val(),
+				org_name:$('#org_name').val(),
+				adres:$('#adres').val(),
+				inn:$('#inn').val(),
+				kpp:$('#kpp').val(),
+				email:$('#email').val(),
+				skidka:$('#cskidka').val()
+			};
+			if(send.person == 0) err('Не выбран заявитель', -48);
+			else if(!send.fio && !send.org_name) err('Необходимо указать контактное лицо<br />либо название организации', -61);
+			else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						dialog.close();
+						_msg('Новый клиент внесён.');
+						if(typeof callback == 'function')
+							callback(res);
+						else
+							document.location.href = URL + '&p=gazeta&d=client&d1=info&id=' + res.uid;
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+		function err(msg, top) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class="red">' + msg + '</SPAN>',
+				top:top,
+				left:131,
+				indent:40,
+				show:1,
+				remove:1
+			});
+		}
+	},
 	clientFilter = function() {
 		var v = {
 			fast:cFind.inp(),
@@ -14,6 +94,29 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 		var send = clientFilter(),
 			result = $('.result');
 		send.op = 'client_spisok';
+		if(result.hasClass('busy'))
+			return;
+		result.addClass('busy');
+		$.post(AJAX_GAZ, send, function (res) {
+			result.removeClass('busy');
+			if(res.success) {
+				result.html(res.result);
+				$('.left').html(res.spisok);
+			}
+		}, 'json');
+	},
+
+	zayavFilter = function() {
+		var v = {
+			find:zFind.inp()
+		};
+		$('.filter')[v.find ? 'hide' : 'show']();
+		return v;
+	},
+	zayavSpisokLoad = function() {
+		var send = zayavFilter(),
+			result = $('.result');
+		send.op = 'zayav_spisok';
 		if(result.hasClass('busy'))
 			return;
 		result.addClass('busy');
@@ -40,6 +143,23 @@ $(document)
 				next.remove();
 				$('#client .left').append(res.spisok);
 			} else
+				next.removeClass('busy');
+		}, 'json');
+	})
+
+	.on('click', '#history_next', function() {
+		if($(this).hasClass('busy'))
+			return;
+		var next = $(this),
+			send = {
+				op:'history_next',
+				page:$(this).attr('val')
+			};
+		next.addClass('busy');
+		$.post(AJAX_GAZ, send, function(res) {
+			if(res.success)
+				next.after(res.html).remove();
+			else
 				next.removeClass('busy');
 		}, 'json');
 	})
@@ -1341,7 +1461,7 @@ $(document)
 				txt:'Введите данные клиента и нажмите Enter',
 				func:clientSpisokLoad
 			});
-			//$('#buttonCreate').click(clientAdd);
+			$('#buttonCreate').click(clientAdd);
 			$('#order')._radio({
 				light:1,
 				spisok:[
@@ -1388,6 +1508,137 @@ $(document)
 				delayShow:1000,
 				correct:0
 			});
+		}
+		if($('#clientInfo').length > 0) {
+			$('.cedit').click(function() {
+				var html = '<table class="client-add">' +
+						'<tr><td class="label">Категория:<td><input type="hidden" id="cperson" value="' + CLIENT.person + '" />' +
+							'<a href="' + URL + '&p=gazeta&d=setup&d1=person" class="img_edit"></a>' +
+						'<tr><td class="label">Контактное лицо (фио):<td><input type="text" id="fio" maxlength="200" value="' + CLIENT.fio + '" />' +
+						'<tr><td class="label">Название организации:<td><input type="text" id="org_name" maxlength="200" value="' + CLIENT.org_name + '" />' +
+						'<tr><td class="label">Телефоны:<td><input type="text" id="telefon" maxlength="300" value="' + CLIENT.telefon + '" />' +
+						'<tr><td class="label">Адрес:<td><input type="text" id="adres" maxlength="200" value="' + CLIENT.adres + '" />' +
+						'<tr><td class="label">ИНН:<td><input type="text" id="inn" maxlength="100" value="' + CLIENT.inn + '" />' +
+						'<tr><td class="label">КПП:<td><input type="text" id="kpp" maxlength="100" value="' + CLIENT.kpp + '" />' +
+						'<tr><td class="label">E-mail:<td><input type="text" id="email" maxlength="100" value="' + CLIENT.email + '" />' +
+						'<tr><td class="label">Скидка:<td><input type="hidden" id="cskidka" value="' + CLIENT.skidka + '" />' +
+						'</table>',
+					dialog = _dialog({
+						top:40,
+						width:440,
+						head:'Редактирование данных клиента',
+						content:html,
+						submit:submit
+					});
+				$('#cperson').vkSel({
+					width:180,
+					display:'inline-block',
+					spisok:PERSON_SPISOK
+				});
+				$('.client-add .img_edit:first').vkHint({
+					msg:"Перейти к настройкам заявителей",
+					indent:110,
+					top:-76,
+					left:75
+				});
+				$('#cskidka').vkSel({
+					width:60,
+					title0:'Нет',
+					spisok:SKIDKA_SPISOK
+				});
+				$('#fio').focus();
+				$('#fio,#org_name,#telefon,#adres,#inn,#kpp,#email').keyEnter(submit);
+				function submit() {
+					var send = {
+						op:'client_edit',
+						id:CLIENT.id,
+						person:$('#cperson').val(),
+						fio:$('#fio').val(),
+						telefon:$('#telefon').val(),
+						org_name:$('#org_name').val(),
+						adres:$('#adres').val(),
+						inn:$('#inn').val(),
+						kpp:$('#kpp').val(),
+						email:$('#email').val(),
+						skidka:$('#cskidka').val()
+					};
+					if(!send.fio && !send.org_name) err('Необходимо указать контактное лицо<br />либо название организации');
+					else {
+						dialog.process();
+						$.post(AJAX_GAZ, send, function(res) {
+							if(res.success) {
+								CLIENT = res;
+								$('#clientInfo .left:first').html(res.html);
+								dialog.close();
+								_msg('Данные изменены.');
+
+							} else
+								dialog.abort();
+						}, 'json');
+					}
+				}
+				function err(msg) {
+					dialog.bottom.vkHint({
+						msg:'<SPAN class="red">' + msg + '</SPAN>',
+						top:-61,
+						left:131,
+						indent:40,
+						show:1,
+						remove:1
+					});
+				}
+			});
+			$('.cdel').click(function() {
+				var dialog = _dialog({
+					top:90,
+					width:300,
+					head:'Удаление клиента',
+					content:'<center>Внимание!<br />Будут удалены все данные о клиенте,<br />его заявки, и платежи.<br /><b>Подтвердите удаление.</b></center>',
+					butSubmit:'Удалить',
+					submit:submit
+				});
+				function submit() {
+					var send = {
+						op:'client_del',
+						id:CLIENT.id
+					};
+					dialog.process();
+					$.post(AJAX_GAZ, send, function(res) {
+						if(res.success) {
+							dialog.close();
+							_msg('Клиент удален.');
+							location.href = URL + '&p=gazeta&d=client';
+						} else
+							dialog.abort();
+					}, 'json');
+				}
+			});
+
+		}
+
+		if($('#zayav').length > 0) {
+			window.zFind = $('#find')
+				.vkHint({
+					width:145,
+					msg:'<div style="text-align:justify">' +
+						'Введите значение и нажмите <b>Enter</b>. ' +
+						'Поиск производится по всем объявлениям, ' +
+						'то есть другие параметры не учитываются. ' +
+						'Если указано число и оно совпадает с номером ' +
+						'заявки, то эта заявка выводится первая в списке.<div>',
+					ugol:'right',
+					indent:10,
+					top:-1,
+					left:-182,
+					delayShow:1500
+				})
+				._search({
+					width:148,
+					focus:1,
+					enter:1,
+					txt:'Быстрый поиск..',
+					func:zayavSpisokLoad
+				});
 		}
 	});
 

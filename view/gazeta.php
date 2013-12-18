@@ -35,6 +35,75 @@ function _mainLinks() {
 	$html .= $send;
 }//_mainLinks()
 
+function _category($id=false) {
+	$cat = array(
+		1 => 'Объявление',
+		2 => 'Реклама',
+		3 => 'Поздравление',
+		4 => 'Статья'
+	);
+	return $id ? $cat[$id] : $cat;
+}//_category()
+function _person($person_id=false) {//Список изделий для заявок
+	if(!defined('PERSON_LOADED') || $person_id === false) {
+		$key = CACHE_PREFIX.'person';
+		$arr = xcache_get($key);
+		if(empty($arr)) {
+			$sql = "SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$arr[$r['id']] = $r['name'];
+			xcache_set($key, $arr, 86400);
+		}
+		if(!defined('PERSON_LOADED')) {
+			foreach($arr as $id => $name)
+				define('PERSON_'.$id, $name);
+			define('PERSON_0', '');
+			define('PERSON_LOADED', true);
+		}
+	}
+	return $person_id !== false ? constant('PERSON_'.$person_id) : $arr;
+}//_person()
+function _rubric($rubric_id=false) {//Список изделий для заявок
+	if(!defined('RUBRIC_LOADED') || $rubric_id === false) {
+		$key = CACHE_PREFIX.'rubric';
+		$arr = xcache_get($key);
+		if(empty($arr)) {
+			$sql = "SELECT `id`,`name` FROM `setup_rubric` ORDER BY `sort`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$arr[$r['id']] = $r['name'];
+			xcache_set($key, $arr, 86400);
+		}
+		if(!defined('RUBRIC_LOADED')) {
+			foreach($arr as $id => $name)
+				define('RUBRIC_'.$id, $name);
+			define('RUBRIC_0', '');
+			define('RUBRIC_LOADED', true);
+		}
+	}
+	return $rubric_id !== false ? constant('RUBRIC_'.$rubric_id) : $arr;
+}//_rubric()
+function _rubricsub($item_id=false) {//Список изделий для заявок
+	if(!defined('RUBRICSUB_LOADED') || $item_id === false) {
+		$key = CACHE_PREFIX.'rubric_sub';
+		$arr = xcache_get($key);
+		if(empty($arr)) {
+			$sql = "SELECT `id`,`name` FROM `setup_rubric_sub` ORDER BY `sort`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$arr[$r['id']] = $r['name'];
+			xcache_set($key, $arr, 86400);
+		}
+		if(!defined('RUBRICSUB_LOADED')) {
+			foreach($arr as $id => $name)
+				define('RUBRICSUB_'.$id, $name);
+			define('RUBRICSUB_0', '');
+			define('RUBRICSUB_LOADED', true);
+		}
+	}
+	return $item_id !== false ? constant('RUBRICSUB_'.$item_id) : $arr;
+}//_rubricsub()
 
 // ---===! client !===--- Секция клиентов
 
@@ -224,12 +293,77 @@ function client_list() {
 	'</div>';
 }//client_list()
 
+function _clientLink($arr, $fio=0) {//Добавление имени и ссылки клиента в массив или возврат по id
+	$clientArr = array(is_array($arr) ? 0 : $arr);
+	if(is_array($arr)) {
+		$ass = array();
+		foreach($arr as $r) {
+			$clientArr[$r['client_id']] = $r['client_id'];
+			if($r['client_id'])
+				$ass[$r['client_id']][] = $r['id'];
+		}
+		unset($clientArr[0]);
+	}
+	if(!empty($clientArr)) {
+		$sql = "SELECT
+					`id`,
+					`fio`,
+					`org_name`,
+					`deleted`
+		        FROM `gazeta_client`
+				WHERE `id` IN (".implode(',', $clientArr).")";
+		$q = query($sql);
+		if(!is_array($arr)) {
+			if($r = mysql_fetch_assoc($q)) {
+				$name = $r['org_name'] ? $r['org_name'] : $r['fio'];
+				return $fio ? $name : '<a'.($r['deleted'] ? ' class="deleted"' : '').' href="'.URL.'&p=gazeta&d=client&d1=info&id='.$r['id'].'">'.$name.'</a>';
+			}
+			return '';
+		}
+		while($r = mysql_fetch_assoc($q)) {
+			$name = $r['org_name'] ? $r['org_name'] : $r['fio'];
+			foreach($ass[$r['id']] as $id) {
+				$arr[$id]['client_link'] = '<a'.($r['deleted'] ? ' class="deleted"' : '').' href="'.URL.'&p=gazeta&d=client&d1=info&id='.$r['id'].'">'.$name.'</a>';
+				$arr[$id]['client_fio'] = $name;
+			}
+		}
+	}
+	return $arr;
+}//_clientLink()
+function clientBalansUpdate($client_id) {// установка баланса клиента
+	$rashod = query_value("SELECT SUM(`summa`) FROM `gazeta_zayav` WHERE `deleted`=0 AND `client_id`=".$client_id);
+	$prihod = query_value("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `deleted`=0 AND `client_id`=".$client_id);
+	$balans = $prihod - $rashod;
+	$sql = "UPDATE `gazeta_client` SET `balans`=".$balans." WHERE `id`=".$client_id;
+	query($sql);
+	return $balans;
+}
+function clientInfoGet($client) {
+	$name = $client['person'] == 1 ? $client['fio'] : _person($client['person']).' '.$client['org_name'];
+	if(empty($name))
+		$name = $client['org_name'];
+	return
+	'<div class="name">'.$name.'</div>'.
+	'<table class="cinf">'.
+		($client['person'] != 1 ? '<tr><td class="label">Контактное лицо:<td>'.$client['fio'] : '').
+		($client['telefon'] ? '<tr><td class="label">Телефоны:<td>'.$client['telefon'] : '').
+		($client['adres'] ?   '<tr><td class="label">Адрес:  <td>'.$client['adres'] : '').
+		($client['inn'] ?     '<tr><td class="label">ИНН:    <td>'.$client['inn'] : '').
+		($client['kpp'] ?     '<tr><td class="label">КПП:    <td>'.$client['kpp'] : '').
+		($client['email'] ?   '<tr><td class="label">E-mail: <td>'.$client['email'] : '').
+		($client['skidka'] ?  '<tr><td class="label">Скидка: <td>'.$client['skidka'].'%' : '').
+		'<tr><td class="label">Баланс: <td><b class="'.($client['balans'] < 0 ? 'minus' : 'plus').'">'.round($client['balans'], 2).'</b>'.
+	'</table>'.
+	'<div class="dtime_add">Клиента вн'.(_viewer($client['viewer_id_add'], 'sex') == 1 ? 'есла' : 'ёс').' '
+		._viewer($client['viewer_id_add'], 'name').' '.
+		FullData($client['dtime_add'], 1).
+	'</div>';
+}
 function client_info($client_id) {
-	$sql = "SELECT * FROM `client` WHERE `status`=1 AND `id`=".$client_id;
+	$sql = "SELECT * FROM `gazeta_client` WHERE `deleted`=0 AND `id`=".$client_id;
 	if(!$client = mysql_fetch_assoc(query($sql)))
 		return _noauth('Клиента не существует');
 
-	$zamer = zamer_spisok(1, array('client'=>$client_id), 10);
 	$commCount = query_value("SELECT COUNT(`id`)
 							  FROM `vk_comment`
 							  WHERE `status`=1
@@ -237,81 +371,353 @@ function client_info($client_id) {
 								AND `table_name`='client'
 								AND `table_id`=".$client_id);
 
-	$sql = "SELECT * FROM `money` WHERE `status`=1 AND `client_id`=".$client_id;
-	$q = query($sql);
-	$moneyCount = mysql_num_rows($q);
-	$money = '<div class="_empty">Платежей нет.</div>';
-	if($moneyCount) {
-		$money = '<table class="_spisok _money">'.
-			'<tr><th class="sum">Сумма'.
-			'<th>Описание'.
-			'<th class="data">Дата';
-		while($r = mysql_fetch_assoc($q)) {
-			$about = '';
-			if($r['zayav_id'] > 0)
-				$about .= 'Заявка '.$r['zayav_id'].'. ';
-			$about .= $r['prim'];
-			$money .= '<tr><td class="sum"><b>'.$r['sum'].'</b>'.
-				'<td>'.$about.
-				'<td class="dtime" title="Внёс: '._viewer($r['viewer_id_add'], 'name').'">'.FullDataTime($r['dtime_add']);
-		}
-		$money .= '</table>';
-	}
-	// $remindData = remind_data(1, array('client'=>$client_id));
+	$money['all'] = 0;
+//	$money = money_spisok(1, array('client_id'=>$client_id,'limit'=>15));
 
-	$histCount = query_value("SELECT COUNT(`id`) FROM `history` WHERE `client_id`=".$client_id);
+	$histCount = 0;
+//	$histCount = query_value("SELECT COUNT(`id`) FROM `history` WHERE `client_id`=".$client_id);
 
 	return
 		'<script type="text/javascript">'.
-		'var CLIENT={'.
-		'id:'.$client_id.','.
-		'fio:"'.$client['fio'].'",'.
-		'telefon:"'.$client['telefon'].'",'.
-		'adres:"'.$client['adres'].'",'.
-		'pasp_seria:"'.$client['pasp_seria'].'",'.
-		'pasp_nomer:"'.$client['pasp_nomer'].'",'.
-		'pasp_adres:"'.$client['pasp_adres'].'",'.
-		'pasp_ovd:"'.$client['pasp_ovd'].'",'.
-		'pasp_data:"'.$client['pasp_data'].'"'.
-		'};'.
+			'var CLIENT={'.
+				'id:'.$client_id.','.
+				'person:'.$client['person'].','.
+				'fio:"'.$client['fio'].'",'.
+				'org_name:"'.$client['org_name'].'",'.
+				'telefon:"'.$client['telefon'].'",'.
+				'adres:"'.$client['adres'].'",'.
+				'inn:"'.$client['inn'].'",'.
+				'kpp:"'.$client['kpp'].'",'.
+				'email:"'.$client['email'].'",'.
+				'skidka:"'.$client['skidka'].'"'.
+			'};'.
 		'</script>'.
 		'<div id="clientInfo">'.
-		'<table class="tabLR">'.
-		'<tr><td class="left">'.clientInfoGet($client).
-		'<td class="right">'.
-		'<div class="rightLink">'.
-		'<a class="sel">Информация</a>'.
-		'<a class="cedit">Редактировать</a>'.
-		'<a class="zamer_add"><b>Новый замер</b></a>'.
-		'<a class="cdel">Удалить клиента</a>'.
-		'</div>'.
-		'</table>'.
+			'<table class="tabLR">'.
+				'<tr><td class="left">'.clientInfoGet($client).
+					'<td class="right">'.
+						'<div class="rightLink">'.
+							'<a class="sel">Информация</a>'.
+							'<a class="cedit">Редактировать</a>'.
+							'<a href="'.URL.'&p=gazeta&d=zayav&d1=add&client_id='.$client_id.'"><b>Новая заявка</b></a>'.
+							'<a>Внести платёж</a>'.
+							'<a class="cdel">Удалить клиента</a>'.
+						'</div>'.
+			'</table>'.
 
-		'<div id="dopLinks">'.
-		'<a class="link sel" val="zayav">Заявки'.($zamer['all'] ? ' ('.$zamer['all'].')' : '').'</a>'.
-		'<a class="link" val="money">Платежи'.($moneyCount ? ' ('.$moneyCount.')' : '').'</a>'.
-		//'<a class="link" val="remind">Задания'.(!empty($remindData) ? ' ('.$remindData['all'].')' : '').'</a>'.
-		'<a class="link" val="comm">Заметки'.($commCount ? ' ('.$commCount.')' : '').'</a>'.
-		'<a class="link" val="hist">История'.($histCount ? ' ('.$histCount.')' : '').'</a>'.
-		'</div>'.
+			'<div id="dopLinks">'.
+				'<a class="link sel" val="zayav">Заявки</a>'.
+				'<a class="link" val="money">Платежи'.($money['all'] ? ' ('.$money['all'].')' : '').'</a>'.
+				'<a class="link" val="comm">Заметки'.($commCount ? ' ('.$commCount.')' : '').'</a>'.
+				'<a class="link" val="hist">История'.($histCount ? ' ('.$histCount.')' : '').'</a>'.
+			'</div>'.
 
-		'<table class="tabLR">'.
-		'<tr><td class="left">'.
-		'<div id="zayav_spisok">'.$zamer['spisok'].'</div>'.
-		'<div id="money_spisok">'.$money.'</div>'.
-		'<div id="remind_spisok">'.(!empty($remindData) ? report_remind_spisok($remindData) : '<div class="_empty">Заданий нет.</div>').'</div>'.
-		'<div id="comments">'._vkComment('client', $client_id).'</div>'.
-		'<div id="histories">'.report_history_spisok(1, array('client_id'=>$client_id)).'</div>'.
-		'<td class="right">'.
-		'<div id="zayav_filter">'.
-		//'<div id="zayav_result">'.zayav_count($zayavData['all'], 0).'</div>'.
-		//'<div class="findHead">Статус заявки</div>'.
-		//_rightLink('status', _zayavStatusName()).
-		'</div>'.
-		'</table>'.
+			'<table class="tabLR">'.
+				'<tr><td class="left">'.
+						//'<div id="zayav_spisok">'.($zayavSpisok ? $zayavSpisok : '<div class="_empty">Заявок нет</div>').'</div>'.
+						//'<div id="money_spisok">'.$money['spisok'].'</div>'.
+						'<div id="comments">'._vkComment('client', $client_id).'</div>'.
+						//'<div id="histories">'.history_spisok(1, array('client_id'=>$client_id)).'</div>'.
+					'<td class="right">'.
+			'</table>'.
 		'</div>';
 }//client_info()
 
+
+// ---===! zayav !===--- Секция заявок
+
+function zayavFilter($v=array()) {
+	if(empty($v['find']))
+		$v['find'] = '';
+	$filter = array(
+		'find' => win1251(htmlspecialchars(trim($v['find'])))
+	);
+	return $filter;
+}//zayavFilter()
+function zayav_data($page=1, $filter=array(), $limit=20) {
+	$cond = "`deleted`=0";
+
+	if(!empty($filter['find'])) {
+		$find = preg_replace( '/\s+/', '', $filter['find']);
+		$cond .= " AND (
+			REPLACE(`txt`,' ','') LIKE '%".$find."%' OR
+            REPLACE(`telefon`,' ','') LIKE '%".$find."%' OR
+            REPLACE(`adres`,' ','') LIKE '%".$find."%' OR
+			`txt` LIKE '%".$filter['find']."%' OR
+            `telefon` LIKE '%".$filter['find']."%' OR
+            `adres` LIKE '%".$filter['find']."%')";
+		$reg = '/('.$filter['find'].')/i';
+		$regNoSpace = '/('.$find.')/i';
+		if($page ==1 && preg_match(REGEXP_NUMERIC, $filter['find']))
+			$find_id = intval($filter['find']);
+	}
+	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `gazeta_zayav` WHERE ".$cond." LIMIT 1");
+
+	$zayav = array();
+	if(isset($find_id)) {
+		$sql = "SELECT * FROM `gazeta_zayav` WHERE `deleted`=0 AND `id`=".$find_id." LIMIT 1";
+		if($r = mysql_fetch_assoc(query($sql))) {
+			$all++;
+			$limit--;
+			$r['find_id'] = 1;
+			$zayav[$r['id']] = $r;
+		}
+	}
+
+	if(!$all)
+		return array(
+			'all' => 0,
+			'result' => 'Заявок не найдено.',
+			'spisok' => '<div class="_empty">Заявок не найдено.</div>'
+		);
+
+	$send['all'] = $all;
+	$send['result'] = 'Показан'._end($all, '', 'о').' '.$all.' заяв'._end($all, 'ка', 'ки', 'ок');
+
+	$start = ($page - 1) * $limit;
+	$sql = "SELECT *
+			FROM `gazeta_zayav`
+			WHERE ".$cond."
+			ORDER BY `id` DESC
+			LIMIT ".$start.",".$limit;
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q)) {
+		if(!empty($filter['find'])) {
+			if(preg_match($reg, $r['txt']))
+				$r['txt'] = preg_replace($reg, '<em>\\1</em>', $r['txt'], 1);
+
+			if(preg_match($reg, $r['telefon']))
+				$r['telefon_find'] = preg_replace($reg, '<em>\\1</em>', $r['telefon'], 1);
+			elseif(preg_match($regNoSpace, preg_replace( '/\s+/', '', $r['telefon'])))
+				$r['telefon_find'] = $r['telefon'];
+
+			if(preg_match($reg, $r['adres']))
+				$r['adres_find'] = preg_replace($reg, '<em>\\1</em>', $r['adres'], 1);
+			elseif(preg_match($regNoSpace, preg_replace( '/\s+/', '', $r['adres'])))
+				$r['adres_find'] = $r['adres'];
+		}
+		$zayav[$r['id']] = $r;
+	}
+
+	$zayav = _clientLink($zayav);
+
+	$send['spisok'] = '';
+	foreach($zayav as $id => $r) {
+		$send['spisok'] .=
+			'<div class="zayav_unit">'.
+				'<div class="dtime">'.FullDataTime($r['dtime_add']).'</div>'.
+				'<a href="'.URL.'&p=gazeta&d=zayav&d1=info&id='.$id.'" class="name">'._category($r['category']).' №'.(isset($r['find_id']) ? '<em>'.$id.'</em>' : $id).'</a>'.
+				'<table class="values">'.
+					($r['client_id'] ? '<tr><td class="label">Клиент:<td>'.$r['client_link'] : '').
+					($r['category'] == 1 ?
+						'<tr><td class="label">Рубрика:<td>'._rubric($r['rubric_id']).
+							($r['rubric_sub_id'] ? '<span class="ug">»</span>'._rubricsub($r['rubric_sub_id']) : '').
+						'<tr><td class="label top">Текст:<td><div class="txt">'.$r['txt'].'</div>'
+					: '').
+					($r['category'] == 2 ?
+						'<tr><td class="label">Размер:<td>'.
+							round($r['size_x'], 1).
+							' x '.
+							round($r['size_y'], 1).
+							' = '.
+							'<b>'.round($r['size_x']*$r['size_y']).'</b> см&sup2;'
+					: '').
+					(isset($r['telefon_find']) ? '<tr><td class="label">Телефон:<td>'.$r['telefon_find'] : '').
+					(isset($r['adres_find']) ? '<tr><td class="label">Адрес:<td>'.$r['adres_find'] : '').
+					'<tr><td class="label">Стоимость:<td><b>'.round($r['summa'], 2).'</b> руб.'.
+						($r['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
+				'</table>'.
+			'</div>';
+	}
+	if($start + $limit < $all) {
+		$c = $all - $start - $limit;
+		$c = $c > $limit ? $limit : $c;
+		$send['spisok'] .=
+			'<div class="ajaxNext zayav_next" val="'.($page + 1).'">'.
+				'<span>Показать ещё '.$c.' заяв'._end($c, 'ку', 'ки', 'ок').'</span>'.
+			'</div>';
+	}
+	return $send;
+}//zayav_data()
+function zayav_list() {
+	$data = zayav_data();
+	return
+	'<div id="zayav">'.
+		'<div class="result">'.$data['result'].'</div>'.
+		'<table class="tabLR">'.
+			'<tr><td class="left">'.$data['spisok'].
+				'<td class="right">'.
+					'<div id="buttonCreate"><a HREF="'.URL.'&p=gazeta&d=zayav&d1=add&back=zayav">Новая заявка</a></div>'.
+					'<div id="find"></div>'.
+					'<div class="filter">'.
+					'</div>'.
+		'</table>'.
+	'</div>';
+}//zayav_list()
+
+
+// ---===! report !===--- Секция отчётов
+
+function report() {
+	$def = 'history';
+	$pages = array(
+		'history' => 'История действий',
+		'zayav' => 'Заявки',
+		'money' => 'Деньги'
+	);
+
+	$d = empty($_GET['d1']) ? $def : $_GET['d1'];
+
+	$links = '';
+	foreach($pages as $p => $name)
+		$links .= '<a href="'.URL.'&p=gazeta&d=report&d1='.$p.'"'.($d == $p ? ' class="sel"' : '').'>'.$name.'</a>';
+
+	switch(@$_GET['d1']) {
+		default:
+		case 'history':
+			$left = history_spisok();
+			break;
+		case 'zayav':
+			$data = '';
+			$left = '';
+			break;
+		case 'money':
+			$data = '';
+			$left = '<div class="headName">Список платежей</div>';
+			break;
+	}
+	return
+	'<table class="tabLR" id="report">'.
+		'<tr><td class="left">'.$left.
+		'<td class="right"><div class="rightLink">'.$links.'</div>'.
+	'</table>';
+}//report()
+function history_insert($arr) {
+	$sql = "INSERT INTO `gazeta_history` (
+			   `type`,
+			   `value`,
+			   `value1`,
+			   `value2`,
+			   `client_id`,
+			   `zayav_id`,
+			   `viewer_id_add`
+			) VALUES (
+				".$arr['type'].",
+				'".(isset($arr['value']) ? $arr['value'] : '')."',
+				'".(isset($arr['value1']) ? $arr['value1'] : '')."',
+				'".(isset($arr['value2']) ? $arr['value2'] : '')."',
+				".(isset($arr['client_id']) ? $arr['client_id'] : 0).",
+				".(isset($arr['zayav_id']) ? $arr['zayav_id'] : 0).",
+				".VIEWER_ID."
+			)";
+	query($sql);
+}//history_insert()
+function history_types($v) {
+	switch($v['type']) {
+		case 51: return 'Внесение нового клиента '.$v['client_link'].'.';
+		case 52: return 'Изменение данных клиента '.$v['client_link'].':<div class="changes">'.$v['value'].'</div>';
+		case 53: return 'Удаление клиента '.$v['client_link'].'.';
+
+		case 1011: return 'В установках добавлена новая категория клиентов <u>'.$v['value'].'</u>.';
+	    case 1012: return 'В установках изменены данные категории клиентов <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
+        case 1013: return 'В установках удалена категория клиентов <u>'.$v['value'].'</u>.';
+
+        case 1021: return 'В установках добавлена новая рубрика <u>'.$v['value'].'</u>.';
+		case 1022: return 'В установках изменена рубрика <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
+		case 1023: return 'В установках удалена рубрика <u>'.$v['value'].'</u>.';
+
+		case 1031: return 'В установках добавлен '.$v['value'].'-й номер газеты.';
+		case 1032: return 'В установках изменены данные '.$v['value'].'-го номера газеты:<div class="changes">'.$v['value1'].'</div>';
+		case 1033: return 'В установках удалён '.$v['value'].'-ый номер газеты.';
+		case 1034: return 'В установках создан список номеров газет на '.$v['value'].' год.';
+
+		case 1041: return 'В установках добавлено новое название полосы <u>'.$v['value'].'</u>.';
+        case 1042: return 'В установках изменены данные полосы <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
+
+		case 1051: return 'В установках добавлена новая скидка <u>'.$v['value'].'%</u>.';
+        case 1052: return 'В установках изменены данные скидки <u>'.$v['value'].'%</u>:<div class="changes">'.$v['value1'].'</div>';
+        case 1053: return 'В установках удалена скидка <u>'.$v['value'].'%</u>.';
+
+        case 1062: return 'В установках изменена стоимость доп. параметра объявления <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
+
+		case 1071: return 'В установках в рубрике <u>'.$v['value'].'</u> добавлена новая подрубрика <u>'.$v['value1'].'</u>.';
+		case 1072: return 'В установках в рубрике <u>'.$v['value'].'</u> изменены данные подрубрики:<div class="changes">'.$v['value1'].'</div>';
+		case 1073: return 'В установках в рубрике <u>'.$v['value'].'</u> удалена подрубрика <u>'.$v['value1'].'</u>.';
+
+		case 1081: return 'В установках добавлен новый сотрудник '._viewer($v['value'], 'name').'.';
+        case 1082: return 'В установках удалён сотрудник '._viewer($v['value'], 'name').'.';
+
+		case 1091: return 'В установках изменена стоимость длины объявлений.';
+
+		case 1101: return 'В установках добавлена новая категория расхода <u>'.$v['value'].'</u>.';
+		case 1102: return 'В установках изменены данные категории расхода <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
+		case 1103: return 'В установках удалена категория расхода <u>'.$v['value'].'</u>.';
+
+		case 1111: return 'В установках добавлен новый вид платежа <u>'.$v['value'].'</u>.';
+		case 1112: return 'В установках изменён вид платежа <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
+		case 1113: return 'В установках удалён вид платежа <u>'.$v['value'].'</u>.';
+
+		default: return $v['type'];
+	}
+}//history_types()
+function history_spisok($page=1, $filter=array()) {
+	$limit = 30;
+	$cond = "`id`".
+		(isset($filter['client_id']) ? ' AND `client_id`='.$filter['client_id'] : '').
+		(isset($filter['zayav_id']) ? ' AND `zayav_id`='.$filter['zayav_id'] : '');
+	$sql = "SELECT COUNT(`id`) AS `all`
+			FROM `gazeta_history`
+			WHERE ".$cond."
+			LIMIT 1";
+	$all = query_value($sql);
+	if(!$all)
+		return 'Истории по указанным условиям нет.';
+	$start = ($page - 1) * $limit;
+
+	$sql = "SELECT *
+			FROM `gazeta_history`
+			WHERE ".$cond."
+			ORDER BY `id` DESC
+			LIMIT ".$start.",".$limit;
+	$q = query($sql);
+	$history = array();
+	$viewer = array();
+	while($r = mysql_fetch_assoc($q)) {
+		$viewer[$r['viewer_id_add']] = $r['viewer_id_add'];
+		$history[$r['id']] = $r;
+	}
+	$viewer = _viewer($viewer);
+	$history = _clientLink($history);
+
+	$send = '';
+	$txt = '';
+	end($history);
+	$keyEnd = key($history);
+	reset($history);
+	foreach($history as $r) {
+		if(!$txt) {
+			$time = strtotime($r['dtime_add']);
+			$viewer_id = $r['viewer_id_add'];
+		}
+		$txt .= '<div class="txt">'.history_types($r).'</div>';
+		$key = key($history);
+		if(!$key ||
+		   $key == $keyEnd ||
+		   $time - strtotime($history[$key]['dtime_add']) > 900 ||
+		   $viewer_id != $history[$key]['viewer_id_add']) {
+			$send .=
+				'<div class="history_unit">'.
+					'<div class="head">'.FullDataTime($r['dtime_add']).$viewer[$r['viewer_id_add']]['link'].'</div>'.
+					$txt.
+				'</div>';
+			$txt = '';
+		}
+		next($history);
+	}
+	if($start + $limit < $all)
+		$send .= '<div class="ajaxNext" id="history_next" val="'.($page + 1).'"><span>Показать более ранние записи...</span></div>';
+	return $send;
+}//history_spisok()
 
 
 // ---===! setup !===--- Секция настроек

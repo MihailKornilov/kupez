@@ -33,8 +33,8 @@ else {
 							$html .= client_list();
 					}
 				break;
-				case 'zayav': break;
-				case 'report': break;
+				case 'zayav': $html .= zayav_list(); break;
+				case 'report': $html .= report(); break;
 				case 'setup': $html .= setup(); break;
 			}
 			break;

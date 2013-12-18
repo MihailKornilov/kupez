@@ -56,6 +56,9 @@ function _hashCookieSet() {
 }//_hashCookieSet()
 function _cacheClear() {
 	xcache_unset(CACHE_PREFIX.'setup_global');
+	xcache_unset(CACHE_PREFIX.'person');
+	xcache_unset(CACHE_PREFIX.'rubric');
+	xcache_unset(CACHE_PREFIX.'rubric_sub');
 	GvaluesCreate();
 }//_cacheClear()
 
@@ -74,7 +77,7 @@ function _header() {
 
 		//Стороние скрипты
 		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/js/jquery-2.0.3.min.js"></script>'.
-		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/'.(DEBUG ? '' : 'min/').'xd_connection.js"></script>'.
+		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/xd_connection'.(DEBUG ? '' : '.min').'.js"></script>'.
 
 		//Установка начального значения таймера.
 		(SA ? '<script type="text/javascript">var TIME=(new Date()).getTime();</script>' : '').
@@ -87,8 +90,8 @@ function _header() {
 		'</script>'.
 
 		//Подключение api VK. Стили VK должны стоять до основных стилей сайта
-		'<link href="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/'.(DEBUG ? '' : 'min/').'vk.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
-		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/'.(DEBUG ? '' : 'min/').'vk.js?'.VERSION.'"></script>'.
+		'<link href="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/vk'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
+		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/vk'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
 		'<link href="'.SITE.'/css/main.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
 		'<script type="text/javascript" src="'.SITE.'/js/main.js?'.VERSION.'"></script>'.
@@ -281,61 +284,5 @@ function vkUserCheck($vku, $update = false)
                            `enter_last`=current_timestamp where viewer_id='.VIEWER_ID);
     }
     return $vku;
-}
-
-// установка баланса клиента
-function setClientBalans($client_id = 0) {
-	if ($client_id > 0) {
-		global $VK;
-		$rashod = $VK->QRow("SELECT SUM(`summa`) FROM `gazeta_zayav` WHERE `client_id`=".$client_id);
-		$prihod = $VK->QRow("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `status`=1 AND `client_id`=".$client_id);
-		$balans = $prihod - $rashod;
-		$zayav_count = $VK->QRow("SELECT COUNT(`id`) FROM `gazeta_zayav` WHERE `client_id`=".$client_id);
-		$VK->Query("UPDATE `gazeta_client` SET
-                        `balans`=".$balans.",
-                        `zayav_count`=".$zayav_count." WHERE `id`=".$client_id);
-		return $balans;
-	} else {
-		return 0;
-	}
-}
-
-$zayavCategory = array(
-  1 => 'Объявление',
-  2 => 'Реклама',
-  3 => 'Поздравление',
-  4 => 'Статья'
-);
-
-
-// форматирование текста для внесения в базу
-function textFormat($txt) {
-	$txt = str_replace("'","&#039;", $txt);
-	$txt = str_replace("<","&lt;", $txt);
-	$txt = str_replace(">","&gt;", $txt);
-	return str_replace("\n","<BR>", $txt);
-}
-
-function textUnFormat($txt) {
-	$txt=str_replace("&#039;","'",$txt);
-	$txt=str_replace("&lt;","<",$txt);
-	$txt=str_replace("&gt;",">",$txt);
-	return str_replace("<BR>","\n",$txt);
-}
-
-
-
-// установка баланса клиента
-function setClientBalans($client_id = 0) {
-	if ($client_id > 0) {
-		global $VK;
-		$rashod = $VK->QRow("select sum(summa) from zayav where client_id=".$client_id);
-		$prihod = $VK->QRow("select sum(summa) from oplata where status=1 and client_id=".$client_id);
-		$balans = $prihod - $rashod;
-		$VK->Query("update client set balans=".$balans." where id=".$client_id);
-		return $balans;
-	} else {
-		return 0;
-	}
 }
 */

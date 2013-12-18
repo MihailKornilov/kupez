@@ -23,59 +23,12 @@ G.log.type = {
     46:'Вн$sex2 платёж на сумму $value руб. ($dop). Клиент $client.',
     47:'Удалил$sex1 платёж на сумму $value руб.',
 
-    51:'Вн$sex2 нового клиента $client.',
-    52:'Изменил$sex1 данные клиента $client.',
-    53:'Удалил$sex1 клиента $value.',
-
     61:'Удалил$sex1 объявление №$value.',
     62:'Удалил$sex1 рекламу №$value.',
     63:'Удалил$sex1 поздравление №$value.',
     64:'Удалил$sex1 статью №$value.',
 
     71:'Установил$sex1 начальное значение в кассе: $value руб.',
-
-    // Настройки
-    1011:'В настройках добавил$sex1 новую категорию клиента "$value".',
-    1012:'В настройках изменил$sex1 данные категории клиента "$value".',
-    1013:'В настройках удалил$sex1 данные категории клиента "$value".',
-
-    1021:'В настройках добавил$sex1 новую рубрику "$value".',
-    1022:'В настройках изменил$sex1 рубрику "$value".',
-    1023:'В настройках удалил$sex1 рубрику "$value".',
-
-    1031:'В настройках добавил$sex1 новый $value-й номер газеты.',
-    1032:'В настройках отредактировал$sex1 данные $value-го номера газеты.',
-    1033:'В настройках удалил$sex1 данные $value-го номера газеты.',
-    1034:'В настройках создал$sex1 список номеров газет на $value год.',
-
-    1041:'В настройках добавил$sex1 новое название полосы "$value".',
-    1042:'В настройках изменил$sex1 данные полосы "$value".',
-    1043:'В настройках удалил$sex1 данные полосы "$value".',
-
-    1051:'В настройках добавил$sex1 новую скидку $value%.',
-    1052:'В настройках изменил$sex1 данные скидки $value%.',
-    1053:'В настройках удалил$sex1 скидку $value%.',
-
-    1062:'В настройках изменил$sex1 стоимость дополнительного параметра объявления "$value".',
-
-    1071:'В настройках добавил$sex1 новую подрубрику $value.',
-    1072:'В настройках изменил$sex1 подрубрику $value.',
-    1073:'В настройках удалил$sex1 подрубрику $value.',
-
-
-    1081:'В настройках добавил$sex1 нового сотрудника $value.',
-    1082:'В настройках удалил$sex1 сотрудника $value.',
-
-    1101:'В настройках добавил$sex1 новую категорию расхода "$value".',
-    1102:'В настройках изменил$sex1 категорию расхода "$value".',
-    1103:'В настройках удалил$sex1 категорию расхода "$value".',
-
-    1111:'В настройках добавил$sex1 новый вид платежа "$value".',
-    1112:'В настройках изменил$sex1 вид платежа "$value".',
-    1113:'В настройках удалил$sex1 вид платежа "$value".',
-
-
-    1091:'В настройках изменил$sex1 стоимость длины объявлений:<br />$value'
 };
 
 // Формирование окончаний по полу
@@ -121,46 +74,3 @@ $("#log_worker").vkSel({
     }
 });
 
-
-$("#day_begin").vkCalendar({lost:1, place:'left', func:function (data) { G.spisok.print({day_begin:data}); }});
-$("#day_end").vkCalendar({lost:1, place:'left', func:function (data) { G.spisok.print({day_end:data}); }});
-
-
-G.spisok.unit = function (sp) {
-    var us = G.vkusers[sp.viewer_id];
-    var txt = G.log.type[sp.type];
-    if (!txt) return '';
-    txt = endSex(us, txt);
-
-    if (sp.client_id) {
-        txt = txt.replace('$client',
-            sp.client_fio ?
-            "<A href='/index.php?" + G.values + "&p=gazeta&d=client&d1=info&id=" + sp.client_id + "'>" + sp.client_fio + "</A>" :
-            '(удалён)');
-    }
-
-    if (sp.zayav_id) { txt = txt.replace('$zayav', "<A href='/index.php?" + G.values + "&p=gazeta&d=zayav&d1=view&id=" + sp.zayav_id + "'>№" + sp.zayav_id + "</A>"); }
-    if (sp.value) { txt = txt.replace('$value', sp.value); }
-    if (sp.dop) { txt = txt.replace('$dop', sp.dop); }
-
-    return "<div class=head>" +
-                sp.dtime +
-                "<A href='http://vk.com/id" + sp.viewer_id + "' target='_blank'>" + us.name + "</A>" +
-           "</div>" +
-           "<div class=txt>" + txt + "</div>";
-};
-
-G.spisok.create({
-    url:"/view/gazeta/report/log/AjaxLogGet.php",
-    limit:20,
-    view:$("#spisok"),
-    nofind:"Истории нет.",
-    //   a:1,
-    values:{
-        type:0,
-        worker:0,
-        day_begin:$("#day_begin").val(),
-        day_end:$("#day_end").val()
-    },
-    callback:function (data) {}
-});

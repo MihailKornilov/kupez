@@ -7,7 +7,7 @@
 */
 require_once('../../../include/AjaxHeader.php');
 
-$find = "WHERE `viewer_id_add`>0";
+$find = "WHERE `status`>0 AND `viewer_id_add`>0";
 
 // показ объ€влений дл€ выбранного пользовател€ (администрирование)
 if ($_GET['viewer_id_add'] > 0) {

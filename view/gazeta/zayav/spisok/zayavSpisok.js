@@ -57,20 +57,6 @@ $("#fastFind").topSearch({
         G.spisok.print({input:encodeURIComponent(inp)});
     }
 });
-$("#fastFind").vkHint({
-    width:145,
-    msg:'<div style=text-align:justify;>Введите значение и нажмите <b>Enter</b>. ' +
-        'Поиск производится по всем объявлениям, ' +
-        'то есть другие параметры не учитываются. ' +
-        'Если указано число и оно совпадает с номером ' +
-        'заявки, то эта заявка выводится первая в списке.<div>',
-    ugol:'right',
-    indent:10,
-    top:-10,
-    left:-179,
-    delayShow:1500
-});
-
 
 
 $("#no_public").myCheck({
@@ -128,25 +114,3 @@ G.spisok.unit = function (sp) {
 
         "</TABLE>";
 };
-
-G.spisok.create({
-    url:"/view/gazeta/zayav/spisok/AjaxZayavSpisok.php",
-    view:$("#spisok"),
-    limit:15,
-    cache_spisok:spisok.ob,
-    result_view:$("#findResult"),
-    result:"Показано $count заяв$ob",
-    ends:{'$ob':['ка', 'ки', 'ок']},
-    next_next:"Показать ещё заявки",
-    nofind:"Заявок не найдено.",
-    imgup:$("#findResult"),
-//    a:1,
-    values:{
-        input:'',
-        category:G.zayav.category,
-        year:G.zayav.year,
-        gazeta_nomer:$("#gazeta_nomer").val(),
-        no_public:0
-    }
-});
-
