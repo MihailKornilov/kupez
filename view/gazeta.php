@@ -426,15 +426,62 @@ function client_info($client_id) {
 
 // ---===! zayav !===--- Секция заявок
 
+function gnJson($year=0, $array=false) {//Получение списка номеров для select на указанный год
+	if(!$year)
+		$year = strftime('%Y', time());
+	$sql = "SELECT * FROM `gazeta_nomer` WHERE SUBSTR(`day_public`,1,4)=".$year." ORDER BY general_nomer";
+	$q = query($sql);
+	$json = array();
+	$arr = array();
+	while($r = mysql_fetch_assoc($q)) {
+		$lost = $r['general_nomer'] < GN_FIRST_ACTIVE ? ' lost' : '';
+		$ex = explode('-', $r['day_print']);
+		$public = abs($ex[2]).' '._monthCut($ex[1]);
+		$json[] =
+			'{'.
+				'uid:'.$r['general_nomer'].','.
+				'title:"'.$r['week_nomer'].' ('.$r['general_nomer'].') выход '.$public.'",'.
+				'content:"<div class=\"gn_sel'.$lost.'\">'.
+							'<b>'.$r['week_nomer'].'</b>'.
+							'('.$r['general_nomer'].')<span> '.
+							'выход '.$public.'</span>'.
+						 '</div>"'.
+			'}';
+		$arr[] = array(
+			'uid' => $r['general_nomer'],
+			'title' => utf8($r['week_nomer'].' ('.$r['general_nomer'].') выход '.$public),
+			'content' => utf8('<div class="gn_sel'.$lost.'">'.
+								'<b>'.$r['week_nomer'].'</b>'.
+								'('.$r['general_nomer'].')<span> '.
+								'выход '.$public.'</span>'.
+							'</div>')
+		);
+	}
+	return $array ? $arr : implode(',', $json);
+}
 function zayavFilter($v=array()) {
 	if(empty($v['find']))
 		$v['find'] = '';
+	if(empty($v['cat']) || !preg_match(REGEXP_NUMERIC, $v['cat']))
+		$v['cat'] = 0;
+	if(empty($v['nopublic']) || !preg_match(REGEXP_BOOL, $v['nopublic']))
+		$v['nopublic'] = 0;
+	if(empty($v['gnyear']) || !preg_match(REGEXP_YEAR, $v['gnyear']))
+		$v['gnyear'] = strftime('%Y', time());
+	if(!isset($v['nomer']) || !preg_match(REGEXP_NUMERIC, $v['nomer']))
+		$v['nomer'] = GN_FIRST_ACTIVE;
 	$filter = array(
-		'find' => win1251(htmlspecialchars(trim($v['find'])))
+		'find' => win1251(htmlspecialchars(trim($v['find']))),
+		'cat' => intval($v['cat']),
+		'gnyear' => intval($v['gnyear']),
+		'nomer' => intval($v['nomer']),
+		'nopublic' => intval($v['nopublic'])
 	);
 	return $filter;
 }//zayavFilter()
 function zayav_data($page=1, $filter=array(), $limit=20) {
+	if(empty($filter))
+		$filter = zayavFilter();
 	$cond = "`deleted`=0";
 
 	if(!empty($filter['find'])) {
@@ -450,6 +497,20 @@ function zayav_data($page=1, $filter=array(), $limit=20) {
 		$regNoSpace = '/('.$find.')/i';
 		if($page ==1 && preg_match(REGEXP_NUMERIC, $filter['find']))
 			$find_id = intval($filter['find']);
+	} else {
+		if(!empty($filter['cat']))
+			$cond .= " AND `category`=".$filter['cat'];
+		if($filter['nopublic'])
+			$cond .= " AND `gn_count`=0";
+		else {
+			if($filter['nomer'])
+				$ids = query_ids("SELECT DISTINCT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']);
+			else {
+				$ids = query_ids("SELECT `general_nomer` FROM `gazeta_nomer` WHERE SUBSTR(`day_public`,1,4)=".$filter['gnyear']);
+				$ids = query_ids('SELECT DISTINCT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer` IN ('.$ids.')');
+			}
+			$cond .= " AND `id` IN (".$ids.")";
+		}
 	}
 	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `gazeta_zayav` WHERE ".$cond." LIMIT 1");
 
@@ -541,7 +602,10 @@ function zayav_data($page=1, $filter=array(), $limit=20) {
 }//zayav_data()
 function zayav_list() {
 	$data = zayav_data();
+	$cat = array(0 => 'Любая категория') + _category();
+	$cat[1] .= '<div class="img_word"></div>';
 	return
+	'<script type="text/javascript">var GN_SEL=['.gnJson().'];</script>'.
 	'<div id="zayav">'.
 		'<div class="result">'.$data['result'].'</div>'.
 		'<table class="tabLR">'.
@@ -550,6 +614,14 @@ function zayav_list() {
 					'<div id="buttonCreate"><a HREF="'.URL.'&p=gazeta&d=zayav&d1=add&back=zayav">Новая заявка</a></div>'.
 					'<div id="find"></div>'.
 					'<div class="filter">'.
+						'<div class="findHead">Категория</div>'.
+						_rightLink('cat', $cat, 0).
+						_check('nopublic', 'Невыходившие заявки').
+						'<div class="filter_nomer">'.
+							'<div class="findHead">Номер газеты</div>'.
+							'<input type="hidden" id="gnyear">'.
+							'<input type="hidden" id="nomer" value="'.GN_FIRST_ACTIVE.'">'.
+						'</div>'.
 					'</div>'.
 		'</table>'.
 	'</div>';
@@ -681,12 +753,9 @@ function history_spisok($page=1, $filter=array()) {
 			LIMIT ".$start.",".$limit;
 	$q = query($sql);
 	$history = array();
-	$viewer = array();
-	while($r = mysql_fetch_assoc($q)) {
-		$viewer[$r['viewer_id_add']] = $r['viewer_id_add'];
+	while($r = mysql_fetch_assoc($q))
 		$history[$r['id']] = $r;
-	}
-	$viewer = _viewer($viewer);
+	$history = _viewer($history);
 	$history = _clientLink($history);
 
 	$send = '';
@@ -707,7 +776,7 @@ function history_spisok($page=1, $filter=array()) {
 		   $viewer_id != $history[$key]['viewer_id_add']) {
 			$send .=
 				'<div class="history_unit">'.
-					'<div class="head">'.FullDataTime($r['dtime_add']).$viewer[$r['viewer_id_add']]['link'].'</div>'.
+					'<div class="head">'.FullDataTime($r['dtime_add']).$r['viewer_link'].'</div>'.
 					$txt.
 				'</div>';
 			$txt = '';

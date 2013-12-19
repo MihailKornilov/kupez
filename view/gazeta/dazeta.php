@@ -1,97 +1,11 @@
-<?php
-// Активный первый и последний номера газеты
-$gn = $VK->QueryObjectOne('SELECT
-                               MIN(`general_nomer`) AS `first`,
-                               MAX(`general_nomer`) AS `max`
-                           FROM `gazeta_nomer` WHERE `day_print`>=DATE_FORMAT(NOW(),"%Y-%m-%d")');
-define('GN_FIRST_ACTIVE', $gn->first);
-define('GN_LAST_ACTIVE',  $gn->max);
-define('TXT_LEN_FIRST',   $G->txt_len_first);
-define('TXT_CENA_FIRST',  $G->txt_cena_first);
-define('TXT_LEN_NEXT',    $G->txt_len_next);
-define('TXT_CENA_NEXT',   $G->txt_cena_next);
-$zayavCategory = array(
-    1 => 'Объявление',
-    2 => 'Реклама',
-    3 => 'Поздравление',
-    4 => 'Статья'
-);
-?>
 <SCRIPT type="text/javascript">
 G.gn.first_active = <?=GN_FIRST_ACTIVE?>;
 G.gn.first_save = <?=GN_FIRST_ACTIVE?>;
 G.gn.last_active = <?=GN_LAST_ACTIVE?>;
 </SCRIPT>
-<SCRIPT type="text/javascript" src="/include/client/client.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/js/gnGet.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/js/gazeta.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
-
-// Список заявок
-function zayavSpisok() {
-    if (@$_GET['d1'] == 'add') { zayavAdd(); return; }
-    if (@$_GET['d1'] == 'view') { zayavView(); return; }
-    if (@$_GET['d1'] == 'edit') { zayavEdit(); return; }
-    global $VK, $MonthCut;
-    $spisok = $VK->QueryObjectArray("SELECT
-                                        `general_nomer`,
-                                        SUBSTR(`day_public`,1,4) AS `year`,
-                                        SUBSTR(`day_public`,6,2) AS `month`,
-                                        SUBSTR(`day_public`,9,2) AS `day`,
-                                        `week_nomer`,
-                                        `day_print`
-                                         FROM `gazeta_nomer` ORDER BY general_nomer");
-    $nomer = array();
-    foreach($spisok as $sp) {
-        $grey = (time() > strtotime($sp->day_print) + 86400 ? ' class=grey' : '');
-        $pub = abs($sp->day).' '.$MonthCut[$sp->month];
-        if (!isset($nomer[$sp->year])) { $nomer[$sp->year] = array(); }
-        array_push($nomer[$sp->year],
-            '{uid:'.$sp->general_nomer
-           .',title:"'.$sp->week_nomer.' ('.$sp->general_nomer.') выход '.$pub.'"'
-           .',content:"<B'.$grey.'>'.$sp->week_nomer.'</B><SPAN'.$grey.'>('.$sp->general_nomer.')</SPAN><TT>выход '.$pub.'</TT>"}'
-        );
-    }
-    $y_nomer = array();
-    foreach ($nomer as $n => $sp) { array_push($y_nomer, $n.":[".implode(',',$sp)."]"); }
-
-    $year = @$_GET['year'] ? $_GET['year'] : strftime("%Y",time());
-    $gn = isset($_GET['gn']) ? $_GET['gn'] : GN_FIRST_ACTIVE;
-    $cat = @$_GET['cat'] ? $_GET['cat'] : 0;
-    //123
-?>
-<DIV id=findResult>&nbsp;</DIV>
-<TABLE cellpadding=0 cellspacing=0 id=zayav>
-    <TR>
-        <TD id=spisok>&nbsp;
-        <TD id=right>
-            <DIV id=buttonCreate><A onclick="location.href='<?=URL?>&p=gazeta&d=zayav&d1=add';">Новая заявка</A></DIV>
-            <DIV id=fastFind></DIV>
-            <DIV id=nofast>
-                <DIV class=findName>Категория</DIV>
-                    <div id=category></div>
-                <input type=hidden id=no_public>
-                <div id=public>
-                    <DIV class=findName>Номер газеты</DIV>
-                        <INPUT TYPE=hidden id=year value=<?=$year?>>
-                        <INPUT TYPE=hidden id=gazeta_nomer value=<?=$gn?>>
-                </div>
-            </DIV>
-</TABLE>
-<SCRIPT type="text/javascript">
-G.zayav = {
-    category:<?=$cat?>,
-    gazeta_nomer_spisok:<?='{'.implode(',', $y_nomer).'}'?>,
-    year:<?=$year?>,
-    years:<?=$VK->vkSelJson("SELECT
-                                DISTINCT(SUBSTR(`day_public`,1,4)),
-                                SUBSTR(`day_public`,1,4) FROM `gazeta_nomer` ORDER BY `day_public`");?>
-
-};
-</SCRIPT>
-<SCRIPT type="text/javascript" src="/view/gazeta/zayav/spisok/zayavSpisok.js?<?=JS_VERSION?>"></SCRIPT>
-<?php
-} // end of zayavSpisok()
 
 // Добавление новой заявки
 function zayavAdd() {

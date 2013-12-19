@@ -163,9 +163,20 @@ switch(@$_POST['op']) {
 
 
 	case 'zayav_spisok':
-		$data = zayav_data(1, zayavFilter($_POST));
+		$filter = zayavFilter($_POST);
+		$data = zayav_data(1, $filter);
 		$send['result'] = utf8($data['result']);
 		$send['spisok'] = utf8($data['spisok']);
+		if(!$filter['nomer'])
+			$send['gn_sel'] = gnJson($filter['gnyear'], 1);
+		jsonSuccess($send);
+		break;
+	case 'zayav_next':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['page']))
+			jsonError();
+		$page = intval($_POST['page']);
+		$data = zayav_data($page, zayavFilter($_POST));
+		$send['html'] = utf8($data['spisok']);
 		jsonSuccess($send);
 		break;
 

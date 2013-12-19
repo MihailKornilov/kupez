@@ -78,9 +78,6 @@
 
 
 /* Список объявлений */
-#zayav #nofast { margin-top:20px; }
-#zayav #category { margin-bottom:20px; }
-#zayav .img_word { float:right; position:relative; top:-1px; left:10px; }
 #zayav #vkSel_gazeta_nomer TT { color:#666; font-size:10px; margin-left:4px; }
 #zayav #vkSel_gazeta_nomer .over TT { color:#DDD; }
 #zayav #vkSel_gazeta_nomer .grey { color:#777; }

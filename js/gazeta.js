@@ -108,23 +108,33 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 
 	zayavFilter = function() {
 		var v = {
-			find:zFind.inp()
+			find:zFind.inp(),
+			cat:$('#cat').val(),
+			gnyear:$('#gnyear').val(),
+			nomer:$('#nomer').val(),
+			nopublic:$('#nopublic').val()
 		};
 		$('.filter')[v.find ? 'hide' : 'show']();
 		return v;
 	},
-	zayavSpisokLoad = function() {
-		var send = zayavFilter(),
-			result = $('.result');
+	zayavSpisokLoad = function(year) {
+		var send = zayavFilter();
 		send.op = 'zayav_spisok';
-		if(result.hasClass('busy'))
+		if($('#mainLinks').hasClass('busy'))
 			return;
-		result.addClass('busy');
+		$('#mainLinks').addClass('busy');
 		$.post(AJAX_GAZ, send, function (res) {
-			result.removeClass('busy');
+			$('#mainLinks').removeClass('busy');
 			if(res.success) {
-				result.html(res.result);
+				$('.result').html(res.result);
 				$('.left').html(res.spisok);
+				if(year == 'change')
+					$('#nomer').vkSel({
+						width:147,
+						title0:'Номер не указан',
+						spisok:res.gn_sel,
+						func:zayavSpisokLoad
+					});
 			}
 		}, 'json');
 	};
@@ -147,13 +157,29 @@ $(document)
 		}, 'json');
 	})
 
+	.on('click', '.zayav_next', function() {
+		if($(this).hasClass('busy'))
+			return;
+		var next = $(this),
+			send = zayavFilter();
+		send.op = 'zayav_next',
+		send.page = next.attr('val');
+		next.addClass('busy');
+		$.post(AJAX_GAZ, send, function(res) {
+			if(res.success)
+				next.after(res.html).remove();
+			else
+				next.removeClass('busy');
+		}, 'json');
+	})
+
 	.on('click', '#history_next', function() {
 		if($(this).hasClass('busy'))
 			return;
 		var next = $(this),
 			send = {
 				op:'history_next',
-				page:$(this).attr('val')
+				page:next.attr('val')
 			};
 		next.addClass('busy');
 		$.post(AJAX_GAZ, send, function(res) {
@@ -1639,6 +1665,60 @@ $(document)
 					txt:'Быстрый поиск..',
 					func:zayavSpisokLoad
 				});
+			$('#cat').rightLink(zayavSpisokLoad);
+			$('.img_word')
+				.click(function () {
+					var gn = $('#nomer').val();
+					if(gn == 0)
+						$(this).vkHint({
+							width:150,
+							ugol:'right',
+							msg:'<span class=red>Не выбран номер газеты.</span>',
+							indent:5,
+							top:-26,
+							left:-198,
+							show:1,
+							remove:1
+						});
+					else
+						location.href = 'http://' + DOMAIN + '/view/ob-word.php?' + VALUES + "&gn=" + gn;
+					return false;
+				})
+				.vkHint({
+					ugol:'right',
+					width:145,
+					msg:'<span style="color:#444">' +
+							'Открыть список объявлений ' +
+							'в газетном варианте в формате ' +
+							'Microsoft Word.' +
+						'</span>',
+					indent:10,
+					top:-30,
+					left:-193
+				});
+			$('#nopublic')._check(function() {
+				$('.filter_nomer').toggle();
+				zayavSpisokLoad();
+			});
+			$('#nopublic_check').vkHint({
+				width:145,
+				msg:'Заявки, которые не публиковались ни в одном номере газеты.',
+				indent:60,
+				top:-64,
+				left:-61
+			});
+			$('#gnyear').years({
+				func:function() {
+					$('#nomer').val(0);
+					zayavSpisokLoad('change');
+				}
+			});
+			$('#nomer').vkSel({
+				width:147,
+				title0:'Номер не указан',
+				spisok:GN_SEL,
+				func:zayavSpisokLoad
+			});
 		}
 	});
 

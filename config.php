@@ -38,6 +38,14 @@ function _getSetupGlobal() {//Получение глобальных данных
 	define('VERSION', $g['version']);
 	define('G_VALUES_VERSION', $g['g_values']);
 	define('KASSA_START', $g['kassa_start']);
+
+	$sql = "SELECT
+ 				MIN(`general_nomer`) AS `first`,
+				MAX(`general_nomer`) AS `max`
+			FROM `gazeta_nomer` WHERE `day_print`>=DATE_FORMAT(NOW(),'%Y-%m-%d')";
+	$gn = mysql_fetch_assoc(query($sql));
+	define('GN_FIRST_ACTIVE', $gn['first']);
+	define('GN_LAST_ACTIVE',  $gn['max']);
 }//end of _getSetupGlobal()
 function _getVkUser() {//Получение данных о пользователе
 	$u = _viewer();
