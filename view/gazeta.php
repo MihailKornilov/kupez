@@ -626,6 +626,53 @@ function zayav_list() {
 		'</table>'.
 	'</div>';
 }//zayav_list()
+function zayav_info($zayav_id) {
+	if(!preg_match(REGEXP_NUMERIC, $zayav_id))
+		return _noauth('Страницы не существует');
+	$sql = "SELECT * FROM `gazeta_zayav` WHERE `id`=".$zayav_id;
+	if(!$zayav = mysql_fetch_assoc(query($sql)))
+		return _noauth('Заявки не существует');
+	if($zayav['deleted'])
+		return _noauth('Заявка удалена');
+
+	define('ZAYAV_OB', $zayav['category'] == 1);
+	define('ZAYAV_REK', $zayav['category'] == 2);
+
+	return
+	'<div id="zayav-info">'.
+		'<div id="dopLinks">'.
+			'<a class="link sel">Просмотр</a>'.
+			'<a class="link">Редактирование</a>'.
+			'<a class="link">Внести платёж</a>'.
+		'</div>'.
+		'<div class="headName">'._category($zayav['category']).' №'.$zayav['id'].'</div>'.
+		'<table class="ztab">'.
+			($zayav['client_id'] ? '<tr><td class="label">Клиент:<td>'._clientLink($zayav['client_id']) : '').
+			'<tr><td class="label">Дата приёма:<td>'.FullDataTime($zayav['dtime_add']).
+	(ZAYAV_OB ?
+			'<tr><td class="label">Рубрика:'.
+				'<td>'._rubric($zayav['rubric_id']).
+					   ($zayav['rubric_sub_id'] ? '<span class="ug">»</span>'._rubricsub($zayav['rubric_sub_id']) : '').
+			'<tr><td class="label top">Текст:'.
+				'<td><div class="txt">'.
+						$zayav['txt'].
+						($zayav['telefon'] ? '<span class="tel">Тел.: '.$zayav['telefon'].'</span>' : '').
+						($zayav['adres'] ? '<span class="tel">Алрес.: '.$zayav['adres'].'</span>' : '').
+					'</div>'
+	: '').
+	(ZAYAV_REK ?
+			'<tr><td class="label">Размер:'.
+				'<TD>'.round($zayav['size_x'], 1).' x '.
+					   round($zayav['size_y'], 1).' = '.
+					   '<b>'.round($zayav['size_x'] * $zayav['size_y']).'</b> см&sup2;'
+	: '').
+			'<tr><td class="label">Общая стоимость:<td><b>'.round($zayav['summa'], 2).'</b> руб.'.
+			(!$zayav['client_id'] ? '<tr><td class="label">Оплачено:<td>' : '').
+			'<tr><td class="label">Номера выпуска:'.
+		'</table>'.
+	'</div>';
+}//zayav_info()
+
 
 
 // ---===! report !===--- Секция отчётов

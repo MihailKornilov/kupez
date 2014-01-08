@@ -76,6 +76,24 @@
 .zayav_next{margin:0 8px 10px}
 
 
+/* Информация о заявке */
+#zayav-info .headName{margin:10px 15px 5px}
+#zayav-info .ztab{border-spacing:6px;margin-left:15px}
+#zayav-info .label{width:100px}
+#zayav-info .ug{margin:0 7px;color:#777}
+#zayav-info .txt{border:#DDD solid 1px;background-color:#FFFFF4}
+#zayav-info .txt{font:16px Times New Roman;padding:4px 6px}
+#zayav-info .tel{
+	font:bold 14px Times New Roman;
+	color:#555;
+	display:block;
+	margin-top:3px;
+}
+
+
+
+
+
 #report .left{padding:10px}
 .history_unit{margin-bottom:12px;padding-bottom:8px;border-bottom:#dae1e8 solid 1px}
 .history_unit .head{font-size:10px;color:#777}

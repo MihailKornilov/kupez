@@ -33,7 +33,16 @@ else {
 							$html .= client_list();
 					}
 				break;
-				case 'zayav': $html .= zayav_list(); break;
+				case 'zayav':
+					switch(@$_GET['d1']) {
+						case 'add':
+//							$html .= zayav_add($v);
+							break;
+						case 'info': $html .= zayav_info(intval(@$_GET['id'])); break;
+						default:
+							$html .= zayav_list();
+					}
+					break;
 				case 'report': $html .= report(); break;
 				case 'setup': $html .= setup(); break;
 			}

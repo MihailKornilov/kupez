@@ -79,26 +79,14 @@ function zayavView() {
 
     switch ($zayav->category) {
         case 1:
-            $rubrika = $VK->QRow("SELECT `name` FROM `setup_rubrika` WHERE `id`=".$zayav->rubrika);
-            if($zayav->podrubrika > 0)
-                $rubrika .= "<SPAN class=ug>»</SPAN>".$VK->QRow("select name from setup_pod_rubrika where id=".$zayav->podrubrika);
-            $rubrika = '<TR><TD class=tdAbout>Рубрика:<TD>'.$rubrika;
             if ($zayav->file)
                 $img = '<td><img src='.$zayav->file.'s.jpg onclick=G.fotoView("'.$zayav->file.'");>';
-            if ($zayav->telefon) $zayav->txt.="<B>Тел.: ".$zayav->telefon."</B>";
-            if ($zayav->adres) $zayav->txt.="<B>Адрес: ".$zayav->adres."</B>";
-            $txt = '<TR><TD class=tdAbout valign=top>Текст:<TD>'.
-                        '<TABLE cellpadding=0 cellspacing=6 class=txt><tr>'.@$img.'<td>'.$zayav->txt.'</table>';
             if ($zayav->summa_manual == 1) $manual = "<SPAN class=manual>(указана вручную)</SPAN>";
             $dop = '<TH>Дополнительно';
             $dopArr = $VK->QueryPtPArray('SELECT `id`,`name` FROM `setup_ob_dop`');
             $dopTd = '<td class=dop>';
             break;
         case 2:
-            $size = '<TR><TD class=tdAbout>Размер:'.
-                        '<TD>'.round($zayav->size_x,1).' x '.
-                               round($zayav->size_y,1).' = '.
-                         '<b>'.round($zayav->size_x * $zayav->size_y).'</b> см&sup2;';
             if ($zayav->summa_manual == 1) $manual = "<SPAN class=manual>(указана вручную)</SPAN>";
             if ($zayav->skidka > 0)
                 $skidka = "<SPAN class=skidka>Скидка <B>".$zayav->skidka."</B>% (".round($zayav->skidka_sum, 2)." руб.)</SPAN>";
@@ -168,21 +156,10 @@ function zayavView() {
         $zayav_del = '<a id=delete>Удалить заявку</a>';
     }
 ?>
-<DIV id=dopMenu>
-    <A class=linkSel><I></I><B></B><DIV>Просмотр</DIV><B></B><I></I></A>
-    <A HREF='<?=URL?>&p=gazeta&d=zayav&d1=edit&id=<?=$zayav->id?>' class=link><I></I><B></B><DIV>Редактирование</DIV><B></B><I></I></A>
-    <A class=link onclick=moneyAdd({zayav_id:<?=$zayav->id?>,client_id:<?=$zayav->client_id?>});><I></I><B></B><DIV>Внести платёж</DIV><B></B><I></I></A>
-    <?=$zayav_del?>
-</DIV>
-
 <div id=zayavView>
     <TABLE cellpadding=0 cellspacing=0 width=100%>
     <tr><td valign=top width=100%>
-        <DIV class=headName><?=$zayavCategory[$zayav->category]?> №<?=$zayav->id?></DIV>
         <TABLE cellpadding=0 cellspacing=6 width=100%>
-            <?=@$client?>
-            <TR><TD class=tdAbout>Дата приёма:<TD><?php echo FullDataTime($zayav->dtime_add); ?>
-            <?=@$rubrika?>
             <?=@$txt?>
             <?=@$size?>
             <TR><TD class=tdAbout>Общая стоимость:<TD><B><?=round($zayav->summa, 2)?></B> руб.<?=@$manual.@$skidka?>

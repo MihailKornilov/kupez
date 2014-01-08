@@ -77,20 +77,6 @@
 
 
 
-/* Список объявлений */
-#zayav #vkSel_gazeta_nomer TT { color:#666; font-size:10px; margin-left:4px; }
-#zayav #vkSel_gazeta_nomer .over TT { color:#DDD; }
-#zayav #vkSel_gazeta_nomer .grey { color:#777; }
-#zayav .unit .image {
-    width:80px;
-    vertical-align:top;
-    text-align:center;
-    cursor:pointer;
-}
-
-
-
-
 
 
 
@@ -148,17 +134,6 @@
 
 /* Просмотр заявки */
 #zayavView { padding:10px 8px 20px 10px; }
-#zayavView .tdAbout { width:100px; }
-#zayavView .ug { margin:0 7px; color:#666; }
-#zayavView .txt { border:#DDD solid 1px; background-color:#FFFFF4; }
-#zayavView .txt * { font:16px Times New Roman; }
-#zayavView .txt td { vertical-align:top; }
-#zayavView .txt B {
-    font:bold 14px Times New Roman;
-    color:#555;
-    display:block;
-    margin-top:3px;
-}
 #zayavView .txt img { cursor:pointer; }
 #zayavView .manual { font-size:10px; margin-left:10px; color:#888; }
 #zayavView #image { vertical-align:top; }
