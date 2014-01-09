@@ -59,6 +59,9 @@ function _cacheClear() {
 	xcache_unset(CACHE_PREFIX.'person');
 	xcache_unset(CACHE_PREFIX.'rubric');
 	xcache_unset(CACHE_PREFIX.'rubric_sub');
+	xcache_unset(CACHE_PREFIX.'gn');
+	xcache_unset(CACHE_PREFIX.'obdop');
+	xcache_unset(CACHE_PREFIX.'polosa');
 	GvaluesCreate();
 }//_cacheClear()
 

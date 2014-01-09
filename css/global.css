@@ -133,24 +133,8 @@
 
 
 /* Просмотр заявки */
-#zayavView { padding:10px 8px 20px 10px; }
-#zayavView .txt img { cursor:pointer; }
-#zayavView .manual { font-size:10px; margin-left:10px; color:#888; }
 #zayavView #image { vertical-align:top; }
 #zayavView #image img { cursor:pointer; margin-left:10px; }
-#zayavView .public {
-    font-size:10px;
-    text-align:right;
-    color:#555;
-    width:80px;
-}
-#zayavView EM { margin-left:3px; color:#888; }
-#zayavView .dop { color:#444; font-size:10px; }
-#zayavView .skidka { font-size:10px; color:#999; margin-left:10px; }
-#zayavView .active { background-color:#DFD; }
-#zayavView .lost_spisok { text-align:center; background-color:#F9F9F9; }
-#zayavView .lost { background-color:#F9F9F9; display:none; }
-#zayavView .lost TD { color:#777; }
 #zayavView #money { width:450px; margin-top:20px; }
 #zayavView #money .tabSpisok { margin-top:6px; width:100%; }
 #zayavView #money .sum { font-weight:bold; text-align:right; width:60px; }

@@ -83,12 +83,19 @@
 #zayav-info .ug{margin:0 7px;color:#777}
 #zayav-info .txt{border:#DDD solid 1px;background-color:#FFFFF4}
 #zayav-info .txt{font:16px Times New Roman;padding:4px 6px}
-#zayav-info .tel{
-	font:bold 14px Times New Roman;
-	color:#555;
-	display:block;
-	margin-top:3px;
-}
+#zayav-info .tel{font:bold 14px Times New Roman;color:#555;display:block;margin-top:3px}
+#zayav-info .manual{font-size:10px;margin-left:10px;color:#888}
+#zayav-info .skidka{font-size:10px;color:#999;margin-left:10px}
+#zayav-info .gn tr{background-color:#DFD}
+#zayav-info .gn .nomer{text-align:right;width:50px}
+#zayav-info .gn em{margin-left:3px;color:#888}
+#zayav-info .public{font-size:10px;text-align:right;color:#555;width:80px}
+#zayav-info .gn .cena{text-align:right}
+#zayav-info .gn .dop{color:#444;font-size:10px}
+#zayav-info tr#lost-count{text-align:center;background-color:#eee;cursor:pointer;color:#555}
+#zayav-info tr#lost-count:hover{background-color:#F9F9F9}
+#zayav-info .gn tr.lost{background-color:#F9F9F9;display:none}
+#zayav-info .gn tr.lost td{color:#777}
 
 
 

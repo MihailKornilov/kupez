@@ -1720,6 +1720,12 @@ $(document)
 				func:zayavSpisokLoad
 			});
 		}
+		if($('#zayav-info').length > 0) {
+			$('#lost-count').click(function() {
+				$(this).parent().find('.lost').show()
+				$(this).remove();
+			});
+		}
 	});
 
 /*

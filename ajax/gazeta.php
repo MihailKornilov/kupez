@@ -292,6 +292,7 @@ switch(@$_POST['op']) {
 				) VALUES '.implode(',', $gnArr);
 		query($sql);
 
+		xcache_unset(CACHE_PREFIX.'gn');
 		GvaluesCreate();
 
 		history_insert(array(
@@ -336,6 +337,7 @@ switch(@$_POST['op']) {
 				)";
 		query($sql);
 
+		xcache_unset(CACHE_PREFIX.'gn');
 		GvaluesCreate();
 
 		history_insert(array(
@@ -386,6 +388,7 @@ switch(@$_POST['op']) {
 				LIMIT 1";
 		query($sql);
 
+		xcache_unset(CACHE_PREFIX.'gn');
 		GvaluesCreate();
 
 		$changes = '';
@@ -423,6 +426,7 @@ switch(@$_POST['op']) {
 		$sql = "DELETE FROM `gazeta_nomer` WHERE `general_nomer`=".$general;
 		query($sql);
 
+		xcache_unset(CACHE_PREFIX.'gn');
 		GvaluesCreate();
 
 		history_insert(array(

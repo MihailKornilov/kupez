@@ -67,65 +67,12 @@ function zayavAdd() {
 
 // Просмотр заявки
 function zayavView() {
-    global $VK, $zayavCategory;
-    $zayav = $VK->QueryObjectOne("SELECT * FROM `gazeta_zayav` WHERE `id`=".(preg_match("|^[\d]+$|", @$_GET['id']) ? $_GET['id'] : 0));
-    if (!@$zayav->id) { nopage($_GET['p'], $_GET['d']); return; };
-
-    if ($zayav->client_id > 0) {
-        $client = $VK->QueryObjectOne("SELECT `fio`,`org_name` FROM `gazeta_client` WHERE `id`=".$zayav->client_id);
-        $client = "<TR><TD class=tdAbout>Клиент:".
-                      "<TD><A href='".URL."&p=gazeta&d=client&d1=info&id=".$zayav->client_id."'>".($client->org_name ? $client->org_name : $client->fio)."</A>";
-    }
-
-    switch ($zayav->category) {
-        case 1:
-            if ($zayav->file)
-                $img = '<td><img src='.$zayav->file.'s.jpg onclick=G.fotoView("'.$zayav->file.'");>';
-            if ($zayav->summa_manual == 1) $manual = "<SPAN class=manual>(указана вручную)</SPAN>";
-            $dop = '<TH>Дополнительно';
-            $dopArr = $VK->QueryPtPArray('SELECT `id`,`name` FROM `setup_ob_dop`');
-            $dopTd = '<td class=dop>';
-            break;
-        case 2:
-            if ($zayav->summa_manual == 1) $manual = "<SPAN class=manual>(указана вручную)</SPAN>";
-            if ($zayav->skidka > 0)
-                $skidka = "<SPAN class=skidka>Скидка <B>".$zayav->skidka."</B>% (".round($zayav->skidka_sum, 2)." руб.)</SPAN>";
-            $dop = '<TH>Полоса';
-            $dopArr = $VK->QueryPtPArray('SELECT `id`,`name` FROM `setup_polosa_cost`');
-            $dopTd = '<td class=dop>';
-            break;
-    }
-    $dopArr[0] = '';
-
 
     if ($zayav->file and $zayav->category != 1) {
         $image = '<td id=image><img src='.$zayav->file.'b.jpg width=200 onclick=G.fotoView("'.$zayav->file.'");>';
     }
 
     $zayav_del = 1; // Изначально заявку можно удалить
-
-    // Список выходов
-    $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav->id.' ORDER BY `general_nomer`');
-    if (count($spisok) > 0) {
-        $gn = $VK->ObjectAss("SELECT `general_nomer` AS `id`,`week_nomer`,`day_public` FROM `gazeta_nomer`");
-        $pub['active'] = array();
-        $pub['lost'] = array();
-        foreach ($spisok as $sp) {
-            $class = ($sp->general_nomer >= GN_FIRST_ACTIVE ? 'active' : 'lost');
-            if ($class == 'lost') $zayav_del = ''; // если есть прошедшие газеты, удаление заявки невозможно
-            array_push($pub[$class], '<TR class='.$class.'>'.
-                        '<td align=right><b>'.$gn[$sp->general_nomer]->week_nomer.'</b><em>('.$sp->general_nomer.')</em>'.
-                        '<td class=public>'.FullData($gn[$sp->general_nomer]->day_public, 1, 1).
-                        '<td align=right>'.round($sp->summa, 2).
-                        @$dopTd.$dopArr[$sp->dop]);
-        }
-        $public = '<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH>Номер<TH>Выход<TH>Цена'.@$dop;
-        if (count($pub['lost']) > 0) {
-            $public .= '<tr class=lost_spisok><td colspan=4><a onclick=lostView();>Показать прошедшие выходы ('.count($pub['lost']).')</a>';
-            $public .= implode($pub['lost']);
-        }
-        $public .= implode($pub['active']).'</TABLE>';
-    }
 
     // Список платежей
     $moneySumma = 0; // общая сумма платежей
@@ -145,33 +92,15 @@ function zayavView() {
         }
         $money .= '</table></div>';
     }
-
-    // Если нет клиента, показано, сколько оплачено за заявку
-    if ($zayav->client_id == 0) {
-        $paided = "<TR><TD class=tdAbout>Оплачено:<TD>".round($moneySumma, 2)." руб.";
-    }
-
-
-    if ($zayav_del == 1) {
-        $zayav_del = '<a id=delete>Удалить заявку</a>';
-    }
 ?>
 <div id=zayavView>
     <TABLE cellpadding=0 cellspacing=0 width=100%>
     <tr><td valign=top width=100%>
-        <TABLE cellpadding=0 cellspacing=6 width=100%>
-            <?=@$txt?>
-            <?=@$size?>
-            <TR><TD class=tdAbout>Общая стоимость:<TD><B><?=round($zayav->summa, 2)?></B> руб.<?=@$manual.@$skidka?>
-            <?=@$paided?>
-            <TR><TD class=tdAbout>Номера выпуска:<td>
-        </TABLE>
-        <?=@$public?>
         <?=@$image?>
     </TABLE>
     <?=@$money?>
     <DIV id=comm></DIV>
-    <DIV id=dialog_zayav></DIV>
+
 </div>
 <SCRIPT type="text/javascript">
 G.zayav = {

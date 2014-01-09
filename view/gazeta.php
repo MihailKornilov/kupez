@@ -104,6 +104,60 @@ function _rubricsub($item_id=false) {//Список изделий для заявок
 	}
 	return $item_id !== false ? constant('RUBRICSUB_'.$item_id) : $arr;
 }//_rubricsub()
+function _gnCache() {//Получение информации о всех номерах газеты из кеша
+	$key = CACHE_PREFIX.'gn';
+	$send = xcache_get($key);
+	if(empty($send)) {
+		$send = array();
+		$sql = "SELECT * FROM `gazeta_nomer`";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q))
+			$send[$r['general_nomer']] = $r;
+		xcache_set($key, $send, 86400);
+	}
+	return $send;
+}//_gnCache()
+function _onDop($item_id=false) {//Дополнительные параметры для объявлений
+	if(!defined('OBDOP_LOADED') || $item_id === false) {
+		$key = CACHE_PREFIX.'obdop';
+		$arr = xcache_get($key);
+		if(empty($arr)) {
+			$sql = "SELECT * FROM `setup_ob_dop`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$arr[$r['id']] = $r['name'];
+			xcache_set($key, $arr, 86400);
+		}
+		if(!defined('OBDOP_LOADED')) {
+			foreach($arr as $id => $name)
+				define('OBDOP_'.$id, $name);
+			define('OBDOP_0', '');
+			define('OBDOP_LOADED', true);
+		}
+	}
+	return $item_id !== false ? constant('OBDOP_'.$item_id) : $arr;
+}//_onDop()
+function _polosa($item_id=false) {//Название полосы для рекламы
+	if(!defined('POLOSA_LOADED') || $item_id === false) {
+		$key = CACHE_PREFIX.'polosa';
+		$arr = xcache_get($key);
+		if(empty($arr)) {
+			$sql = "SELECT * FROM `setup_polosa_cost`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$arr[$r['id']] = $r['name'];
+			xcache_set($key, $arr, 86400);
+		}
+		if(!defined('POLOSA_LOADED')) {
+			foreach($arr as $id => $name)
+				define('POLOSA_'.$id, $name);
+			define('POLOSA_0', '');
+			define('POLOSA_LOADED', true);
+		}
+	}
+	return $item_id !== false ? constant('POLOSA_'.$item_id) : $arr;
+}//_polosa()
+
 
 // ---===! client !===--- Секция клиентов
 
@@ -635,8 +689,34 @@ function zayav_info($zayav_id) {
 	if($zayav['deleted'])
 		return _noauth('Заявка удалена');
 
-	define('ZAYAV_OB', $zayav['category'] == 1);
-	define('ZAYAV_REK', $zayav['category'] == 2);
+	define('OB', $zayav['category'] == 1);
+	define('REK', $zayav['category'] == 2);
+
+	//Список выходов
+	$sql = "SELECT * FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav_id." ORDER BY `general_nomer`";
+	$q = query($sql);
+	$public = '';
+	if(mysql_num_rows($q)) {
+		$gn = _gnCache();
+		$tr = '';
+		$lost = 0;
+		while($r = mysql_fetch_assoc($q)) {
+			$tr .=
+			'<tr'.($r['general_nomer'] < GN_FIRST_ACTIVE ? ' class="lost"' : '').'>'.
+				'<td class="nomer"><b>'.$gn[$r['general_nomer']]['week_nomer'].'</b><em>('.$r['general_nomer'].')</em>'.
+				'<td class="public">'.FullData($gn[$r['general_nomer']]['day_public'], 1, 1, 1).
+				'<td class="cena">'.round($r['summa'], 2).
+				(OB || REK ? '<td class="dop">'.(OB ? _onDop($r['dop']) : _polosa($r['dop'])) : '');
+			if($r['general_nomer'] < GN_FIRST_ACTIVE)
+				$lost++;
+		}
+		$public =
+			'<table class="_spisok gn">'.
+				'<tr><th>Номер<th>Выход<th>Цена'.(OB || REK ? '<th>Дополнительно' : '').
+				($lost ? '<tr id="lost-count"><td colspan="4">Показать прошедшие выходы ('.$lost.')' : '').
+				$tr.
+			'</table>';
+	}
 
 	return
 	'<div id="zayav-info">'.
@@ -649,8 +729,7 @@ function zayav_info($zayav_id) {
 		'<table class="ztab">'.
 			($zayav['client_id'] ? '<tr><td class="label">Клиент:<td>'._clientLink($zayav['client_id']) : '').
 			'<tr><td class="label">Дата приёма:<td>'.FullDataTime($zayav['dtime_add']).
-	(ZAYAV_OB ?
-			'<tr><td class="label">Рубрика:'.
+	(OB ?	'<tr><td class="label">Рубрика:'.
 				'<td>'._rubric($zayav['rubric_id']).
 					   ($zayav['rubric_sub_id'] ? '<span class="ug">»</span>'._rubricsub($zayav['rubric_sub_id']) : '').
 			'<tr><td class="label top">Текст:'.
@@ -660,15 +739,17 @@ function zayav_info($zayav_id) {
 						($zayav['adres'] ? '<span class="tel">Алрес.: '.$zayav['adres'].'</span>' : '').
 					'</div>'
 	: '').
-	(ZAYAV_REK ?
-			'<tr><td class="label">Размер:'.
+	(REK ?	'<tr><td class="label">Размер:'.
 				'<TD>'.round($zayav['size_x'], 1).' x '.
 					   round($zayav['size_y'], 1).' = '.
 					   '<b>'.round($zayav['size_x'] * $zayav['size_y']).'</b> см&sup2;'
 	: '').
-			'<tr><td class="label">Общая стоимость:<td><b>'.round($zayav['summa'], 2).'</b> руб.'.
-			(!$zayav['client_id'] ? '<tr><td class="label">Оплачено:<td>' : '').
-			'<tr><td class="label">Номера выпуска:'.
+			'<tr><td class="label">Общая стоимость:'.
+				'<td><b>'.round($zayav['summa'], 2).'</b> руб.'.
+					 ((OB || REK) && $zayav['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
+					 ($zayav['skidka'] ? '<span class="skidka">Скидка <b>'.$zayav['skidka'].'</b>% ('.round($zayav['skidka_sum'], 2).' руб.)</span>' : '').
+			(!$zayav['client_id'] ? '<tr><td class="label">Оплачено:<td>'.round(query_value("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `zayav_id`=".$zayav_id), 2).' руб.' : '').
+			'<tr><td class="label top">Номера выпуска:<td>'.$public.
 		'</table>'.
 	'</div>';
 }//zayav_info()
