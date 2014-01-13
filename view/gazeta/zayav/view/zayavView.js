@@ -3,19 +3,6 @@ function imageView() {
     G.fotoView({spisok:[{link:G.zayav.image}]});
 };
 
-// Показ прошедших выпусков газеты
-function lostView() {
-    $("#zayavView .lost").show();
-    $("#zayavView .lost_spisok").hide();
-    frameBodyHeightSet();
-}
-
-
-$("#comm").vkComment({
-    table_name:'zayav',
-    table_id:G.zayav.id
-});
-
 
 if ($("#del").length > 0) {
     $("#del").vkHint({

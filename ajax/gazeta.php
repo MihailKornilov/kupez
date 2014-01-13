@@ -854,12 +854,12 @@ switch(@$_POST['op']) {
 		$name = win1251(htmlspecialchars(trim($_POST['name'])));
 		if(empty($name))
 			jsonError();
-		$sql = "INSERT INTO `setup_money_type` (
+		$sql = "INSERT INTO `setup_income` (
 					`name`,
 					`sort`
 				) VALUES (
 					'".addslashes($name)."',
-					"._maxSql('setup_money_type', 'sort')."
+					"._maxSql('setup_income', 'sort')."
 				)";
 		query($sql);
 
@@ -882,11 +882,11 @@ switch(@$_POST['op']) {
 		if(empty($name))
 			jsonError();
 
-		$sql = "SELECT * FROM `setup_money_type` WHERE `id`=".$id;
+		$sql = "SELECT * FROM `setup_income` WHERE `id`=".$id;
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
-		$sql = "UPDATE `setup_money_type`
+		$sql = "UPDATE `setup_income`
 				SET `name`='".addslashes($name)."'
 				WHERE `id`=".$id;
 		query($sql);
@@ -912,13 +912,13 @@ switch(@$_POST['op']) {
 			jsonError();
 		$id = intval($_POST['id']);
 
-		$sql = "SELECT * FROM `setup_money_type` WHERE `id`=".$id;
+		$sql = "SELECT * FROM `setup_income` WHERE `id`=".$id;
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
 		if(query_value("SELECT COUNT(`id`) FROM `gazeta_money` WHERE `type`=".$id))
 			jsonError();
-		$sql = "DELETE FROM `setup_money_type` WHERE `id`=".$id;
+		$sql = "DELETE FROM `setup_income` WHERE `id`=".$id;
 		query($sql);
 
 		xcache_unset(CACHE_PREFIX.'money_type');

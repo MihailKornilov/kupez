@@ -157,6 +157,36 @@ function _polosa($item_id=false) {//Название полосы для рекламы
 	}
 	return $item_id !== false ? constant('POLOSA_'.$item_id) : $arr;
 }//_polosa()
+function _income($type_id=false, $i='name') {//Список изделий для заявок
+	if(!defined('INCOME_LOADED') || $type_id === false) {
+		$key = CACHE_PREFIX.'income';
+		$arr = xcache_get($key);
+		if(empty($arr)) {
+			$sql = "SELECT * FROM `setup_income` ORDER BY `sort`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$arr[$r['id']] = array(
+					'name' => $r['name']
+//					'invoice_id' => $r['invoice_id']
+				);
+			xcache_set($key, $arr, 86400);
+		}
+		if(!defined('INCOME_LOADED')) {
+			foreach($arr as $id => $r) {
+				define('INCOME_'.$id, $r['name']);
+//				define('INCOME_INVOICE_'.$id, $r['invoice_id']);
+			}
+			define('INCOME_0', '');
+//			define('INCOME_INVOICE_0', 0);
+			define('INCOME_LOADED', true);
+		}
+	}
+	if($type_id === false)
+		return $arr;
+//	if($i == 'invoice')
+//		return constant('INCOME_INVOICE_'.$type_id);
+	return constant('INCOME_'.$type_id);
+}//_income()
 
 
 // ---===! client !===--- Секция клиентов
@@ -718,6 +748,9 @@ function zayav_info($zayav_id) {
 			'</table>';
 	}
 
+	//Платежи
+	$income = income_spisok(1, array('zayav_id'=>$zayav_id));
+
 	return
 	'<div id="zayav-info">'.
 		'<div id="dopLinks">'.
@@ -751,9 +784,103 @@ function zayav_info($zayav_id) {
 			(!$zayav['client_id'] ? '<tr><td class="label">Оплачено:<td>'.round(query_value("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `zayav_id`=".$zayav_id), 2).' руб.' : '').
 			'<tr><td class="label top">Номера выпуска:<td>'.$public.
 		'</table>'.
+		'<div class="headBlue">Платежи</div>'.
+		'<div class="zmoney">'.($income['all'] ? $income['spisok'] : '').'</div>'.
+		_vkComment('zayav', $zayav_id).
 	'</div>';
 }//zayav_info()
 
+function incomeFilter($v) {
+	$send = array(
+		'limit' => 30,
+		'client_id' => 0,
+		'zayav_id' => 0
+	);
+	if(isset($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) && $v['limit'] > 0)
+		$send['limit'] = $v['limit'];
+	if(isset($v['client_id']) && preg_match(REGEXP_NUMERIC, $v['client_id']))
+		$send['client_id'] = $v['client_id'];
+	if(isset($v['zayav_id']) && preg_match(REGEXP_NUMERIC, $v['zayav_id']))
+		$send['zayav_id'] = $v['zayav_id'];
+	return $send;
+}//incomeFilter()
+function income_spisok($page=1, $filter=array()) {
+	$cond = '`deleted`=0 AND `sum`>0';
+
+	$filter = incomeFilter($filter);
+	if($filter['client_id'])
+		$cond .= " AND `client_id`=".$filter['client_id'];
+	if($filter['zayav_id'])
+		$cond .= " AND `zayav_id`=".$filter['zayav_id'];
+
+	$sql = "SELECT
+	            COUNT(`id`) AS `all`,
+				SUM(`sum`) AS `sum`
+			FROM `gazeta_money`
+			WHERE ".$cond."
+			LIMIT 1";
+	$send = mysql_fetch_assoc(query($sql));
+	if(!$send['all'])
+		return array(
+			'all' => 0,
+			'spisok' => '<div class="_empty">Платежей нет.</div>'
+		);
+
+	$start = ($page - 1) * $filter['limit'];
+	$sql = "SELECT *
+			FROM `gazeta_money`
+			WHERE ".$cond."
+			ORDER BY `id` ASC
+			LIMIT ".$start.",".$filter['limit'];
+	$q = query($sql);
+	$money = array();
+	while($r = mysql_fetch_assoc($q))
+		$money[$r['id']] = $r;
+
+	$send['spisok'] = '';
+	if($page == 1)
+		$send['spisok'] =
+			'<input type="hidden" id="money_limit" value="'.$filter['limit'].'" />'.
+			'<input type="hidden" id="money_client_id" value="'.$filter['client_id'].'" />'.
+			'<input type="hidden" id="money_zayav_id" value="'.$filter['zayav_id'].'" />'.
+			(!$filter['zayav_id'] ?
+				'<div class="_moneysum">'.
+				'Показан'._end($send['all'], '', 'о').
+				' <b>'.$send['all'].'</b> платеж'._end($send['all'], '', 'а', 'ей').
+				' на сумму <b>'._sumSpace($send['sum']).'</b> руб.'.
+				'</div>' : '').
+			'<table class="_spisok _money">'.
+			(!$filter['zayav_id'] ?
+				'<tr><th class="sum">Сумма'.
+				'<th>Описание'.
+				'<th class="data">Дата'.
+				'<th>'
+				: '');
+	foreach($money as $r)
+		$send['spisok'] .= income_unit($r, $filter);
+	if($start + $filter['limit'] < $send['all']) {
+		$c = $send['all'] - $start - $filter['limit'];
+		$c = $c > $filter['limit'] ? $filter['limit'] : $c;
+		$send['spisok'] .=
+			'<tr class="ajaxNext" val="'.($page + 1).'" id="money_next"><td colspan="4">'.
+			'<span>Показать ещё '.$c.' платеж'._end($c, '', 'а', 'ей').'</span>';
+	}
+	$send['spisok'] .= '</table>';
+	return $send;
+}//income_spisok()
+function income_unit($r, $filter=array()) {
+	$about = '';
+//	if($r['zayav_id'] && !$filter['zayav_id'])
+//		$about .= 'Заявка '.$r['zayav_link'].'. ';
+	$about .= $r['prim'];
+	$sumTitle = !$filter['zayav_id'] ? ' title="Платёж"' : '';
+	return
+		'<tr val="'.$r['id'].'">'.
+			'<td class="sum opl"'.$sumTitle.'><b>'._sumSpace($r['sum']).'</b>'.
+			'<td><span class="type">'._income($r['income_id']).(empty($about) ? '' : ':').'</span> '.$about.
+			'<td class="dtime" title="Вн'.(_viewer($r['viewer_id_add'], 'sex') == 1 ? 'есла' : 'ёс').' '._viewer($r['viewer_id_add'], 'name').'">'.FullDataTime($r['dtime_add']).
+			'<td class="ed"><div class="img_del oplata-del"></div>';
+}//income_unit()
 
 
 // ---===! report !===--- Секция отчётов
@@ -1305,7 +1432,7 @@ function setup_money_spisok() {
 	$sql = "SELECT `s`.`id`,
 				   `s`.`name`,
 				   COUNT(`g`.`id`) AS `count`
-			FROM `setup_money_type` AS `s`
+			FROM `setup_income` AS `s`
 			  LEFT JOIN `gazeta_money` AS `g`
 			  ON `s`.`id`=`g`.`type`
 			GROUP BY `s`.`id`
@@ -1320,7 +1447,7 @@ function setup_money_spisok() {
 		'<th class="opl">Кол-во<br />платежей'.
 		'<th class="set">'.
 		'</table>'.
-		'<dl class="_sort" val="setup_money_type">';
+		'<dl class="_sort" val="setup_income">';
 	while($r = mysql_fetch_assoc($q))
 		$send .='<dd val="'.$r['id'].'">'.
 			'<table class="_spisok">'.

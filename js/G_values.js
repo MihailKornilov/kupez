@@ -1,7 +1,7 @@
 var CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],
 PERSON_SPISOK=[{uid:1,title:"Частное лицо"},{uid:12,title:"ИП"},{uid:13,title:"ООО"}],
 RUBRIC_SPISOK=[{uid:1,title:"Продам"},{uid:11,title:"Куплю"},{uid:3,title:"Меняю"},{uid:7,title:"Сниму"},{uid:6,title:"Сдам"},{uid:8,title:"Услуги"},{uid:10,title:"Требуется"},{uid:9,title:"Разное"}],
-MONEY_TYPE_SPISOK=[{uid:1,title:"Наличный"},{uid:2,title:"Безналичный"},{uid:3,title:"Взаимозачёт"},{uid:4,title:"На телефон Юре"},{uid:5,title:"На телефон Маше"}],
+INCOME_SPISOK=[{uid:1,title:"Наличный"},{uid:2,title:"Безналичный"},{uid:3,title:"Взаимозачёт"},{uid:4,title:"На телефон Юре"},{uid:5,title:"На телефон Маше"}],
 SKIDKA_SPISOK=[{uid:5,title:"5%"},{uid:10,title:"10%"},{uid:15,title:"15%"},{uid:20,title:"20%"}],
 TXT_LEN_FIRST=30,
 TXT_CENA_FIRST=40,

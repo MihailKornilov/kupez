@@ -96,6 +96,9 @@
 #zayav-info tr#lost-count:hover{background-color:#F9F9F9}
 #zayav-info .gn tr.lost{background-color:#F9F9F9;display:none}
 #zayav-info .gn tr.lost td{color:#777}
+#zayav-info .headBlue{margin:10px 10px 0}
+#zayav-info .zmoney{margin:0 10px 10px 10px}
+#zayav-info .vkComment{margin:15px 10px}
 
 
 
