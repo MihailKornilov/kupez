@@ -518,23 +518,23 @@ function gnJson($year=0, $array=false) {//Получение списка номеров для select на
 	$json = array();
 	$arr = array();
 	while($r = mysql_fetch_assoc($q)) {
-		$lost = $r['general_nomer'] < GN_FIRST_ACTIVE ? ' lost' : '';
+		$lost = $r['general_nomer'] < GN_FIRST_ACTIVE ? ' class=lost' : '';
 		$ex = explode('-', $r['day_print']);
 		$public = abs($ex[2]).' '._monthCut($ex[1]);
 		$json[] =
 			'{'.
 				'uid:'.$r['general_nomer'].','.
 				'title:"'.$r['week_nomer'].' ('.$r['general_nomer'].') выход '.$public.'",'.
-				'content:"<div class=\"gn_sel'.$lost.'\">'.
+				'content:"<div'.$lost.'>'.
 							'<b>'.$r['week_nomer'].'</b>'.
-							'('.$r['general_nomer'].')<span> '.
-							'выход '.$public.'</span>'.
+							'('.$r['general_nomer'].')'.
+							'<span> выход '.$public.'</span>'.
 						 '</div>"'.
 			'}';
 		$arr[] = array(
 			'uid' => $r['general_nomer'],
 			'title' => utf8($r['week_nomer'].' ('.$r['general_nomer'].') выход '.$public),
-			'content' => utf8('<div class="gn_sel'.$lost.'">'.
+			'content' => utf8('<div'.$lost.'>'.
 								'<b>'.$r['week_nomer'].'</b>'.
 								'('.$r['general_nomer'].')<span> '.
 								'выход '.$public.'</span>'.
@@ -543,6 +543,28 @@ function gnJson($year=0, $array=false) {//Получение списка номеров для select на
 	}
 	return $array ? $arr : implode(',', $json);
 }
+function _zayavLink($arr) {//Добавление в массив информации о заявках
+	$ids = array(); // идешники заявок
+	$arrIds = array();
+	foreach($arr as $r)
+		if($r['zayav_id']) {
+			$ids[$r['zayav_id']] = 1;
+			$arrIds[$r['zayav_id']][] = $r['id'];
+		}
+	if(empty($ids))
+		return $arr;
+	$sql = "SELECT * FROM `gazeta_zayav` WHERE `id` IN (".implode(',', array_keys($ids)).")";
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q))
+		foreach($arrIds[$r['id']] as $id) {
+			$arr[$id]['zayav_link'] = '<a'.($r['deleted'] ? ' class="deleted" title="Заявка удалена"' : '').'
+											href="'.URL.'&p=gazeta&d=zayav&d1=info&id='.$r['id'].'">'.
+										'№'.$r['id'].
+									  '</a>';
+			$arr[$id]['zayav_type'] = _category($r['category']);
+		}
+	return $arr;
+}//_zayavLink()
 function zayavFilter($v=array()) {
 	if(empty($v['find']))
 		$v['find'] = '';
@@ -754,39 +776,43 @@ function zayav_info($zayav_id) {
 	return
 	'<div id="zayav-info">'.
 		'<div id="dopLinks">'.
-			'<a class="link sel">Просмотр</a>'.
+			'<a class="link zinfo sel">Просмотр</a>'.
 			'<a class="link">Редактирование</a>'.
 			'<a class="link">Внести платёж</a>'.
+			'<a class="link hist">История</a>'.
 		'</div>'.
 		'<div class="headName">'._category($zayav['category']).' №'.$zayav['id'].'</div>'.
-		'<table class="ztab">'.
-			($zayav['client_id'] ? '<tr><td class="label">Клиент:<td>'._clientLink($zayav['client_id']) : '').
-			'<tr><td class="label">Дата приёма:<td>'.FullDataTime($zayav['dtime_add']).
-	(OB ?	'<tr><td class="label">Рубрика:'.
-				'<td>'._rubric($zayav['rubric_id']).
-					   ($zayav['rubric_sub_id'] ? '<span class="ug">»</span>'._rubricsub($zayav['rubric_sub_id']) : '').
-			'<tr><td class="label top">Текст:'.
-				'<td><div class="txt">'.
-						$zayav['txt'].
-						($zayav['telefon'] ? '<span class="tel">Тел.: '.$zayav['telefon'].'</span>' : '').
-						($zayav['adres'] ? '<span class="tel">Алрес.: '.$zayav['adres'].'</span>' : '').
-					'</div>'
-	: '').
-	(REK ?	'<tr><td class="label">Размер:'.
-				'<TD>'.round($zayav['size_x'], 1).' x '.
-					   round($zayav['size_y'], 1).' = '.
-					   '<b>'.round($zayav['size_x'] * $zayav['size_y']).'</b> см&sup2;'
-	: '').
-			'<tr><td class="label">Общая стоимость:'.
-				'<td><b>'.round($zayav['summa'], 2).'</b> руб.'.
-					 ((OB || REK) && $zayav['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
-					 ($zayav['skidka'] ? '<span class="skidka">Скидка <b>'.$zayav['skidka'].'</b>% ('.round($zayav['skidka_sum'], 2).' руб.)</span>' : '').
-			(!$zayav['client_id'] ? '<tr><td class="label">Оплачено:<td>'.round(query_value("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `zayav_id`=".$zayav_id), 2).' руб.' : '').
-			'<tr><td class="label top">Номера выпуска:<td>'.$public.
-		'</table>'.
-		'<div class="headBlue">Платежи</div>'.
-		'<div class="zmoney">'.($income['all'] ? $income['spisok'] : '').'</div>'.
-		_vkComment('zayav', $zayav_id).
+		'<div class="content">'.
+			'<table class="ztab">'.
+				($zayav['client_id'] ? '<tr><td class="label">Клиент:<td>'._clientLink($zayav['client_id']) : '').
+				'<tr><td class="label">Дата приёма:<td>'.FullDataTime($zayav['dtime_add']).
+		(OB ?	'<tr><td class="label">Рубрика:'.
+					'<td>'._rubric($zayav['rubric_id']).
+						   ($zayav['rubric_sub_id'] ? '<span class="ug">»</span>'._rubricsub($zayav['rubric_sub_id']) : '').
+				'<tr><td class="label top">Текст:'.
+					'<td><div class="ztxt">'.
+							$zayav['txt'].
+							($zayav['telefon'] ? '<span class="tel">Тел.: '.$zayav['telefon'].'</span>' : '').
+							($zayav['adres'] ? '<span class="tel">Алрес.: '.$zayav['adres'].'</span>' : '').
+						'</div>'
+		: '').
+		(REK ?	'<tr><td class="label">Размер:'.
+					'<TD>'.round($zayav['size_x'], 1).' x '.
+						   round($zayav['size_y'], 1).' = '.
+						   '<b>'.round($zayav['size_x'] * $zayav['size_y']).'</b> см&sup2;'
+		: '').
+				'<tr><td class="label">Общая стоимость:'.
+					'<td><b>'.round($zayav['summa'], 2).'</b> руб.'.
+						 ((OB || REK) && $zayav['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
+						 ($zayav['skidka'] ? '<span class="skidka">Скидка <b>'.$zayav['skidka'].'</b>% ('.round($zayav['skidka_sum'], 2).' руб.)</span>' : '').
+				(!$zayav['client_id'] ? '<tr><td class="label">Оплачено:<td>'.round(query_value("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `zayav_id`=".$zayav_id), 2).' руб.' : '').
+				'<tr><td class="label top">Номера выпуска:<td>'.$public.
+			'</table>'.
+			'<div class="headBlue">Платежи</div>'.
+			'<div class="zmoney">'.($income['all'] ? $income['spisok'] : '').'</div>'.
+			_vkComment('zayav', $zayav_id).
+		'</div>'.
+		'<div class="histories">'.history_spisok(1, array('zayav_id'=>$zayav_id)).'</div>'.
 	'</div>';
 }//zayav_info()
 
@@ -941,6 +967,12 @@ function history_insert($arr) {
 }//history_insert()
 function history_types($v) {
 	switch($v['type']) {
+		case 11: return 'Создание новой заявки '.$v['zayav_link'].': <u>'.$v['zayav_type'].'</u>.';
+
+		case 45: return 'Внесение платёжа на сумму <b>'.$v['value'].'</b> руб. '.
+						($v['value1'] ? '<span class="prim">('.$v['value1'].')</span> ' : '').
+						($v['zayav_id'] ? 'по заявке '.$v['zayav_link'].'.' : '');
+
 		case 51: return 'Внесение нового клиента '.$v['client_link'].'.';
 		case 52: return 'Изменение данных клиента '.$v['client_link'].':<div class="changes">'.$v['value'].'</div>';
 		case 53: return 'Удаление клиента '.$v['client_link'].'.';
@@ -1012,6 +1044,7 @@ function history_spisok($page=1, $filter=array()) {
 		$history[$r['id']] = $r;
 	$history = _viewer($history);
 	$history = _clientLink($history);
+	$history = _zayavLink($history);
 
 	$send = '';
 	$txt = '';
@@ -1023,7 +1056,7 @@ function history_spisok($page=1, $filter=array()) {
 			$time = strtotime($r['dtime_add']);
 			$viewer_id = $r['viewer_id_add'];
 		}
-		$txt .= '<div class="txt">'.history_types($r).'</div>';
+		$txt .= '<div class="htxt">'.history_types($r).'</div>';
 		$key = key($history);
 		if(!$key ||
 		   $key == $keyEnd ||

@@ -19,9 +19,8 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 				content:html,
 				submit:submit
 			});
-		$('#cperson').vkSel({
+		$('#cperson')._select({
 			width:180,
-			display:'inline-block',
 			title0:'Не выбрана',
 			spisok:PERSON_SPISOK
 		});
@@ -31,7 +30,7 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 			top:-76,
 			left:75
 		});
-		$('#cskidka').vkSel({
+		$('#cskidka')._select({
 			width:60,
 			title0:'Нет',
 			spisok:SKIDKA_SPISOK
@@ -129,7 +128,7 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 				$('.result').html(res.result);
 				$('.left').html(res.spisok);
 				if(year == 'change')
-					$('#nomer').vkSel({
+					$('#nomer')._select({
 						width:147,
 						title0:'Номер не указан',
 						spisok:res.gn_sel,
@@ -321,8 +320,8 @@ $(document)
 				'<tr><td class="label">Первый номер выпуска:' +
 					'<td><input type="text" id="week_nomer" maxlength="2" value="1" />' +
 						'<input type="text" id="general_nomer" maxlength="4" value="' + GN_MAX + '" />' +
-				'<tr><td class="label">Дни отправки в печать:<td><input type="hidden" id="day_print" />' +
-				'<tr><td class="label">Дни выхода:<td><input type="hidden" id="day_public" />' +
+				'<tr><td class="label">Дни отправки в печать:<td><input type="hidden" id="day_print" value="1" />' +
+				'<tr><td class="label">Дни выхода:<td><input type="hidden" id="day_public" value="4" />' +
 				'<tr><td class="label">Первый день выхода:<td><input type="hidden" id="day_first" value="' + year + '-01-01" />' +
 				'</table>',
 			dialog = _dialog({
@@ -344,8 +343,8 @@ $(document)
 			];
 		$('#week_nomer').focus();
 		$('#week_nomer,#general_nomer').keyEnter(submit);
-		$('#day_print').vkSel({width:100, value:1, spisok:weeks});
-		$('#day_public').vkSel({width:100, value:4, spisok:weeks});
+		$('#day_print')._select({width:100, spisok:weeks});
+		$('#day_public')._select({width:100, spisok:weeks});
 		$('#day_first')._calendar({lost:1});
 		function submit() {
 			var send = {
@@ -1510,14 +1509,12 @@ $(document)
 				left:-246,
 				delayShow:1000
 			});
-			$('#person').vkSel({
-				width:150,
+			$('#person')._select({
 				spisok:PERSON_SPISOK,
 				title0:'Категория не выбрана',
 				func:clientSpisokLoad
 			});
-			$('#skidka').vkSel({
-				width:150,
+			$('#skidka')._select({
 				spisok:SKIDKA_SPISOK,
 				title0:'Скидка не выбрана',
 				func:clientSpisokLoad
@@ -1556,9 +1553,8 @@ $(document)
 						content:html,
 						submit:submit
 					});
-				$('#cperson').vkSel({
+				$('#cperson')._select({
 					width:180,
-					display:'inline-block',
 					spisok:PERSON_SPISOK
 				});
 				$('.client-add .img_edit:first').vkHint({
@@ -1567,7 +1563,7 @@ $(document)
 					top:-76,
 					left:75
 				});
-				$('#cskidka').vkSel({
+				$('#cskidka')._select({
 					width:60,
 					title0:'Нет',
 					spisok:SKIDKA_SPISOK
@@ -1713,8 +1709,7 @@ $(document)
 					zayavSpisokLoad('change');
 				}
 			});
-			$('#nomer').vkSel({
-				width:147,
+			$('#nomer')._select({
 				title0:'Номер не указан',
 				spisok:GN_SEL,
 				func:zayavSpisokLoad
@@ -1724,6 +1719,16 @@ $(document)
 			$('#lost-count').click(function() {
 				$(this).parent().find('.lost').show()
 				$(this).remove();
+			});
+			$('.zinfo').click(function() {
+				$(this).parent().find('.sel').removeClass('sel');
+				$(this).addClass('sel');
+				$('#zayav-info').removeClass('h');
+			});
+			$('.hist').click(function() {
+				$(this).parent().find('.sel').removeClass('sel');
+				$(this).addClass('sel');
+				$('#zayav-info').addClass('h');
 			});
 		}
 	});
@@ -1755,9 +1760,8 @@ function moneyAdd(obj) {
         focus:"#prihod_sum"
     }).o;
 
-    $("#prihod_type").vkSel({
+    $("#prihod_type")._select({
         width:190,
-        display:'inline-block',
         title0:'Не указан',
         spisok:G.money_type_spisok,
         func:function (id) {

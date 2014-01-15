@@ -2,8 +2,8 @@
 #client .left{padding:0 8px 8px 8px}
 #client .right{width:150px}
 #client .dolg{color:#777;margin-left:10px;font-size:10px}
-#client #vkSel_person{margin:7px 0}
-#client #vkSel_skidka{margin:7px 0}
+#client #person_select{margin-top:5px}
+#client #skidka_select{margin-top:5px}
 #client #dolg_check{margin-top:20px}
 #client .unit{margin-top:8px;border-bottom:#dae1e8 solid 1px;padding:5px}
 #client .unit em{background-color:#FFC; border-bottom:#FE2 solid 1px}
@@ -45,11 +45,11 @@
 #zayav #find{margin-top:10px}
 #zayav .img_word{float:right;position:relative;top:-1px;left:10px}
 #zayav #nopublic_check{margin-top:20px}
-#zayav .gn_sel b{display:inline-block;width:14px;text-align:right;margin-right:2px}
-#zayav .gn_sel span{font-size:10px;color:#555}
-#zayav .over span{color:#ddd}
-#zayav .gn_sel.lost,#zayav .gn_sel.lost *{color:#777}
-#zayav .over .lost,#zayav .over .lost *{color:#bbb}
+#zayav #nomer_select .selun b{display:inline-block;width:14px;text-align:right;margin-right:2px}
+#zayav #nomer_select .selun span{font-size:10px;color:#555}
+#zayav #nomer_select .selun:hover span{color:#ddd}
+#zayav #nomer_select .selun .lost,#zayav #nomer_select .selun .lost *{color:#777}
+#zayav #nomer_select .selun:hover .lost,#zayav #nomer_select .selun:hover .lost *{color:#bbb}
 .zayav_unit{
 	border:#DAE1E8 solid 1px;
 	background-color:#fff;
@@ -78,11 +78,16 @@
 
 /* Информация о заявке */
 #zayav-info .headName{margin:10px 15px 5px}
+#zayav-info:not(.h) .histories,#zayav-info.h .content{display:none}
 #zayav-info .ztab{border-spacing:6px;margin-left:15px}
 #zayav-info .label{width:100px}
 #zayav-info .ug{margin:0 7px;color:#777}
-#zayav-info .txt{border:#DDD solid 1px;background-color:#FFFFF4}
-#zayav-info .txt{font:16px Times New Roman;padding:4px 6px}
+#zayav-info .ztxt{
+	border:#DDD solid 1px;
+	background-color:#FFFFF4;
+	font:16px Times New Roman;
+	padding:4px 6px;
+}
 #zayav-info .tel{font:bold 14px Times New Roman;color:#555;display:block;margin-top:3px}
 #zayav-info .manual{font-size:10px;margin-left:10px;color:#888}
 #zayav-info .skidka{font-size:10px;color:#999;margin-left:10px}
@@ -99,6 +104,7 @@
 #zayav-info .headBlue{margin:10px 10px 0}
 #zayav-info .zmoney{margin:0 10px 10px 10px}
 #zayav-info .vkComment{margin:15px 10px}
+#zayav-info .histories{margin:10px 15px}
 
 
 
@@ -108,7 +114,7 @@
 .history_unit{margin-bottom:12px;padding-bottom:8px;border-bottom:#dae1e8 solid 1px}
 .history_unit .head{font-size:10px;color:#777}
 .history_unit .head a{font-size:10px;margin-left:10px}
-.history_unit .txt{margin:7px 0 7px 15px}
+.history_unit .htxt{margin:7px 0 7px 15px}
 .history_unit .changes{margin:0 0 0 15px}
 .history_unit .changes *{font-size:10px;color:#777}
 .history_unit .changes th{text-align:right;font-weight:700;vertical-align:top}

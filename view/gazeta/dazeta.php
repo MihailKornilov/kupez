@@ -65,55 +65,6 @@ function zayavAdd() {
 <?php
 } // end of zayavAdd()
 
-// Просмотр заявки
-function zayavView() {
-
-    if ($zayav->file and $zayav->category != 1) {
-        $image = '<td id=image><img src='.$zayav->file.'b.jpg width=200 onclick=G.fotoView("'.$zayav->file.'");>';
-    }
-
-    $zayav_del = 1; // Изначально заявку можно удалить
-
-    // Список платежей
-    $moneySumma = 0; // общая сумма платежей
-    $spisok = $VK->QueryObjectArray("SELECT * FROM `gazeta_money` WHERE `zayav_id`=".$zayav->id.' ORDER BY `id`');
-    if (count($spisok) > 0) {
-        if ($zayav->client_id == 0 and $zayav_del == 1) $zayav_del = '<span id=del>Удалить заявку</span>';
-        $type = $VK->QueryPtPArray("SELECT `id`,`name` FROM `setup_money_type`");
-        $money = '<div id=money>'.
-                '<DIV class=headBlue>Список платежей</div>'.
-                '<TABLE cellpadding=0 cellspacing=0 class=tabSpisok><TR><TH>Сумма<TH>Описание<TH>Дата<TH class=del>';
-        foreach ($spisok as $sp) {
-            $money .= '<tr><td class=sum>'.round($sp->sum, 2).
-                          '<td class=about><b>'.$type[$sp->type].($sp->prim ? ':' : '').'</b> '.$sp->prim.
-                          '<td class=dtime>'.FullDataTime($sp->dtime_add).
-                          '<td class=del><div class=img_del onclick=moneyDel('.$sp->id.');></div>';
-            $moneySumma += $sp->sum;
-        }
-        $money .= '</table></div>';
-    }
-?>
-<div id=zayavView>
-    <TABLE cellpadding=0 cellspacing=0 width=100%>
-    <tr><td valign=top width=100%>
-        <?=@$image?>
-    </TABLE>
-    <?=@$money?>
-    <DIV id=comm></DIV>
-
-</div>
-<SCRIPT type="text/javascript">
-G.zayav = {
-    id:<?=$zayav->id?>,
-    client_id:<?=$zayav->client_id?>,
-    category:<?=$zayav->category?>,
-    image:"<?=$zayav->file?>"
-};
-</SCRIPT>
-<SCRIPT type="text/javascript" src="/view/gazeta/zayav/view/zayavView.js?<?=JS_VERSION?>"></SCRIPT>
-<?php
-} // end of zayavView()
-
 // Редактирование заявки
 function zayavEdit() {
     global $VK, $zayavCategory;
