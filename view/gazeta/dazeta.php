@@ -1,8 +1,3 @@
-<SCRIPT type="text/javascript">
-G.gn.first_active = <?=GN_FIRST_ACTIVE?>;
-G.gn.first_save = <?=GN_FIRST_ACTIVE?>;
-G.gn.last_active = <?=GN_LAST_ACTIVE?>;
-</SCRIPT>
 <SCRIPT type="text/javascript" src="/js/gnGet.js?<?=JS_VERSION?>"></SCRIPT>
 <SCRIPT type="text/javascript" src="/js/gazeta.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
@@ -13,33 +8,6 @@ function zayavAdd() {
     if (@$_GET['client_id']) $back = 'client&d1=info&id='.$_GET['client_id'];
 ?>
 <DIV id=zayavAdd>
-    <DIV class=headName>Внесение новой заявки</DIV>
-
-    <TABLE cellpadding=0 cellspacing=8>
-        <TR><TD class=tdAbout>Клиент:          <TD><INPUT TYPE=hidden id=client_id value=<?=@$_GET['client_id']?$_GET['client_id']:0?>>
-        <TR><TD class=tdAbout><b>Категория:</b><TD><INPUT TYPE=hidden id=category value=1>
-    </TABLE>
-
-    <TABLE cellpadding=0 cellspacing=8 id=for_ob>
-        <TR><TD class=tdAbout>Рубрика:            <TD><INPUT TYPE=hidden id=rubrika><INPUT TYPE=hidden id=podrubrika>
-        <TR><TD class=tdAbout valign=top>Текст:   <TD><TEXTAREA id=txt></TEXTAREA><DIV id=txtCount></DIV>
-        <TR><TD class=tdAbout>Контактный телефон: <TD><INPUT TYPE=text id=telefon maxlength=200>
-        <TR><TD class=tdAbout>Адрес:              <TD><INPUT TYPE=text id=adres maxlength=200>
-    </TABLE>
-
-    <TABLE cellpadding=0 cellspacing=8 id=for_rek>
-        <TR><TD class=tdAbout>Размер изображения:
-            <TD><INPUT TYPE=text id=size_x maxlength=5>
-                <B class=xb>x</B>
-                <INPUT TYPE=text id=size_y maxlength=5>
-                 = <INPUT TYPE=text id=kv_sm readonly> см<SUP>2</SUP>
-    </TABLE>
-
-    <TABLE cellpadding=0 cellspacing=8>
-        <TR><TD class=tdAbout>Изображение:<TD id=foto>
-    </TABLE>
-    <input type=hidden id=foto_link>
-
     <TABLE cellpadding=0 cellspacing=8><TR><TD class=tdAbout>Номера выпуска:<TD></TABLE>
     <DIV id=gn_spisok></DIV>
 
@@ -61,7 +29,6 @@ function zayavAdd() {
     <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=<?=$back?>'">Отмена</BUTTON></DIV>
 </DIV>
 <SCRIPT type="text/javascript" src="/view/gazeta/zayav/add/zayavAddEdit.js?<?=JS_VERSION?>"></SCRIPT>
-<SCRIPT type="text/javascript">zayavAdd();</SCRIPT>
 <?php
 } // end of zayavAdd()
 

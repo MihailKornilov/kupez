@@ -11,23 +11,6 @@ function zayavAdd() {
         width:120,
         spisok: G.category_spisok,
         func:function (id) {
-            // очистка объявлений
-            $("#for_ob").hide();
-            zayav.rubrika.val(0);
-            $("#vkSel_podrubrika").remove();
-            $("#podrubrika").val(0);
-            $("#txt").val('');
-            calcSummaOb();
-            $("#telefon").val('');
-            $("#adres").val('');
-            // очистка рекламы
-            $("#for_rek").hide();
-            $("#size_x").val('');
-            $("#size_y").val('');
-            $("#kv_sm").val('');
-
-            fotoUpload();
-
             $("#skidka_tab").hide();
             zayav.skidka.val(0);
 
@@ -134,40 +117,6 @@ function zayavEdit(category, client, gns) {
 } // end of zayavEdit()
 
 
-function rubrikaSet() {
-    zayav.rubrika = $("#rubrika").vkSel({
-        display:'inline-block',
-        width:120,
-        title0:'Не указана',
-        spisok:G.rubrika_spisok,
-        funcAdd:function () { location.href = G.url + '&p=gazeta&d=setup&id=2'; },
-        func:function (id) {
-            $("#vkSel_podrubrika").remove();
-            $("#podrubrika").val(0);
-            podrubrikaSet(id);
-        }
-    }).o;
-}
-
-function podrubrikaSet(id) {
-    if (G.podrubrika_spisok[id]) {
-        $("#podrubrika").vkSel({
-            display:'inline-block',
-            width:180,
-            title0:'Подрубрика не указана',
-            spisok:G.podrubrika_spisok[id],
-            funcAdd:function () { location.href = G.url + '&p=gazeta&d=setup&id=7'; }
-        });
-        // Подсказка о настройке подрубрик при наведении на плюсик
-        $("#vkSel_podrubrika .add:first").vkHint({
-            width:130,
-            msg:"Перейти к настройке<br>подрубрик",
-            indent:60,
-            top:-71,
-            left:-59
-        });
-    }
-} // end of podrubrikaSet
 
 
 // Загрузка изображений

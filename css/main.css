@@ -76,6 +76,26 @@
 .zayav_next{margin:0 8px 10px}
 
 
+
+/* Внесение новой заявки */
+#zayav-add{background-color:#F7F7F7;padding:20px 5px}
+#zayav-add .headName{margin:0 30px 20px 30px}
+#zayav-add .zatab{border-spacing:8px}
+#zayav-add .label{width:155px;text-align:right}
+#zayav-add #zatxt{font:bold 12px Verdana;width:350px;height:39px}
+#zayav-add #rubric_select{margin-right:5px}
+#zayav-add #txt-count{color:#583;margin:3px}
+#zayav-add #txt-count span{font-size:10px;color:#888;margin-left:10px}
+#zayav-add #telefon,#zayav-add #adres{width:350px}
+#zayav-add #size_x,#zayav-add #size_y{width:30px}
+#zayav-add #kv_sm{width:45px;cursor:default}
+#zayav-add .xb{font:12px Trebuchet MS;margin:0 5px;color:#777}
+#zayav-add sup{font-size:10px;position:relative;top:2px}
+
+
+
+
+
 /* Информация о заявке */
 #zayav-info .headName{margin:10px 15px 5px}
 #zayav-info:not(.h) .histories,#zayav-info.h .content{display:none}

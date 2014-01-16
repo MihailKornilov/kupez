@@ -565,6 +565,32 @@ function _zayavLink($arr) {//Добавление в массив информации о заявках
 		}
 	return $arr;
 }//_zayavLink()
+
+function zayav_add() {
+	return
+	'<div id="zayav-add">'.
+		'<div class="headName">Внесение новой заявки</div>'.
+		'<table class="zatab">'.
+            '<tr><td class="label">Клиент:<td><input type="hidden" id="client_id" value="0" />'.
+            '<tr><td class="label"><b>Категория:</b><td><input type="hidden" id="category" value="1" />'.
+        '</table>'.
+		'<table class="zatab ob">'.
+            '<tr><td class="label">Рубрика:<td><input type="hidden" id="rubric" /><input type="hidden" id="rubric_sub" />'.
+            '<tr><td class="label top">Текст:<td><textarea id="zatxt"></textarea><div id="txt-count"></div>'.
+            '<tr><td class="label">Контактный телефон:<td><input type="text" id="telefon" maxlength="200" />'.
+            '<tr><td class="label">Адрес:<td><input type="text" id="adres" maxlength="200" />'.
+		'</table>'.
+		'<table class="zatab rek dn">'.
+            '<tr><td class="label">Размер изображения:'.
+                '<td><input type="text" id="size_x" maxlength="5" />'.
+                    '<b class="xb">x</b>'.
+                    '<input type="text" id="size_y" maxlength="5" />'.
+                    ' = '.
+					'<input type="text" id="kv_sm" readonly> см<sup>2</sup>'.
+		'</table>'.
+	'</div>';
+}//zayav_add()
+
 function zayavFilter($v=array()) {
 	if(empty($v['find']))
 		$v['find'] = '';

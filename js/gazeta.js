@@ -25,7 +25,7 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 			spisok:PERSON_SPISOK
 		});
 		$('.client-add .img_edit:first').vkHint({
-			msg:"Перейти к настройкам заявителей",
+			msg:'Перейти к настройкам категорий клиентов',
 			indent:110,
 			top:-76,
 			left:75
@@ -136,6 +136,58 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 					});
 			}
 		}, 'json');
+	},
+	zayavRubric = function() {
+		$('#rubric')._select({
+			width:120,
+			title0:'Не указана',
+			spisok:RUBRIC_SPISOK,
+			func:function(id) {
+				$('#rubric_sub').val(0)._select('remove');
+				zayavRubricSub(id);
+			}
+		});
+	},
+	zayavRubricSub = function(id) {
+		if(RUBRIC_SUB_SPISOK[id]) {
+			$('#rubric_sub')._select({
+				width:180,
+				title0:'Подрубрика не указана',
+				spisok:RUBRIC_SUB_SPISOK[id]
+			});
+		}
+	},
+	zayavObSumCalc = function() {// Вычисление стоимости объявления
+		var txt_sum = 0, // сумма только за текст
+			podr_about = '', // подробное расписывание длины объявления
+			txt = $('#zatxt').val()
+					.replace(/\./g, '')    // точки
+					.replace(/,/g, '')     // запятые
+					.replace(/\//g, '')    // слеш /
+					.replace(/\"/g, '')    // двойные кавычки
+					.replace(/( +)/g, ' ') // вторые пробелы
+					.replace( /^\s+/g, '') // пробелы в начале
+					.replace( /\s+$/g, '');// пробелы в конце
+		if(!txt.length)
+			$('#txt-count').html('');
+		else {
+			txt_sum += TXT_CENA_FIRST * 1;
+			if(txt.length > TXT_LEN_FIRST) {
+				podr_about = ' = ';
+				var CEIL = Math.ceil((txt.length - TXT_LEN_FIRST) / TXT_LEN_NEXT);
+				podr_about += TXT_LEN_FIRST;
+				var LAST = txt.length - TXT_LEN_FIRST - (CEIL - 1) * TXT_LEN_NEXT;
+				txt_sum += CEIL * TXT_CENA_NEXT;
+				if(TXT_LEN_NEXT == LAST) CEIL++;
+				if(CEIL > 1) podr_about += ' + ' + TXT_LEN_NEXT;
+				if(CEIL > 2) podr_about += 'x' + (CEIL - 1);
+				if(TXT_LEN_NEXT > LAST) podr_about += ' + ' + LAST;
+			}
+			var html = 'Длина: <b>' + txt.length + '</b>' + podr_about + '<br />' +
+					   'Цена: <b>' + txt_sum + '</b> руб.<span>(без учёта доп. параметров)</span>';
+			$('#txt-count').html(html);
+		}
+		//zayav.gn.cenaSet(txt_sum);
 	};
 
 $(document)
@@ -1714,6 +1766,42 @@ $(document)
 				spisok:GN_SEL,
 				func:zayavSpisokLoad
 			});
+		}
+		if($('#zayav-add').length > 0) {
+			$('#category')._select({
+				width:120,
+				spisok:CATEGORY_SPISOK,
+				func:function(category_id) {
+					$('.ob').addClass('dn');
+					$('#rubric').val(0)._select('remove');
+					$('#rubric_sub').val(0)._select('remove');
+					$('#zatxt').val('');
+					zayavObSumCalc();
+					$('#telefon').val('');
+					$('#adres').val('');
+
+					$('.rek').addClass('dn');
+					$('#size_x').val('');
+					$('#size_y').val('');
+					$('#kv_sm').val('');
+
+					switch(category_id) {
+						case '1':
+							$('.ob').removeClass('dn');
+							zayavRubric();
+							break;
+						case '2':
+							$('.rek').removeClass('dn');
+							break;
+						default:;
+					}
+				}
+			});
+			zayavRubric();
+			$('#zatxt')
+				.autosize()
+				.focus()
+				.keyup(zayavObSumCalc);
 		}
 		if($('#zayav-info').length > 0) {
 			$('#lost-count').click(function() {

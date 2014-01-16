@@ -80,32 +80,9 @@
 
 
 
-/* Создание нового объявления */
-#zayavAdd { background-color:#F7F7F7; padding:20px 5px; }
-#zayavAdd.edit { background-color:#FFF; }
-#zayavAdd .headName { margin:0 30px 20px 30px; }
-#zayavAdd .tdAbout { width:155px; text-align:right; }
-#zayavAdd #txt {
-    font:bold 12px Verdana;
-    width:350px;
-    resize:none;
-    overflow:hidden;
-    height:39px;
-}
-#zayavAdd #txtCount { color:#583; margin:3px; }
-#zayavAdd #txtCount SPAN { font-size:10px; color:#888; margin-left:10px; }
-#zayavAdd #vkSel_rubrika { margin-right:5px; }
-#zayavAdd #telefon, #zayavAdd #adres { width:350px; }
 #zayavAdd #for_rek { display:none; }
 #zayavAdd #summa, #zayavAdd #money { width:60px; font:15px Tahoma; text-align:right; }
 #zayavAdd #money { background-color:#FFD; }
-#zayavAdd #size_x, #zayavAdd #size_y { width:30px; }
-#zayavAdd #kv_sm { width:45px; }
-#zayavAdd .xb { font:12px Trebuchet MS; margin:0 5px; color:#777; }
-#zayavAdd SUP { font-size:10px; position:relative; top:2px; }
-#zayavAdd #foto img { cursor:pointer; }
-#zayavAdd #foto .img_del { float:right; }
-#zayavAdd .foto_create_button { width:150px; }
 #zayavAdd #gn_spisok { margin-left:44px; }
 #zayavAdd #sumSkidka { margin-left:5px; color:#999; font-size:10px; }
 #zayavAdd #skidka_tab { display:none; }
@@ -125,23 +102,6 @@
 
 
 
-
-
-
-
-
-
-
-/* Просмотр заявки */
-#zayavView #image { vertical-align:top; }
-#zayavView #image img { cursor:pointer; margin-left:10px; }
-#zayavView #money { width:450px; margin-top:20px; }
-#zayavView #money .tabSpisok { margin-top:6px; width:100%; }
-#zayavView #money .sum { font-weight:bold; text-align:right; width:60px; }
-#zayavView #money .dtime { font-size:10px; text-align:right; width:120px; color:#777; }
-#zayavView #money .about b { color:#777; }
-#zayavView #money .del { width:20px; padding:2px 0 0 0; text-align:center; }
-#zayavView #comm { margin-top:20px; }
 
 
 
