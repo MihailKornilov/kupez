@@ -190,6 +190,112 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 		//zayav.gn.cenaSet(txt_sum);
 	};
 
+$.fn.gnGet = function(o) {
+	o = $.extend({
+		show:4,  // количество номеров, которые показываются изначально, а также отступ от уже выбранных
+		add:8,   // количество номеров, добавляющихся к показу
+		category:1,
+		gns:null,
+		manual:null,
+		summa:null,
+		skidka:null,
+		skidka_sum:0
+	}, o);
+	var t = $(this),
+		pix = 21, // высота номера выпуска в пикселях
+		gn_show_current = o.show, // Количество отображаемых номеров
+		gns_begin = GN_FIRST_ACTIVE,
+		gns_end = gns_begin + o.show,
+		gnSel = [],
+		html =
+			'<div id="gnGet">' +
+				'<table>' +
+					'<tr><td><div id="dopLinks">' +
+								'<a class="link" val="4">Месяц</a>' +
+								'<a class="link" val="13">3 месяца</a>' +
+								'<a class="link" val="26">Полгода</a>' +
+								'<a class="link" val="52">Год</a>' +
+							'</div>' +
+						'<TD><input type="hidden" id="dopDef">' +
+				'</table>' +
+				'<table>' +
+					'<tr><td id="selCount">' +
+						'<td><div id="gns"></div>' +
+				'</table>' +
+			'</div>';
+	t.html(html);
+
+	$(document)
+		.on('click', '#darr', function () {// Разворачивание списка
+			gns_begin = gns_end;
+			gns_end += o.add;
+			gnsPrint();
+		})
+		.on('click', '.gns-week', function () {// Действие по нажатию на номер газеты
+			dopMenuA.removeClass('sel');
+			var sel = $(this).hasClass('gnsel');
+			$(this)[(sel ? 'remove': 'add') + 'Class']('gnsel');
+//		sel_calc();
+//		cenaSet();
+		});
+
+	var gnGet = $('#gnGet'),                 // Основная форма
+		gns = gnGet.find('#gns'),            // Список номеров
+		dopMenuA = gnGet.find('#dopLinks A'), // Список меню с периодами
+		selCount = gnGet.find('#selCount'),  // Количество выбранных номеров
+		globalDop = 0,
+		cena = 0;                            //
+
+	gnsPrint();
+
+	function gnsPrint() {// Вывод списка номеров
+		gnGet.find('#darr').remove();
+		var html = '',
+			spisok_start = gns_begin == GN_FIRST_ACTIVE,//Начинать или дополнять список
+			h_end = ((spisok_start ? 0 : gns.find('.gns-week').length * 1) + gns_end - gns_begin) * pix;
+		for(var n = gns_begin; n < gns_end; n++) {
+			if(n > GN_LAST_ACTIVE)
+				break;
+			var sp = GN[n];
+			if(!sp) { // если номер пропущен, тогда не выводится
+				end++;
+				continue;
+			}
+			html +=
+				'<table><tr>' +
+					'<td><table class="gns-week' + (sp.sel == 1 ? ' gnsel' : '') + (sp.prev == 1 ? ' prev' : '') + '" val="' + n + '">' +
+							'<tr><td class="td"><b>' + sp.week + '</b><span class="g">(' + n + ')</span>' +
+								'<td class="td"><span class="g">выход</span> ' + sp.txt +
+								'<td class="cena" id="cena' + n + '">' +
+						'</table>' +
+					'<td class="vdop"><input type="hidden" id="vdop' + n + '" value="' + sp.dop + '" />' +
+				'</table>';
+		}
+		html += gns_end < GN_LAST_ACTIVE ? '<div id="darr">&darr; &darr; &darr;</div>' : '';
+		gns[spisok_start ? 'html' : 'append'](html);
+		gns.animate({height:h_end + 'px'}, 300);
+		//gns.find('.tab').click(gn_set);
+		//gn_action_active(linkMenu_create);
+		//cenaSet();
+	}
+	dopMenuA.click(function () {// выбор номеров на месяц, 3 месяца, полгода и год начиная сначала
+		var t = $(this),
+			v = t.attr('val') * 1;
+		if(t.hasClass('sel')) {
+			v = 0;
+			t.removeClass('sel');
+		} else {
+			dopMenuA.removeClass('sel');
+			t.addClass('sel');
+		}
+		gns_begin = GN_FIRST_ACTIVE;
+		gns_end = gns_begin + v + o.show;
+		//gns_clear();
+		gnsPrint();
+		//sel_calc();
+	});
+};
+
 $(document)
 	.on('click', '#client .ajaxNext', function() {
 		if($(this).hasClass('busy'))
@@ -277,10 +383,10 @@ $(document)
 				but.removeClass('busy');
 				if(data.response) {
 					var u = data.response[0],
-						html = '<TABLE class="res">' +
+						html = '<table class="res">' +
 								'<TR><TD class="photo"><IMG src=' + u.photo_50 + '>' +
 									'<TD class="name">' + u.first_name + ' ' + u.last_name +
-							'</TABLE>';
+							'</table>';
 					but.after(html);
 					user_id = u.id;
 				}
@@ -1802,6 +1908,7 @@ $(document)
 				.autosize()
 				.focus()
 				.keyup(zayavObSumCalc);
+			$('#gn_spisok').gnGet();
 		}
 		if($('#zayav-info').length > 0) {
 			$('#lost-count').click(function() {
@@ -1833,12 +1940,12 @@ function moneyAdd(obj) {
         func:function () { location.reload(); }
     }, obj);
 
-    var html = "<TABLE cellpadding=0 cellspacing=10 id=prihod_add_tab>" +
+    var html = "<table cellpadding=0 cellspacing=10 id=prihod_add_tab>" +
         "<TR><TD class=tdAbout>Вид:<TD><INPUT type=hidden id=prihod_type><a class=img_edit href='" + G.url + "&p=gazeta&d=setup&id=11'></a>" +
         "<TR><TD class=tdAbout>Сумма:<TD><INPUT type=text id=prihod_sum maxlength=8> руб." +
         "<TR><TD class=tdAbout>Комментарий:<TD><INPUT type=text id=prihod_txt maxlength=250>" +
         "<TR id=tr_kassa><TD class=tdAbout>Деньги поступили<br>в кассу?:<TD><INPUT type=hidden id=prihod_kassa value='-1'>" +
-        "</TABLE>";
+        "</table>";
     var dialog = $("#dialog_prihod").vkDialog({
         top:50,
         width:420,

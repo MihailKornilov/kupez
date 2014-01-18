@@ -1,44 +1,4 @@
 $.fn.gnGet = function (obj) {
-    var obj = $.extend({
-        show:4,  // количество номеров, которые показываютс€ изначально, а также отступ от уже выбранных
-        add:8,   // количество номеров, добавл€ющихс€ к показу
-        category:1,
-        gns:null,
-        manual:null,
-        summa:null,
-        skidka:null,
-        skidka_sum:0
-    }, obj);
-
-    var t = $(this);
-    var pix = 21; // высота номера выпуска в пиксел€х
-    var gn_show_current = obj.show; //  оличество отображаемых номеров
-
-    var html = "<DIV id=gnGet>" +
-        "<TABLE cellpadding=0 cellspacing=0>" +
-        "<TR><TD><DIV id=dopMenu>" +
-        "<A class=link val=4><I></I><B></B><DIV>ћес€ц</DIV><B></B><I></I></A>" +
-        "<A class=link val=13><I></I><B></B><DIV>3 мес€ца</DIV><B></B><I></I></A>" +
-        "<A class=link val=26><I></I><B></B><DIV>ѕолгода</DIV><B></B><I></I></A>" +
-        "<A class=link val=52><I></I><B></B><DIV>√од</DIV><B></B><I></I></A>" +
-        "</DIV>" +
-        "<TD><input type=hidden id=dopDef>" +
-        "</TABLE>" +
-
-        "<TABLE cellpadding=0 cellspacing=0>" +
-        "<TR><TD id=selCount><TD><DIV id=gns></DIV><DIV id=darr>&darr; &darr; &darr;</DIV>" +
-        "</TABLE>" +
-        "</DIV>";
-    t.html(html);
-
-    var gnGet = $("#gnGet");                 // ќсновна€ форма
-    var gns = gnGet.find("#gns");            // —писок номеров
-    var darr = gnGet.find("#darr");          //  нопка разворачивани€ списка
-    var dopMenuA = gnGet.find("#dopMenu A"); // —писок меню с периодами
-    var selCount = gnGet.find("#selCount");  //  оличество выбранных номеров
-    var globalDop = 0;
-    var cena = 0;                            //
-
     switch (parseInt(obj.category)) {
         case 1:
             var dop_spisok = [{uid:'0', title:'ƒоп. параметр не указан'}];
@@ -104,62 +64,7 @@ $.fn.gnGet = function (obj) {
         }
     }
 
-    // –азворачивание списка
-    darr.on('click', function () { gn_show_current += obj.add; gns_print(); });
 
-    // выбор номеров на мес€ц, 3 мес€ца, полгода и год начина€ сначала
-    dopMenuA.click(function () {
-        var cl = $(this).attr('class');
-        gns_clear();
-        if (cl == 'link') {
-            $(this).attr('class', 'linkSel'); // ѕодсветка выбранного периода
-            val = $(this).attr('val');
-            gn_show_current += val * 1;       // ƒобавление значени€ дл€ показа количества номеров
-            var begin = G.gn.first_active;
-            var end = G.gn.first_active + gn_show_current;
-            for(var n = begin; n < end; n++) {
-                if (n > G.gn.last_active) break;
-                var sp = G.gn[n];
-                if (!sp) { end++; continue; } // если номер пропущен, тогда не выводитс€
-                sp.sel = 1;                   // ѕометка номера газеты как выбранного
-                val--;
-                if (val == 0) break;
-            }
-        }
-        gns_print();
-        sel_calc();
-    });
-
-    // ¬ывод списка номеров
-    function gns_print() {
-        var html = '';
-        var begin = G.gn.first_active;
-        var end = G.gn.first_active + gn_show_current;
-        for(var n = begin; n < end; n++) {
-            if (n > G.gn.last_active) break;
-            var sp = G.gn[n];
-            if (!sp) { end++; continue; } // если номер пропущен, тогда не выводитс€
-            html += "<TABLE cellpadding=0 cellspacing=0>" +
-                "<TR><TD>" +
-                    "<TABLE cellpadding=0 cellspacing=0 class='tab" + (sp.sel == 1 ? " tabsel" : '') + (sp.prev == 1 ? " prev" : '') + "' val=" + n + ">" +
-                    "<TR><TD class=td><B>" + sp.week + "</B><SPAN class=g>(" + n + ")</SPAN>" +
-                    "<TD class=td align=right><SPAN class=g>выход</SPAN> " + sp.txt +
-                    "<TD class=cena id=cena" + n + ">" +
-                    "</TABLE>" +
-                "<TD class=vdop><input type=hidden id=vdop" + n + " value=" + sp.dop + ">" +
-            "</TABLE>";
-        }
-        gns.html(html);
-        if (end > G.gn.last_active) {
-            gn_show_current -= end - G.gn.last_active - 1;
-            darr.hide();
-        } else darr.show();
-        var h = gn_show_current * pix;
-        gns.animate({height:h + 'px'}, 300, frameBodyHeightSet);
-        gns.find(".tab").click(gn_set);
-        gn_action_active(linkMenu_create);
-        cenaSet();
-    } // end of gns_print()
 
     function linkMenu_create(sp) {
         if (obj.category < 3) {

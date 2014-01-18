@@ -76,9 +76,54 @@
 .zayav_next{margin:0 8px 10px}
 
 
+/* Список номеров при внесении и редактировании заявок */
+#gnGet{margin:-1px 0 0 0}
+#gnGet #dopLinks{padding:0 0 5px 5px;border:none}
+#gnGet #dopLinks a{margin-right:4px}
+#gnGet #darr{
+	font-size:12px;
+	text-align:center;
+	color:#AAA;
+	height:15px;
+	width:245px;
+	cursor:pointer;
+	padding:1px 0 3px;
+}
+#gnGet #darr:hover{background-color:#e1e7ed;color:#444}
+#gnGet .gns-week {
+	width:245px;
+	background-color:#FFF;
+	border:#DDD solid 1px;
+	margin-bottom:2px;
+	cursor:pointer;
+	height:19px;
+}
+#gnGet .gns-week:hover{border:#99A solid 1px}
+#gnGet .td { padding:2px 3px; color:#333; font-size:10px; }
+#gnGet .td b,#gnGet .td tt{font-size:10px}
+#gnGet .g{color:#888;margin-left:3px;font-size:10px}
+#gnGet .cena {
+	width:50px;
+	border:none;
+	padding:0 2px;
+	text-align:right;
+	border-left:#FFF solid 1px;
+	color:#FFF;
+	overflow: hidden;
+}
+#gnGet .gnsel{background-color:#BFB}
+#gnGet .gnsel .cena{
+	border-left:#DDD solid 1px;
+	background-color:#EFE;
+	cursor:pointer;
+	color:#444;
+}
+#gnGet .prev{background-color:#FFB}
+
+
 
 /* Внесение новой заявки */
-#zayav-add{background-color:#F7F7F7;padding:20px 5px}
+#zayav-add{background-color:#F7F7F7;padding:20px 5px 40px 5px}
 #zayav-add .headName{margin:0 30px 20px 30px}
 #zayav-add .zatab{border-spacing:8px}
 #zayav-add .label{width:155px;text-align:right}

@@ -8,9 +8,6 @@ function zayavAdd() {
     if (@$_GET['client_id']) $back = 'client&d1=info&id='.$_GET['client_id'];
 ?>
 <DIV id=zayavAdd>
-    <TABLE cellpadding=0 cellspacing=8><TR><TD class=tdAbout>Номера выпуска:<TD></TABLE>
-    <DIV id=gn_spisok></DIV>
-
     <TABLE cellpadding=0 cellspacing=8 id=skidka_tab>
         <TR><TD class=tdAbout>Скидка:<TD><INPUT TYPE=hidden id=skidka>
     </TABLE>

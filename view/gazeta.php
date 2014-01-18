@@ -588,6 +588,9 @@ function zayav_add() {
                     ' = '.
 					'<input type="text" id="kv_sm" readonly> см<sup>2</sup>'.
 		'</table>'.
+		'<table class="zatab">'.
+			'<tr><td class="label top">Номера выпуска:<td id="gn_spisok">'.
+		'</table>'.
 	'</div>';
 }//zayav_add()
 

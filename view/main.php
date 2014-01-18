@@ -89,7 +89,9 @@ function _header() {
 			(LOCAL ? 'for(var i in VK)if(typeof VK[i]=="function")VK[i]=function(){return false};' : '').
 			'var DOMAIN="'.DOMAIN.'",'.
 				'VALUES="'.VALUES.'",'.
-				'VIEWER_ID='.VIEWER_ID.';'.
+				'VIEWER_ID='.VIEWER_ID.','.
+				'GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.','.
+				'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.';'.
 		'</script>'.
 
 		//Подключение api VK. Стили VK должны стоять до основных стилей сайта
