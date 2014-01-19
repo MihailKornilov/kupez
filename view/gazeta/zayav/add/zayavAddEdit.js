@@ -119,24 +119,6 @@ function zayavEdit(category, client, gns) {
 
 
 
-// Загрузка изображений
-function fotoUpload() {
-    $("#foto_link").val('');
-    $("#foto").fotoUpload({
-        func:function (res) {
-            $("#foto_link").val(res.link);
-            $("#foto")
-                .html(res.img + "<div class=img_del />")
-                .find("IMG:first").on('load', frameBodyHeightSet);
-            $("#foto .img_del").click(fotoUpload);
-            $("#foto img").click(function () {
-                G.fotoView(res.link);
-            });
-            frameBodyHeightSet();
-        }
-    });
-}
-
 // Обнуление списка номеров и суммы вручную
 function gnReload(id, gns) {
     G.gn.first_active = id == 2 ? 400 : G.gn.first_save;

@@ -77,9 +77,10 @@
 
 
 /* Список номеров при внесении и редактировании заявок */
-#gnGet{margin:-1px 0 0 0}
+#gnGet{margin:-1px 0 15px -5px}
 #gnGet #dopLinks{padding:0 0 5px 5px;border:none}
-#gnGet #dopLinks a{margin-right:4px}
+#gnGet #dopLinks a{margin-right:5px}
+#gnGet .gn-spisok{margin-left:-127px}
 #gnGet #darr{
 	font-size:12px;
 	text-align:center;
@@ -119,7 +120,15 @@
 	color:#444;
 }
 #gnGet .prev{background-color:#FFB}
-
+#gnGet #selCount{
+	width:127px;
+	vertical-align:top;
+	text-align:right;
+	color:#666;
+	font:bold 10px Tahoma;
+	padding-right:5px;
+}
+#gnGet #selCount a{font-size:10px;display:block;color:#aaa}
 
 
 /* Внесение новой заявки */
@@ -136,6 +145,9 @@
 #zayav-add #kv_sm{width:45px;cursor:default}
 #zayav-add .xb{font:12px Trebuchet MS;margin:0 5px;color:#777}
 #zayav-add sup{font-size:10px;position:relative;top:2px}
+#zayav-add #summa{width:60px;font:15px Tahoma;text-align:right}
+#zayav-add #summa:not(:read-only){background-color:#ff8}
+#zayav-add #note{height:26px;width:350px}
 
 
 

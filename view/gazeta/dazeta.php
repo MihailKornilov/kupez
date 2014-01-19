@@ -2,33 +2,6 @@
 <SCRIPT type="text/javascript" src="/js/gazeta.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 
-// Добавление новой заявки
-function zayavAdd() {
-    $back = 'zayav';
-    if (@$_GET['client_id']) $back = 'client&d1=info&id='.$_GET['client_id'];
-?>
-<DIV id=zayavAdd>
-    <TABLE cellpadding=0 cellspacing=8 id=skidka_tab>
-        <TR><TD class=tdAbout>Скидка:<TD><INPUT TYPE=hidden id=skidka>
-    </TABLE>
-
-    <TABLE cellpadding=0 cellspacing=8 id=manual_tab>
-        <TR><TD class=tdAbout>Указать стоимость вручную:<TD><INPUT TYPE=hidden id=summa_manual>
-    </TABLE>
-
-    <TABLE cellpadding=0 cellspacing=8>
-        <TR><TD class=tdAbout>Итоговая стоимость:<TD><INPUT TYPE=text id=summa readonly value=0> руб.
-               <SPAN id=sumSkidka></SPAN><INPUT TYPE=hidden id=skidka_sum value=0>
-        <TR><TD class=tdAbout valign=top>Заметка:<TD><TEXTAREA id=note></TEXTAREA>
-    </TABLE>
-
-    <DIV class=vkButton><BUTTON onclick="zayavAddGo(this,0);">Внести</BUTTON></DIV>
-    <DIV class=vkCancel><BUTTON onclick="location.href='<?=URL?>&p=gazeta&d=<?=$back?>'">Отмена</BUTTON></DIV>
-</DIV>
-<SCRIPT type="text/javascript" src="/view/gazeta/zayav/add/zayavAddEdit.js?<?=JS_VERSION?>"></SCRIPT>
-<?php
-} // end of zayavAdd()
-
 // Редактирование заявки
 function zayavEdit() {
     global $VK, $zayavCategory;

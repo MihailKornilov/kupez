@@ -591,6 +591,18 @@ function zayav_add() {
 		'<table class="zatab">'.
 			'<tr><td class="label top">Номера выпуска:<td id="gn_spisok">'.
 		'</table>'.
+		'<table class="zatab skd dn">'.
+            '<tr><td class="label">Скидка:<td><input type="hidden" id="skidka" />'.
+        '</table>'.
+        '<table class="zatab manual">'.
+            '<tr><td class="label">Указать стоимость вручную:<td>'._check('summa_manual').
+        '</table>'.
+        '<table class="zatab">'.
+            '<tr><td class="label">Итоговая стоимость:'.
+				'<td><input type="text" id="summa" readonly value="0" /> руб.'.
+					'<span id="skidka-txt"></span><input type="hidden" id="skidka_sum" value="0" />'.
+            '<tr><td class="label top">Заметка:<td><textarea id="note"></textarea>'.
+        '</table>'.
 	'</div>';
 }//zayav_add()
 
