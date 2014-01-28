@@ -351,7 +351,7 @@ function client_data($page=1, $filter=array()) {
 		$c = $send['all'] - $start - $limit;
 		$c = $c > $limit ? $limit : $c;
 		$send['spisok'] .=
-			'<div class="ajaxNext" val="'.($page + 1).'">'.
+			'<div class="_next" val="'.($page + 1).'">'.
 				'<span>Показать ещё '.$c.' клиент'._end($c, 'а', 'а', 'ов').'</span>'.
 			'</div>';
 	}
@@ -602,6 +602,8 @@ function zayav_add() {
 				'<td><input type="text" id="summa" readonly value="0" /> руб.'.
 					'<span id="skidka-txt"></span><input type="hidden" id="skidka_sum" value="0" />'.
             '<tr><td class="label top">Заметка:<td><textarea id="note"></textarea>'.
+            '<tr><td><td><div class="vkButton"><button>Внести</button></div>'.
+                        '<div class="vkCancel"><button>Отмена</button></div>'.
         '</table>'.
 	'</div>';
 }//zayav_add()
@@ -741,7 +743,7 @@ function zayav_data($page=1, $filter=array(), $limit=20) {
 		$c = $all - $start - $limit;
 		$c = $c > $limit ? $limit : $c;
 		$send['spisok'] .=
-			'<div class="ajaxNext zayav_next" val="'.($page + 1).'">'.
+			'<div class="_next zayav_next" val="'.($page + 1).'">'.
 				'<span>Показать ещё '.$c.' заяв'._end($c, 'ку', 'ки', 'ок').'</span>'.
 			'</div>';
 	}
@@ -929,7 +931,7 @@ function income_spisok($page=1, $filter=array()) {
 		$c = $send['all'] - $start - $filter['limit'];
 		$c = $c > $filter['limit'] ? $filter['limit'] : $c;
 		$send['spisok'] .=
-			'<tr class="ajaxNext" val="'.($page + 1).'" id="money_next"><td colspan="4">'.
+			'<tr class="_next" val="'.($page + 1).'" id="money_next"><td colspan="4">'.
 			'<span>Показать ещё '.$c.' платеж'._end($c, '', 'а', 'ей').'</span>';
 	}
 	$send['spisok'] .= '</table>';
@@ -1113,7 +1115,7 @@ function history_spisok($page=1, $filter=array()) {
 		next($history);
 	}
 	if($start + $limit < $all)
-		$send .= '<div class="ajaxNext" id="history_next" val="'.($page + 1).'"><span>Показать более ранние записи...</span></div>';
+		$send .= '<div class="_next" id="history_next" val="'.($page + 1).'"><span>Показать более ранние записи...</span></div>';
 	return $send;
 }//history_spisok()
 

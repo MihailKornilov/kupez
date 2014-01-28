@@ -171,10 +171,10 @@ function GvaluesCreate() {// составление файла G_values.js
 		"\n".'TXT_CENA_FIRST='.$g['txt_cena_first'].','.
 		"\n".'TXT_LEN_NEXT='.$g['txt_len_next'].','.
 		"\n".'TXT_CENA_NEXT='.$g['txt_cena_next'].','.
-		"\n".'POLOSA_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').','.
-		"\n".'POLOSA_CENA_ASS='.query_ptpJson('SELECT `id`,ROUND(`cena`) FROM `setup_polosa_cost` ORDER BY `id`').','.
 		"\n".'OBDOP_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').','.
 		"\n".'OBDOP_CENA_ASS='.query_ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').','.
+		"\n".'POLOSA_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').','.
+		"\n".'POLOSA_CENA_ASS='.query_ptpJson('SELECT `id`,ROUND(`cena`) FROM `setup_polosa_cost` ORDER BY `id`').','.
 		"\n".'RASHOD_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `sort`').',';
 
 
