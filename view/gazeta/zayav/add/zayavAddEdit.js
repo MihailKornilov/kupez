@@ -159,67 +159,6 @@ function moneyCreate() {
     });
 } // end of moneyCreate()
 
-// Вычисление стоимости объявления
-function calcSummaOb() {
-    var txt_sum = 0; // сумма только за текст
-    var txt = $("#txt").val();
-    txt = txt.replace(/\./g,'');     // точки
-    txt = txt.replace(/,/g,'');      // запятые
-    txt = txt.replace(/\//g,'');     // слеш /
-    txt = txt.replace(/\"/g,'');     // двойные кавычки
-    txt = txt.replace(/( +)/g,' ');  // вторые пробелы
-    txt = txt.replace( /^\s+/g, ''); // пробелы в начале
-    txt = txt.replace( /\s+$/g, ''); // пробелы в конце
-    if (txt.length == 0) {
-        $("#txtCount").html('');
-    } else {
-        txt_sum += G.txt_cena_first * 1;
-        var podr_about = ''; // подробное расписывание длины объявления
-        if (txt.length>G.txt_len_first) {
-            podr_about = ' = ';
-            var CEIL = Math.ceil((txt.length - G.txt_len_first) / G.txt_len_next);
-            podr_about += G.txt_len_first;
-            var LAST = txt.length - G.txt_len_first - (CEIL - 1) * G.txt_len_next;
-            txt_sum += CEIL*G.txt_cena_next;
-            if (G.txt_len_next == LAST) CEIL++;
-            if (CEIL > 1) podr_about += " + " + G.txt_len_next;
-            if (CEIL > 2) podr_about += "x" + (CEIL - 1);
-            if (G.txt_len_next > LAST) podr_about += " + " + LAST;
-        }
-        var html = "Длина: <B>" + txt.length + "</B>" + podr_about + "<BR>" +
-            "Цена: <B>" + txt_sum + "</B> руб.<SPAN>(без учёта доп. параметров)</SPAN>";
-        $("#txtCount").html(html);
-    }
-    zayav.gn.cenaSet(txt_sum);
-} // end of calcSummaOb()
-
-// Вычисление стоимости рекламы
-function calcSummaRek() {
-    val = $(this).val();
-    var id = $(this).attr('id');
-    $("#kv_sm").val('');
-    kv_sm = 0;
-    if (!G.reg_sum.test(val)) {
-        $("#for_rek").vkHint({
-            msg:"<SPAN class=red>Не корректно введено значение.</SPAN>",
-            remove:1,
-            indent:40,
-            show:1,
-            top:-49,
-            left:144 + (id == 'size_y' ? 63 : 0)
-        });
-    } else {
-        $("#for_rek").prev().remove('.hint');
-        var val_x = $("#size_x").val();
-        var val_y = $("#size_y").val();
-        var x = G.reg_sum.test(val_x) ? val_x : 0;
-        var y = G.reg_sum.test(val_y) ? val_y : 0;
-        //kv_sm = Math.round((x * y) * 100) / 100;
-        kv_sm = Math.round(x * y);
-        if (kv_sm > 0) $("#kv_sm").val(kv_sm);
-    }
-    zayav.gn.cenaSet(kv_sm);
-} // end of calcSummaRek()
 
 function zayavAddGo(but, id) {
     if (zayav.sending == 1) return;

@@ -3,6 +3,39 @@ require_once('config.php');
 require_once(DOCUMENT_ROOT.'/view/gazeta.php');
 
 switch(@$_POST['op']) {
+	case 'client_sel':
+		$send['spisok'] = array();
+		if(!empty($_POST['val']) && !preg_match(REGEXP_WORDFIND, win1251($_POST['val'])))
+			jsonSuccess($send);
+		if(!preg_match(REGEXP_NUMERIC, $_POST['client_id']))
+			jsonSuccess($send);
+		$val = addslashes(win1251(trim($_POST['val'])));
+		$client_id = intval($_POST['client_id']);
+		$sql = "SELECT *
+				FROM `gazeta_client`
+				WHERE `deleted`=0".
+			(!empty($val) ? " AND (`org_name` LIKE '%".$val."%' OR `fio` LIKE '%".$val."%' OR `telefon` LIKE '%".$val."%' OR `adres` LIKE '%".$val."%')" : '').
+			($client_id ? " AND `id`<=".$client_id : '')."
+				ORDER BY `id` DESC
+				LIMIT 50";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q)) {
+			$name = $r['org_name'] ? $r['org_name'] : $r['fio'];
+			$unit = array(
+				'uid' => $r['id'],
+				'title' => utf8(htmlspecialchars_decode($name))
+			);
+			$content = array();
+			if($r['telefon'])
+				$content[] = $r['telefon'];
+			if($r['adres'])
+				$content[] = $r['adres'];
+			if(!empty($content))
+				$unit['content'] = utf8($name.'<span>'.implode('<br />', $content).'</span>');
+			$send['spisok'][] = $unit;
+		}
+		jsonSuccess($send);
+		break;
 	case 'client_add':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['person']) || !$_POST['person'])
 			jsonError();
@@ -45,10 +78,19 @@ switch(@$_POST['op']) {
 					".VIEWER_ID."
 				)";
 		query($sql);
+
+		$name = $org_name ? $org_name : $fio;
+		$content = array();
+		if($telefon)
+			$content[] = $telefon;
+		if($adres)
+			$content[] = $adres;
 		$send = array(
 			'uid' => mysql_insert_id(),
-			'title' => $fio
+			'title' => utf8($name),
+			'content' => utf8($name.'<span>'.implode('<br />', $content).'</span>')
 		);
+
 		history_insert(array(
 			'type' => 51,
 			'client_id' => $send['uid']
@@ -177,6 +219,122 @@ switch(@$_POST['op']) {
 		$page = intval($_POST['page']);
 		$data = zayav_data($page, zayavFilter($_POST));
 		$send['html'] = utf8($data['spisok']);
+		jsonSuccess($send);
+		break;
+	case 'zayav_add':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['client_id']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['category']) || !$_POST['category'])
+			jsonError();
+		$category = intval($_POST['category']);
+		if($category == 1 && (!preg_match(REGEXP_NUMERIC, $_POST['rubric_id']) || !$_POST['rubric_id']))
+			jsonError();
+		if($category == 1 && !preg_match(REGEXP_NUMERIC, $_POST['rubric_sub_id']))
+			jsonError();
+		if($category == 2 && (!preg_match(REGEXP_CENA, $_POST['size_x']) || $_POST['size_x'] == 0))
+			jsonError();
+		if($category == 2 && (!preg_match(REGEXP_CENA, $_POST['size_y']) || $_POST['size_y'] == 0))
+			jsonError();
+		if($category == 2 && !preg_match(REGEXP_NUMERIC, $_POST['skidka']))
+			jsonError();
+		if(!preg_match(REGEXP_BOOL, $_POST['summa_manual']))
+			jsonError();
+		$client_id = intval($_POST['client_id']);
+		$rubric_id = $category == 1 ? intval($_POST['rubric_id']) : 0;
+		$rubric_sub_id = $category == 1 ? intval($_POST['rubric_sub_id']) : 0;
+		$txt = $category == 1 ? win1251(htmlspecialchars(trim($_POST['txt']))) : '';
+		$telefon = $category == 1 ? win1251(htmlspecialchars(trim($_POST['telefon']))) : '';
+		$adres = $category == 1 ? win1251(htmlspecialchars(trim($_POST['adres']))) : '';
+		$size_x = $category == 2 ? round(str_replace(',', '.', $_POST['size_x']), 1) : 0;
+		$size_y = $category == 2 ? round(str_replace(',', '.', $_POST['size_y']), 1) : 0;
+		$skidka = $category == 2 ? intval($_POST['skidka']) : 0;
+		$summa_manual = intval($_POST['summa_manual']);
+		$note = win1251(htmlspecialchars(trim($_POST['note'])));
+		if($category == 2 && !$client_id)
+			jsonError();
+		if($category == 1 && !$telefon && !$adres)
+			jsonError();
+		if(empty($_POST['gns']))
+			jsonError();
+		$gns = array();
+		$summa = 0;
+		$gn_count = 0;
+		foreach(explode(',', $_POST['gns']) as $r) {
+			$ex = explode(':', $r);
+			if(!preg_match(REGEXP_NUMERIC, $ex[0]))
+				jsonError();
+			if(!isset($ex[1]) || !preg_match('/^[0-9]{1,10}(.[0-9]{1,6})?(,[0-9]{1,6})?$/i', $ex[0]))
+				jsonError();
+			if(!isset($ex[2]) || !preg_match(REGEXP_NUMERIC, $ex[2]))
+				jsonError();
+			if($category == 2 && !$ex[2])
+				jsonError();
+			$cena = round(str_replace(',', '.', $ex[1]), 6);
+			$summa += $cena;
+			$gn_count++;
+			$gns[] = '({zayav_id},'.intval($ex[0]).','.intval($ex[2]).','.$cena.')';
+		}
+		$skidka_sum = $category == 2 && $skidka ? round($summa/(100 - $skidka) * 100 - $summa, 2) : 0;
+
+		$sql = "INSERT INTO `gazeta_zayav` (
+				    `client_id`,
+				    `category`,
+
+				    `rubric_id`,
+				    `rubric_sub_id`,
+				    `txt`,
+				    `telefon`,
+				    `adres`,
+
+				    `size_x`,
+				    `size_y`,
+
+				    `summa_manual`,
+				    `summa`,
+				    `skidka`,
+				    `skidka_sum`,
+
+				    `gn_count`,
+					`viewer_id_add`
+				) VALUES (
+				    ".$client_id.",
+				    ".$category.",
+
+				    ".$rubric_id.",
+				    ".$rubric_sub_id.",
+				    '".addslashes($txt)."',
+				    '".addslashes($telefon)."',
+				    '".addslashes($adres)."',
+
+				    ".$size_x.",
+				    ".$size_y.",
+
+				    ".$summa_manual.",
+				    ".round($summa, 2).",
+				    ".$skidka.",
+				    ".$skidka_sum.",
+
+				    ".$gn_count.",
+				    ".VIEWER_ID."
+				)";
+		query($sql);
+		$send['id'] = mysql_insert_id();
+
+		query("INSERT INTO `gazeta_nomer_pub` (
+					`zayav_id`,
+					`general_nomer`,
+					`dop`,
+					`cena`
+			   ) VALUES ".str_replace('{zayav_id}', $send['id'], implode(',', $gns)));
+
+		history_insert(array(
+			'type' => 11,
+			'client_id' => $client_id,
+			'zayav_id' => $send['id']
+		));
+
+		_vkCommentAdd('zayav', $send['id'], $note);
+
 		jsonSuccess($send);
 		break;
 
@@ -916,7 +1074,7 @@ switch(@$_POST['op']) {
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
-		if(query_value("SELECT COUNT(`id`) FROM `gazeta_money` WHERE `type`=".$id))
+		if(query_value("SELECT COUNT(`id`) FROM `gazeta_money` WHERE `income_id`=".$id))
 			jsonError();
 		$sql = "DELETE FROM `setup_income` WHERE `id`=".$id;
 		query($sql);

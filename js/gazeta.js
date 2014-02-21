@@ -2,11 +2,11 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 	clientAdd = function(callback) {
 		var html = '<table class="client-add">' +
 			'<tr><td class="label">Категория:<td><input type="hidden" id="cperson">' +
-				'<a href="' + URL + '&p=gazeta&d=setup&d1=person" class="img_edit"></a>' +
+				'<a href="' + URL + '&p=gazeta&d=setup&d1=person" class="img_edit' + _tooltip('Настройка категорий клиентов', -95) + '</a>' +
 			'<tr><td class="label">Контактное лицо (фио):<td><input type="text" id="fio" maxlength="200">' +
 			'<tr><td class="label">Название организации:<td><input type="text" id="org_name" maxlength="200">' +
-			'<tr><td class="label">Телефоны:<td><input type="text" id="telefon" maxlength="300">' +
-			'<tr><td class="label">Адрес:<td><input type="text" id="adres" maxlength="200">' +
+			'<tr><td class="label">Телефоны:<td><input type="text" id="ctelefon" maxlength="300">' +
+			'<tr><td class="label">Адрес:<td><input type="text" id="cadres" maxlength="200">' +
 			'<tr><td class="label">ИНН:<td><input type="text" id="inn" maxlength="100">' +
 			'<tr><td class="label">КПП:<td><input type="text" id="kpp" maxlength="100">' +
 			'<tr><td class="label">E-mail:<td><input type="text" id="email" maxlength="100">' +
@@ -24,33 +24,27 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 			title0:'Не выбрана',
 			spisok:PERSON_SPISOK
 		});
-		$('.client-add .img_edit:first').vkHint({
-			msg:'Перейти к настройкам категорий клиентов',
-			indent:110,
-			top:-76,
-			left:75
-		});
 		$('#cskidka')._select({
 			width:60,
 			title0:'Нет',
 			spisok:SKIDKA_SPISOK
 		});
 		$('#fio').focus();
-		$('#fio,#org_name,#telefon,#adres,#inn,#kpp,#email').keyEnter(submit);
+		$('#fio,#org_name,#ctelefon,#cadres,#inn,#kpp,#email').keyEnter(submit);
 		function submit() {
 			var send = {
 				op:'client_add',
 				person:$('#cperson').val(),
 				fio:$('#fio').val(),
-				telefon:$('#telefon').val(),
+				telefon:$('#ctelefon').val(),
 				org_name:$('#org_name').val(),
-				adres:$('#adres').val(),
+				adres:$('#cadres').val(),
 				inn:$('#inn').val(),
 				kpp:$('#kpp').val(),
 				email:$('#email').val(),
 				skidka:$('#cskidka').val()
 			};
-			if(send.person == 0) err('Не выбран заявитель', -48);
+			if(send.person == 0) err('Не выбрана категория', -48);
 			else if(!send.fio && !send.org_name) err('Необходимо указать контактное лицо<br />либо название организации', -61);
 			else {
 				dialog.process();
@@ -138,19 +132,19 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 		}, 'json');
 	},
 	zayavRubric = function() {
-		$('#rubric')._select({
+		$('#rubric_id')._select({
 			width:120,
 			title0:'Не указана',
 			spisok:RUBRIC_SPISOK,
 			func:function(id) {
-				$('#rubric_sub').val(0)._select('remove');
+				$('#rubric_sub_id').val(0)._select('remove');
 				zayavRubricSub(id);
 			}
 		});
 	},
 	zayavRubricSub = function(id) {
 		if(RUBRIC_SUB_SPISOK[id]) {
-			$('#rubric_sub')._select({
+			$('#rubric_sub_id')._select({
 				width:180,
 				title0:'Подрубрика не указана',
 				spisok:RUBRIC_SUB_SPISOK[id]
@@ -160,7 +154,7 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 	zayavObSumCalc = function() {// Вычисление стоимости объявления
 		var txt_sum = 0, // сумма только за текст
 			podr_about = '', // подробное расписывание длины объявления
-			txt = $('#zatxt').val()
+			txt = $('#ztxt').val()
 					.replace(/\./g, '')    // точки
 					.replace(/,/g, '')     // запятые
 					.replace(/\//g, '')    // слеш /
@@ -192,25 +186,26 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 			$('#summa').val(window.gnGet.summa());
 	},
 	zayavRekSumCalc = function() {// Вычисление стоимости рекламы
-		var v = $(this).val(),
-			id = $(this).attr('id'),
+		var t = $(this),
+			v = t.val(),
+			id = t.attr('id'),
 			val_x = $('#size_x').val(),
 			val_y = $('#size_y').val(),
-			x = REGEXP_CENA.test(val_x) ? val_x : 0,
-			y = REGEXP_CENA.test(val_y) ? val_y : 0,
+			x = REGEXP_CENA.test(val_x) ? val_x.replace(',', '.') : 0,
+			y = REGEXP_CENA.test(val_y) ? val_y.replace(',', '.') : 0,
 			kv_sm = 0;
 		$('#kv_sm').val('');
 		if(!REGEXP_CENA.test(v)) {
-			$('.rek').vkHint({
+			t.vkHint({
 				msg:'<span class="red">Не корректно введено значение.</span>',
 				remove:1,
 				indent:40,
 				show:1,
-				top:-49,
-				left:140 + (id == 'size_y' ? 52 : 0)
+				top:id == 'size_x' ? -57 : -79,
+				left:id == 'size_x' ? -33 : 20
 			});
 		} else {
-			$('.rek').prev().remove('.hint');
+			t.prev().remove('.hint');
 			kv_sm = Math.round(x * y);
 			if(kv_sm)
 				$("#kv_sm").val(kv_sm);
@@ -218,8 +213,60 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 		window.gnGet.cena(kv_sm);
 		if($('#summa_manual').val() == '0')
 			$('#summa').val(window.gnGet.summa());
+		$('#skidka-txt').html(window.gnGet.skidka());
 	};
 
+$.fn.clientSel = function(o) {
+	var t = $(this);
+	o = $.extend({
+		width:270,
+		add:null,
+		client_id:t.val() || 0,
+		func:function() {}
+	}, o);
+
+	if(o.add)
+		o.add = function() {
+			clientAdd(function(res) {
+				var arr = [];
+				arr.push(res);
+				t._select(arr);
+				t._select(res.uid);
+			});
+		};
+
+	t._select({
+		width:o.width,
+		title0:'Начните вводить данные клиента...',
+		spisok:[],
+		write:1,
+		nofind:'Клиентов не найдено',
+		func:o.func,
+		funcAdd:o.add,
+		funcKeyup:clientsGet
+	});
+	clientsGet();
+
+	function clientsGet(val) {
+		var send = {
+			op:'client_sel',
+			val:val || '',
+			client_id:o.client_id
+		};
+		t._select('process');
+		$.post(AJAX_GAZ, send, function(res) {
+			t._select('cancel');
+			if(res.success) {
+				t._select(res.spisok);
+				if(o.client_id) {
+					t._select(o.client_id);
+					o.client_id = 0;
+				}
+			}
+		}, 'json');
+	}
+	return t;
+};
 $.fn.gnGet = function(o) {
 	o = $.extend({
 		show:4,     // количество номеров, которые показываются изначально, а также отступ от уже выбранных
@@ -426,7 +473,7 @@ $.fn.gnGet = function(o) {
 				var four = 0;
 				if(o.manual) {
 					gnsActionActive(function(sp) {
-						if (sp.prev != 1) {
+						if(sp.prev != 1) {
 							four++;
 							if (four == 4)
 								four = 0;
@@ -435,7 +482,7 @@ $.fn.gnGet = function(o) {
 						}
 					});
 					four = 0;
-					sum = Math.round((summa_manual / count) * 100) / 100;
+					sum = Math.round((summa_manual / count) * 1000000) / 1000000;
 				}
 				gnsActionActive(function(sp) {
 					if(!sp.prev) {
@@ -449,7 +496,7 @@ $.fn.gnGet = function(o) {
 						else
 							sp.cena = cena ? cena + (sp.dop ? OBDOP_CENA_ASS[sp.dop] : 0) : 0;
 					}
-					gnGet.find('#cena' + sp.n).html(sp.cena);
+					gnGet.find('#cena' + sp.n).html(Math.round(sp.cena * 100) / 100);
 				});
 				break;
 			case 2:
@@ -458,7 +505,7 @@ $.fn.gnGet = function(o) {
 						if(sp.dop > 0 && sp.prev != 1)
 							count++;
 					});
-					sum = Math.round((summa_manual / count) * 100) / 100;
+					sum = Math.round((summa_manual / count) * 1000000) / 1000000;
 				}
 				skidka_sum = 0;
 				gnsActionActive(function(sp) {
@@ -484,7 +531,7 @@ $.fn.gnGet = function(o) {
 					if(!sp.prev)
 						count++;
 				});
-				sum = Math.round((summa_manual / count) * 100) / 100;
+				sum = Math.round((summa_manual / count) * 1000000) / 1000000;
 				gnsActionActive(function(sp) {
 					if(!sp.prev)
 						sp.cena = sum;
@@ -531,12 +578,12 @@ $.fn.gnGet = function(o) {
 		o.func();
 	};
 	t.manualSumma = function(sum) {
-		summa_manual = sum;
+		summa_manual = REGEXP_CENA.test(sum) ? sum.replace(',', '.') * 1 : 0;
 		cenaSet();
 	};
 	t.result = function() {
-		var spisok = [];
-		var no_polosa = 0; // проверка, все ли полосы выбраны
+		var spisok = [],
+			no_polosa = 0; // проверка, все ли полосы выбраны
 		gnsActionActive(function(sp) {
 			if(o.category == 2 && !sp.dop)
 				no_polosa = 1;
@@ -1887,7 +1934,7 @@ $(document)
 	})
 
 	.ready(function() {
-		if($('#client').length > 0) {
+		if($('#client').length) {
 			window.cFind = $('#find')._search({
 				width:602,
 				focus:1,
@@ -1941,7 +1988,7 @@ $(document)
 				correct:0
 			});
 		}
-		if($('#clientInfo').length > 0) {
+		if($('#clientInfo').length) {
 			$('.cedit').click(function() {
 				var html = '<table class="client-add">' +
 						'<tr><td class="label">Категория:<td><input type="hidden" id="cperson" value="' + CLIENT.person + '" />' +
@@ -2044,10 +2091,9 @@ $(document)
 					}, 'json');
 				}
 			});
-
 		}
 
-		if($('#zayav').length > 0) {
+		if($('#zayav').length) {
 			window.zFind = $('#find')
 				.vkHint({
 					width:145,
@@ -2124,15 +2170,16 @@ $(document)
 				func:zayavSpisokLoad
 			});
 		}
-		if($('#zayav-add').length > 0) {
+		if($('#zayav-add').length) {
+			$('#client_id').clientSel({add:1});
 			$('#category')._select({
 				width:120,
 				spisok:CATEGORY_SPISOK,
 				func:function(category) {
 					$('.ob').addClass('dn');
-					$('#rubric').val(0)._select('remove');
-					$('#rubric_sub').val(0)._select('remove');
-					$('#zatxt').val('');
+					$('#rubric_id').val(0)._select('remove');
+					$('#rubric_sub_id').val(0)._select('remove');
+					$('#ztxt').val('');
 					zayavObSumCalc();
 					$('#telefon').val('');
 					$('#adres').val('');
@@ -2167,7 +2214,7 @@ $(document)
 				}
 			});
 			zayavRubric();
-			$('#zatxt')
+			$('#ztxt')
 				.autosize()
 				.focus()
 				.keyup(zayavObSumCalc);
@@ -2175,7 +2222,7 @@ $(document)
 			$('#size_y').keyup(zayavRekSumCalc);
 			window.gnGet = $('#gn_spisok').gnGet({
 				func:function() {
-					if($('#summa').is(':read-only')) {
+					if($('#summa').attr('readonly')) {
 						$('#summa').val(window.gnGet.summa());
 						$('#skidka-txt').html(window.gnGet.skidka());
 					}
@@ -2191,23 +2238,73 @@ $(document)
 						$('#summa').val(window.gnGet.summa());
 					$('#skidka-txt').html(window.gnGet.skidka());
 				}
-			}).o;
+			});
 			$('#summa_manual')._check(function(id) {
 				$('#summa').attr('readonly', !id).focus();
 				window.gnGet.manual(id);
 				$('#skidka-txt').html(window.gnGet.skidka());
 			});
 			$('#summa').keyup(function() {
-				var v = $(this).val();
-				if(REGEXP_CENA.test(v))
-					window.gnGet.manualSumma(v);
+				window.gnGet.manualSumma($(this).val());
 			});
 			$('#note').autosize();
 			$('.vkButton').click(function() {
-				alert(window.gnGet.result());
+				var but = $(this),
+					send = {
+						op:'zayav_add',
+						client_id:$('#client_id').val(),
+						category:$('#category').val(),
+
+						rubric_id:$('#rubric_id').val(),
+						rubric_sub_id:$('#rubric_sub_id').val(),
+						txt:$('#ztxt').val(),
+						telefon:$('#telefon').val(),
+						adres:$('#adres').val(),
+
+						size_x:$('#size_x').val(),
+						size_y:$('#size_y').val(),
+
+						gns:window.gnGet.result(),
+
+						skidka:$('#skidka').val(),
+						summa_manual:$('#summa_manual').val(),
+						note:$('#note').val()
+					};
+
+				if(send.category == 1 && send.rubric_id == 0) err('Не указана рубрика');
+				else if(send.category == 1 && !send.txt) { err('Введите текст объявления'); $('#ztxt').focus(); }
+				else if(send.category == 1 && !send.telefon && !send.adres) { err('Укажите контактный телефон или адрес клиента'); $('#telefon').focus(); }
+				else if(send.category == 2 && send.client_id == 0) err('Не выбран клиент');
+				else if(send.category == 2 && (!REGEXP_CENA.test(send.size_x) || !REGEXP_CENA.test(send.size_y))) err('Некорректно указан размер блока');
+				else if(!send.gns) err('Нужно выбрать хотя бы один номер выпуска');
+				else if(send.gns == 'no_polosa') err('Необходимо указать полосы у всех номеров');
+				else if(!REGEXP_CENA.test($('#summa').val())) { err('Некорректно введена итоговая стоимость'); $('#summa').focus(); }
+				else {
+					but.addClass('busy');
+					$.post(AJAX_GAZ, send, function(res) {
+						if(res.success) {
+							_msg('Заявка внесена.');
+							location.href = URL + '&p=gazeta&d=zayav&d1=info&id=' + res.id;
+						} else
+							but.removeClass('busy');
+					}, 'json');
+				}
+				function err(msg) {
+					but.vkHint({
+						msg:'<SPAN class=red>' + msg + '</SPAN>',
+						remove:1,
+						indent:40,
+						show:1,
+						top:-58,
+						left:-14
+					});
+				}
+			});
+			$('.vkCancel').click(function() {
+				location.href = URL + '&p=gazeta&d=' + $(this).attr('val');
 			});
 		}
-		if($('#zayav-info').length > 0) {
+		if($('#zayav-info').length) {
 			$('#lost-count').click(function() {
 				$(this).parent().find('.lost').show()
 				$(this).remove();
@@ -2221,6 +2318,42 @@ $(document)
 				$(this).parent().find('.sel').removeClass('sel');
 				$(this).addClass('sel');
 				$('#zayav-info').addClass('h');
+			});
+		}
+		if($('#zayav-edit').length) {
+			if($('#client_id').val() == 0)
+				$('#client_id').clientSel({add:1});
+			window.gnGet = $('#gn_spisok').gnGet({
+				category:ZAYAV.category,
+				func:function() {
+					if($('#summa').attr('readonly')) {
+						$('#summa').val(window.gnGet.summa());
+						$('#skidka-txt').html(window.gnGet.skidka());
+					}
+				}
+			});
+			switch(ZAYAV.category) {
+				case 1:
+					zayavRubric();
+					zayavRubricSub($('#rubric_id').val());
+					$('#ztxt')
+						.autosize()
+						.focus()
+						.keyup(zayavObSumCalc);
+					zayavObSumCalc();
+					break;
+				case 2:
+					$('#size_x').keyup(zayavRekSumCalc);
+					$('#size_y').keyup(zayavRekSumCalc);
+			}
+			if(ZAYAV.category == 1 || ZAYAV.category == 2)
+				$('#summa_manual')._check(function(id) {
+					$('#summa').attr('readonly', !id).focus();
+					window.gnGet.manual(id);
+					$('#skidka-txt').html(window.gnGet.skidka());
+				});
+			$('.vkCancel').click(function() {
+				location.href = URL + '&p=gazeta&d=zayav&d1=info&id=' + ZAYAV.id;
 			});
 		}
 	});

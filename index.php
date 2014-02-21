@@ -37,6 +37,7 @@ else {
 					switch(@$_GET['d1']) {
 						case 'add': $html .= zayav_add(); break;
 						case 'info': $html .= zayav_info(intval(@$_GET['id'])); break;
+						case 'edit': $html .= zayav_edit(intval(@$_GET['id'])); break;
 						default:
 							$html .= zayav_list();
 					}

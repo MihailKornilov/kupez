@@ -17,7 +17,7 @@
 /* Окно внесения нового клиента */
 .client-add{border-spacing:8px}
 .client-add .label{text-align:right}
-.client-add .img_edit{margin:0 0 2px 8px}
+.client-add .img_edit{margin:0 0 4px 8px}
 .client-add input{width:250px}
 
 /* Информация о клиенте */
@@ -77,8 +77,8 @@
 
 
 /* Список номеров при внесении и редактировании заявок */
-#gnGet{margin:-1px 0 15px -5px}
-#gnGet #dopLinks{padding:0 0 5px 5px;border:none}
+#gnGet{margin:-3px 0 15px -5px}
+#gnGet #dopLinks{padding:0 0 5px 5px;border:none;background-color:transparent}
 #gnGet #dopLinks a{margin-right:5px}
 #gnGet #dopDef_dropdown{margin:-4px 0 0 7px}
 #gnGet .gn-spisok{margin-left:-127px}
@@ -138,8 +138,8 @@
 #zayav-add .headName{margin:0 30px 20px 30px}
 #zayav-add .zatab{border-spacing:8px;width:100%}
 #zayav-add .label{width:155px;text-align:right}
-#zayav-add #zatxt{font:bold 12px Verdana;width:350px;height:39px}
-#zayav-add #rubric_select{margin-right:5px}
+#zayav-add #ztxt{font:bold 12px Verdana;width:350px;height:39px}
+#zayav-add #rubric_id_select{margin-right:5px}
 #zayav-add #txt-count{color:#583;margin:3px}
 #zayav-add #txt-count span{font-size:10px;color:#888;margin-left:10px}
 #zayav-add #telefon,#zayav-add #adres{width:350px}
@@ -182,11 +182,34 @@
 #zayav-info tr#lost-count:hover{background-color:#F9F9F9}
 #zayav-info .gn tr.lost{background-color:#F9F9F9;display:none}
 #zayav-info .gn tr.lost td{color:#777}
+#zayav-info .added{
+	margin:5px 10px;
+	color:#888;
+	font-size:10px;
+	text-align:right;
+}
 #zayav-info .headBlue{margin:10px 10px 0}
 #zayav-info .zmoney{margin:0 10px 10px 10px}
 #zayav-info .vkComment{margin:15px 10px}
 #zayav-info .histories{margin:10px 15px}
 
+/* Редактирование заявки */
+#zayav-edit .headName{margin:10px 15px 15px}
+#zayav-edit .zetab{border-spacing:10px;margin-left:10px}
+#zayav-edit .label{width:155px;text-align:right}
+#zayav-edit #ztxt{font:bold 12px Verdana;width:350px;height:39px}
+#zayav-edit #rubric_id_select{margin-right:5px}
+#zayav-edit #txt-count{color:#583;margin:3px}
+#zayav-edit #txt-count span{font-size:10px;color:#888;margin-left:10px}
+#zayav-edit #telefon,#zayav-edit #adres{width:350px}
+#zayav-edit #size_x,#zayav-edit #size_y{width:30px}
+#zayav-edit #kv_sm{width:45px;cursor:default}
+#zayav-edit .xb{font:12px Trebuchet MS;margin:0 5px;color:#777}
+#zayav-edit sup{font-size:10px;position:relative;top:2px}
+#zayav-edit #summa{width:60px;font:15px Tahoma;text-align:right}
+#zayav-edit #summa:not(:read-only){background-color:#ff8}
+#zayav-edit #skidka-txt{margin-left:5px;color:#999;font-size:10px}
+#zayav-edit .vkButton{margin-right:8px}
 
 
 
