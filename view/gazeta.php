@@ -104,19 +104,42 @@ function _rubricsub($item_id=false) {//Список изделий для заявок
 	}
 	return $item_id !== false ? constant('RUBRICSUB_'.$item_id) : $arr;
 }//_rubricsub()
-function _gnCache() {//Получение информации о всех номерах газеты из кеша
-	$key = CACHE_PREFIX.'gn';
-	$send = xcache_get($key);
-	if(empty($send)) {
-		$send = array();
-		$sql = "SELECT * FROM `gazeta_nomer`";
-		$q = query($sql);
-		while($r = mysql_fetch_assoc($q))
-			$send[$r['general_nomer']] = $r;
-		xcache_set($key, $send, 86400);
+function _gn($nomer=false, $i='') {//Получение информации о всех номерах газеты из кеша
+	if(!defined('GN_LOADED') || $nomer === false) {
+		$key = CACHE_PREFIX.'gn';
+		$send = xcache_get($key);
+		if(empty($send)) {
+			$send = array();
+			$sql = "SELECT * FROM `gazeta_nomer`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$send[$r['general_nomer']] = array(
+					'week' => $r['week_nomer'],
+					'day_print' => $r['day_print'],
+					'day_public' => $r['day_public'],
+					'pub' => FullData($r['day_public'], 1, 1, 1)
+				);
+			xcache_set($key, $send, 86400);
+		}
+		if(!defined('GN_LOADED')) {
+			foreach($send as $n => $r) {
+				define('GN_WEEK_'.$n, $r['week']);
+				define('GN_DAY_PRINT_'.$n, $r['day_print']);
+				define('GN_DAY_PUBLIC_'.$n, $r['day_public']);
+				define('GN_PUB_'.$n, $r['pub']);
+			}
+			define('GN_LOADED', true);
+		}
 	}
+	if($nomer !== false)
+		switch($i) {
+			case 'week': return constant('GN_WEEK_'.$nomer);
+			case 'day_print': return constant('GN_DAY_PRINT_'.$nomer);
+			case 'day_public': return constant('GN_DAY_PUBLIC_'.$nomer);
+			case 'pub': return constant('GN_PUB_'.$nomer);
+		}
 	return $send;
-}//_gnCache()
+}//_gn()
 function _obDop($item_id=false) {//Дополнительные параметры для объявлений
 	if(!defined('OBDOP_LOADED') || $item_id === false) {
 		$key = CACHE_PREFIX.'obdop';
@@ -569,6 +592,36 @@ function _zayavLink($arr) {//Добавление в массив информации о заявках
 	return $arr;
 }//_zayavLink()
 
+function gns_control($post, $category, $zayav_id='{zayav_id}') {//проверка правильности заполнения номеров при внесении и редактировании заявки
+	$send['summa'] = 0;
+	$send['count'] = 0;
+	$send['array'] = array();
+	if(empty($post) && preg_match(REGEXP_NUMERIC, $zayav_id))
+		return $send;
+	$gns = array();
+	foreach(explode(',', $post) as $r) {
+		$ex = explode(':', $r);
+		if(!preg_match(REGEXP_NUMERIC, $ex[0]))
+			return false;
+		if(!isset($ex[1]) || !preg_match('/^[0-9]{1,10}(.[0-9]{1,6})?(,[0-9]{1,6})?$/i', $ex[0]))
+			return false;
+		if(!isset($ex[2]) || !preg_match(REGEXP_NUMERIC, $ex[2]))
+			return false;
+		if($category == 2 && !$ex[2])
+			return false;
+		$cena = round(str_replace(',', '.', $ex[1]), 6);
+		$send['summa'] += $cena;
+		$send['count']++;
+		$gns[] = '('.$zayav_id.','.intval($ex[0]).','.intval($ex[2]).','.$cena.')';
+		$send['array'][$ex[0]] = array(
+			'cena' => round($cena, 2),
+			'dop' => $ex[2]
+		);
+	}
+	$send['summa'] = round($send['summa'], 2);
+	$send['insert'] = implode(',', $gns);
+	return $send;
+}
 function zayav_add() {
 	$client_id = empty($_GET['client_id']) || !preg_match(REGEXP_NUMERIC, $_GET['client_id']) ? 0 : $_GET['client_id'];
 	$back = $client_id ? 'client&d1=info&id='.$client_id : 'zayav';
@@ -797,14 +850,13 @@ function zayav_info($zayav_id) {
 	$q = query($sql);
 	$public = '';
 	if(mysql_num_rows($q)) {
-		$gn = _gnCache();
 		$tr = '';
 		$lost = 0;
 		while($r = mysql_fetch_assoc($q)) {
 			$tr .=
 			'<tr'.($r['general_nomer'] < GN_FIRST_ACTIVE ? ' class="lost"' : '').'>'.
-				'<td class="nomer"><b>'.$gn[$r['general_nomer']]['week_nomer'].'</b><em>('.$r['general_nomer'].')</em>'.
-				'<td class="public">'.FullData($gn[$r['general_nomer']]['day_public'], 1, 1, 1).
+				'<td class="nomer"><b>'._gn($r['general_nomer'], 'week').'</b><em>('.$r['general_nomer'].')</em>'.
+				'<td class="public">'._gn($r['general_nomer'], 'pub').
 				'<td class="cena">'.round($r['cena'], 2).
 				(OB || REK ? '<td class="dop">'.(OB ? _obDop($r['dop']) : _polosa($r['dop'])) : '');
 			if($r['general_nomer'] < GN_FIRST_ACTIVE)
@@ -812,7 +864,11 @@ function zayav_info($zayav_id) {
 		}
 		$public =
 			'<table class="_spisok gn">'.
-				'<tr><th>Номер<th>Выход<th>Цена'.(OB || REK ? '<th>Дополнительно' : '').
+				'<tr><th>Номер'.
+					'<th>Выход'.
+					'<th>Цена'.
+			  (OB ? '<th>Дополнительно' : '').
+			 (REK ? '<th>Полоса' : '').
 				($lost ? '<tr id="lost-count"><td colspan="4">Показать прошедшие выходы ('.$lost.')' : '').
 				$tr.
 			'</table>';
@@ -875,11 +931,21 @@ function zayav_edit($zayav_id) {
 	define('OB', $z['category'] == 1);
 	define('REK', $z['category'] == 2);
 
+	$sql = "SELECT * FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav_id." AND `general_nomer`>=".GN_FIRST_ACTIVE." ORDER BY `general_nomer` ASC";
+	$q = query($sql);
+	$gns = array();
+	while($r = mysql_fetch_assoc($q))
+		$gns[] = $r['general_nomer'].':['.round($r['cena'], 6).','.$r['dop'].']';
+
 	return
 	'<script type="text/javascript">'.
 		'var ZAYAV={'.
 			'id:'.$zayav_id.','.
-			'category:'.$z['category'].
+			'category:'.$z['category'].','.
+			(!empty($gns) ? 'gns:{'.implode(',', $gns).'}'.',' : '').
+			'kv_sm:'.round($z['size_x'] * $z['size_y']).','.
+			'skidka:'.$z['skidka'].','.
+			'manual:'.$z['summa_manual'].
 		'};'.
 	'</script>'.
 	'<div id="zayav-edit">'.
@@ -907,10 +973,12 @@ function zayav_edit($zayav_id) {
 					'<input type="text" id="kv_sm" readonly value="'.round($z['size_x'] * $z['size_y']).'" /> см<sup>2</sup>'
 	: '').
 			'<tr><td class="label top">Номера выпуска:<td id="gn_spisok">'.
+	 (REK ? '<tr><td class="label">Скидка:<td><input type="hidden" id="skidka" value="'.$z['skidka'].'" />' : '').
 (OB || REK ? '<tr><td class="label">Указать стоимость вручную:<td>'._check('summa_manual', '', $z['summa_manual']) : '').
 			'<tr><td class="label">Итоговая стоимость:'.
-				'<td><input type="text" id="summa" '.($z['summa_manual'] || !OB && !REK ? '' : 'readonly').' value="'.round($z['summa'], 2).'" /> руб.'.
-					'<span id="skidka-txt"></span><input type="hidden" id="skidka_sum" value="0" />'.
+				'<td><input type="text" id="summa" '.($z['summa_manual'] || !OB && !REK ? '' : 'readonly').' value="0" /> руб.'.
+					'<span id="skidka-txt"></span>'.
+					'<input type="hidden" id="skidka_sum" />'.
 			'<tr><td><td><div class="vkButton"><button>Сохранить</button></div>'.
 						'<div class="vkCancel"><button>Отмена</button></div>'.
 	'</table>'.
@@ -1068,8 +1136,10 @@ function history_insert($arr) {
 }//history_insert()
 function history_types($v) {
 	switch($v['type']) {
-		case 11: return 'Создание новой заявки '.$v['zayav_link'].': <u>'.$v['zayav_type'].'</u>'.
+		case 11: return 'Создание новой заявки '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>'.
 						($v['client_id'] ? ' для клиента '.$v['client_link'] : '').'.';
+		case 31: return 'Редактирование заявки '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>'.
+						($v['value'] ? ':<div class="changes">'.$v['value'].'</div>' : '.');
 
 		case 45: return 'Внесение платёжа на сумму <b>'.$v['value'].'</b> руб. '.
 						($v['value1'] ? '<span class="prim">('.$v['value1'].')</span> ' : '').
@@ -1158,7 +1228,7 @@ function history_spisok($page=1, $filter=array()) {
 			$time = strtotime($r['dtime_add']);
 			$viewer_id = $r['viewer_id_add'];
 		}
-		$txt .= '<div class="htxt">'.history_types($r).'</div>';
+		$txt .= '<li><div class="li">'.history_types($r).'</div>';
 		$key = key($history);
 		if(!$key ||
 		   $key == $keyEnd ||
@@ -1167,7 +1237,7 @@ function history_spisok($page=1, $filter=array()) {
 			$send .=
 				'<div class="history_unit">'.
 					'<div class="head">'.FullDataTime($r['dtime_add']).$r['viewer_link'].'</div>'.
-					$txt.
+					'<ul>'.$txt.'</ul>'.
 				'</div>';
 			$txt = '';
 		}
@@ -1231,6 +1301,7 @@ function setup() {
 		foreach($pages as $p => $name)
 			$links .= '<a href="'.URL.'&p=gazeta&d=setup&d1='.$p.'"'.($d == $p ? ' class="sel"' : '').'>'.$name.'</a>';
 	return
+	'<script type="text/javascript" src="'.SITE.'/js/setup.js?'.VERSION.'"></script>'.
 	'<div id="setup">'.
 		'<table class="tabLR">'.
 			'<tr><td class="left">'.$left.

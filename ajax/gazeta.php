@@ -256,25 +256,9 @@ switch(@$_POST['op']) {
 			jsonError();
 		if(empty($_POST['gns']))
 			jsonError();
-		$gns = array();
-		$summa = 0;
-		$gn_count = 0;
-		foreach(explode(',', $_POST['gns']) as $r) {
-			$ex = explode(':', $r);
-			if(!preg_match(REGEXP_NUMERIC, $ex[0]))
-				jsonError();
-			if(!isset($ex[1]) || !preg_match('/^[0-9]{1,10}(.[0-9]{1,6})?(,[0-9]{1,6})?$/i', $ex[0]))
-				jsonError();
-			if(!isset($ex[2]) || !preg_match(REGEXP_NUMERIC, $ex[2]))
-				jsonError();
-			if($category == 2 && !$ex[2])
-				jsonError();
-			$cena = round(str_replace(',', '.', $ex[1]), 6);
-			$summa += $cena;
-			$gn_count++;
-			$gns[] = '({zayav_id},'.intval($ex[0]).','.intval($ex[2]).','.$cena.')';
-		}
-		$skidka_sum = $category == 2 && $skidka ? round($summa/(100 - $skidka) * 100 - $summa, 2) : 0;
+		if(!$gns = gns_control($_POST['gns'], $category))
+			jsonError();
+		$skidka_sum = $category == 2 && $skidka ? round($gns['summa']/(100 - $skidka) * 100 - $gns['summa'], 2) : 0;
 
 		$sql = "INSERT INTO `gazeta_zayav` (
 				    `client_id`,
@@ -310,11 +294,11 @@ switch(@$_POST['op']) {
 				    ".$size_y.",
 
 				    ".$summa_manual.",
-				    ".round($summa, 2).",
+				    ".$gns['summa'].",
 				    ".$skidka.",
 				    ".$skidka_sum.",
 
-				    ".$gn_count.",
+				    ".$gns['count'].",
 				    ".VIEWER_ID."
 				)";
 		query($sql);
@@ -325,7 +309,7 @@ switch(@$_POST['op']) {
 					`general_nomer`,
 					`dop`,
 					`cena`
-			   ) VALUES ".str_replace('{zayav_id}', $send['id'], implode(',', $gns)));
+			   ) VALUES ".str_replace('{zayav_id}', $send['id'], $gns['insert']));
 
 		history_insert(array(
 			'type' => 11,
@@ -337,6 +321,195 @@ switch(@$_POST['op']) {
 
 		jsonSuccess($send);
 		break;
+	case 'zayav_edit':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['zayav_id']) || !$_POST['zayav_id'])
+			jsonError();
+		$zayav_id = intval($_POST['zayav_id']);
+		$sql = "SELECT * FROM `gazeta_zayav` WHERE !`deleted` AND `id`=".$zayav_id;
+		if(!$z = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$client_id = $z['client_id'];
+		$rubric_id = 0;
+		$rubric_sub_id = 0;
+		$txt = '';
+		$telefon = '';
+		$adres = '';
+		$size_x = 0;
+		$size_y = 0;
+		$summa_manual = 0;
+		$skidka = 0;
+		$skidka_sum = 0;
+
+		if(!$client_id) {
+			if(!preg_match(REGEXP_NUMERIC, $_POST['client_id']))
+				jsonError();
+			$client_id = intval($_POST['client_id']);
+		}
+
+		if(!$gns = gns_control($_POST['gns'], $z['category'], $zayav_id))
+			jsonError();
+
+		if($z['category'] == 1) {
+			if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_id']))
+				jsonError();
+			if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_sub_id']))
+				jsonError();
+			$rubric_id = intval($_POST['rubric_id']);
+			$rubric_sub_id = intval($_POST['rubric_sub_id']);
+			$txt = win1251(htmlspecialchars(trim($_POST['txt'])));
+			$telefon = win1251(htmlspecialchars(trim($_POST['telefon'])));
+			$adres = win1251(htmlspecialchars(trim($_POST['adres'])));
+			if(!$telefon && !$adres)
+				jsonError();
+		}
+		if($z['category'] == 2) {
+			if(!preg_match(REGEXP_CENA, $_POST['size_x']) && $_POST['size_x'] == 0)
+				jsonError();
+			if(!preg_match(REGEXP_CENA, $_POST['size_y']) && $_POST['size_y'] == 0)
+				jsonError();
+			if(!preg_match(REGEXP_NUMERIC, $_POST['skidka']))
+				jsonError();
+			$size_x = round(str_replace(',', '.', $_POST['size_x']), 1);
+			$size_y = round(str_replace(',', '.', $_POST['size_y']), 1);
+			$skidka = intval($_POST['skidka']);
+			$skidka_sum = $skidka ? round($gns['summa']/(100 - $skidka) * 100 - $gns['summa'], 2) : 0;
+		}
+		if($z['category'] < 3) {
+			if(!preg_match(REGEXP_BOOL, $_POST['summa_manual']))
+				jsonError();
+			$summa_manual = intval($_POST['summa_manual']);
+		}
+
+		//Сохранение предыдущий номеров выпуска для истории
+		$gnPrev = array();
+		$sql = "SELECT *
+				FROM `gazeta_nomer_pub`
+				WHERE `zayav_id`=".$zayav_id."
+				  AND `general_nomer`>=".GN_FIRST_ACTIVE."
+				ORDER BY `general_nomer`";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q))
+			$gnPrev[$r['general_nomer']] = array(
+				'cena' => round($r['cena'], 2),
+				'dop' => $r['dop']
+			);
+
+		//Обновление номеров выпуска
+		query("DELETE FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav_id." AND `general_nomer`>=".GN_FIRST_ACTIVE);
+		if($gns['count'])
+			query("INSERT INTO `gazeta_nomer_pub` (
+					`zayav_id`,
+					`general_nomer`,
+					`dop`,
+					`cena`
+			       ) VALUES ".$gns['insert']);
+		$pub = query_assoc("
+				SELECT
+					COUNT(*) AS `count`,
+					IFNULL(SUM(`cena`),0) AS `summa`
+				FROM `gazeta_nomer_pub`
+				WHERE `zayav_id`=".$zayav_id);
+
+		$sql = "UPDATE `gazeta_zayav`
+		        SET `client_id`=".$client_id.",
+
+				    `rubric_id`=".$rubric_id.",
+				    `rubric_sub_id`=".$rubric_sub_id.",
+				    `txt`='".addslashes($txt)."',
+				    `telefon`='".addslashes($telefon)."',
+				    `adres`='".addslashes($adres)."',
+
+				    `size_x`=".$size_x.",
+				    `size_y`=".$size_y.",
+
+				    `summa_manual`=".$summa_manual.",
+				    `summa`=".$pub['summa'].",
+				    `skidka`=".$skidka.",
+				    `skidka_sum`=".$skidka_sum.",
+
+				    `gn_count`=".$pub['count']."
+				WHERE `id`=".$zayav_id;
+		query($sql);
+
+		$changes = '';
+		if($z['client_id'] != $client_id)
+			$changes .= '<tr><th>Клиент:<td><td>»<td>'._clientLink($client_id);
+		if($z['rubric_id'] != $rubric_id || $z['rubric_sub_id'] != $rubric_sub_id)
+			$changes .= '<tr><th>Рубрика:'.
+							'<td>'._rubric($z['rubric_id']).($z['rubric_sub_id'] ? ', '._rubricsub($z['rubric_sub_id']) : '').
+							'<td>»'.
+							'<td>'._rubric($rubric_id).($rubric_sub_id ? ', '._rubricsub($rubric_sub_id) : '');
+		if($z['txt'] != $txt)
+			$changes .= '<tr><th>Текст:<td>'.$z['txt'].'<td>»<td>'.$txt;
+		if($z['telefon'] != $telefon)
+			$changes .= '<tr><th>Телефон:<td>'.$z['telefon'].'<td>»<td>'.$telefon;
+		if($z['adres'] != $adres)
+			$changes .= '<tr><th>Адрес:<td>'.$z['adres'].'<td>»<td>'.$adres;
+		if($z['size_x'] != $size_x || $z['size_y'] != $size_y)
+			$changes .= '<tr><th>Размер блока:'.
+							'<td>'.round($size_x, 1).'x'.round($size_y, 1).'='.round($size_x * $size_y).
+							'<td>»'.
+							'<td>'.round($z['size_x'], 1).'x'.round($z['size_y'], 1).'='.round($z['size_x'] * $z['size_y']);
+		if($z['summa_manual'] != $summa_manual)
+			$changes .= '<tr><th>Сумма указана вручную:<td>'.($z['summa_manual'] ? 'да' : 'нет').'<td>»<td>'.($summa_manual ? 'да' : 'нет');
+		if($z['skidka'] != $skidka)
+			$changes .= '<tr><th>Скидка:<td>'.$z['skidka'].'%<td>»<td>'.$skidka.'%';
+		if(round($z['summa'], 2) != round($pub['summa'], 2))
+			$changes .= '<tr><th>Стоимость:<td>'.round($z['summa'], 2).'<td>»<td>'.round($pub['summa'], 2);
+		if($z['skidka_sum'] != $skidka_sum)
+			$changes .= '<tr><th>Сумма скидки:<td>'.round($z['skidka_sum'], 2).'<td>»<td>'.round($skidka_sum, 2);
+		//Проверка на удаление номеров выпуска или их изменение
+		$gnAdd = array();
+		$gnDel = array();
+		$gnCh = array();
+		foreach($gnPrev as $n => $r)
+			if(empty($gns['array'][$n]))
+				$gnDel[] =
+					'<b>'._gn($n, 'week').'</b>('.$n.') '.
+					_gn($n, 'pub').', '.
+					'цена: '.$r['cena'].
+					($z['category'] == 1 && $r['dop'] ? ', '._obDop($r['dop']) : '').
+					($z['category'] == 2 && $r['dop'] ? ', полоса: '._polosa($r['dop']) : '');
+			else {
+				$new = $gns['array'][$n];
+				if($new['cena'] != $r['cena'] || $new['dop'] != $r['dop'])
+					$gnCh[] =
+						'<b>'._gn($n, 'week').'</b>('.$n.') '.
+						_gn($n, 'pub').'<br />'.
+						'&nbsp;&nbsp;цена: '.$r['cena'].' » '.$new['cena'].
+						($z['category'] == 1 && $r['dop'] ? '<br />&nbsp;&nbsp;доп: '._obDop($r['dop']).' » '._obDop($new['dop']) : '').
+						($z['category'] == 2 && $r['dop'] ? '<br />&nbsp;&nbsp;полоса: '._polosa($r['dop']).' » '._polosa($new['dop']) : '');
+				unset($gns['array'][$n]);
+			}
+		//Проверка на добавление новых номеров выпуска
+		foreach($gns['array'] as $n => $r)
+			$gnAdd[] =
+				'<b>'._gn($n, 'week').'</b>('.$n.') '.
+				_gn($n, 'pub').', '.
+				'цена: '.$r['cena'].
+				($z['category'] == 1 && $r['dop'] ? ', '._obDop($r['dop']) : '').
+				($z['category'] == 2 && $r['dop'] ? ', полоса: '._polosa($r['dop']) : '');
+		$gnChanges = '';
+		if(!empty($gnAdd))
+			$gnChanges .= '<tr><th>Добавлены<br />номера выпуска:'.
+							'<td colspan="3">'.implode('<br />', $gnAdd);
+		if(!empty($gnDel))
+			$gnChanges .= '<tr><th>Удалены<br />номера выпуска:'.
+							'<td colspan="3">'.implode('<br />', $gnDel);
+		if(!empty($gnCh))
+			$gnChanges .= '<tr><th>Изменены<br />номера выпуска:'.
+							'<td colspan="3">'.implode('<br />', $gnCh);
+		if($changes || $gnChanges)
+			history_insert(array(
+				'type' => 31,
+				'client_id' => $client_id,
+				'zayav_id' => $zayav_id,
+				'value' => ($changes ? '<table>'.$changes.'</table>' : '').
+						   ($gnChanges ? '<table>'.$gnChanges.'</table>' : '')
+			));
+		jsonSuccess();
+		break;
 
 	case 'history_next':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['page']))
@@ -345,7 +518,6 @@ switch(@$_POST['op']) {
 		$send['html'] = utf8(history_spisok($page));
 		jsonSuccess($send);
 		break;
-
 
 	case 'setup_worker_add':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
