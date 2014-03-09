@@ -205,20 +205,11 @@ switch(@$_POST['op']) {
 
 
 	case 'zayav_spisok':
-		$filter = zayavFilter($_POST);
-		$data = zayav_data(1, $filter);
+		$data = zayav_data($_POST);
 		$send['result'] = utf8($data['result']);
 		$send['spisok'] = utf8($data['spisok']);
-		if(!$filter['nomer'])
-			$send['gn_sel'] = gnJson($filter['gnyear'], 1);
-		jsonSuccess($send);
-		break;
-	case 'zayav_next':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['page']))
-			jsonError();
-		$page = intval($_POST['page']);
-		$data = zayav_data($page, zayavFilter($_POST));
-		$send['html'] = utf8($data['spisok']);
+		if(!$data['filter']['nomer'] && $data['filter']['page'] > 1)
+			$send['gn_sel'] = gnJson($data['filter']['gnyear'], 1);
 		jsonSuccess($send);
 		break;
 	case 'zayav_add':
@@ -1177,6 +1168,126 @@ switch(@$_POST['op']) {
 			));
 
 		$send['html'] = utf8(setup_polosa_spisok());
+		jsonSuccess($send);
+		break;
+
+	case 'setup_invoice_add':
+		$name = win1251(htmlspecialchars(trim($_POST['name'])));
+		$about = win1251(htmlspecialchars(trim($_POST['about'])));
+		$types = trim($_POST['types']);
+		if(empty($name))
+			jsonError();
+
+		if(!empty($types)) {
+			foreach(explode(',', $types) as $id)
+				if(!preg_match(REGEXP_NUMERIC, $id))
+					jsonError();
+			$prihod = query_value("SELECT `name` FROM `setup_income` WHERE `id` IN (".$types.") AND `invoice_id`>0 LIMIT 1");
+			if($prihod)
+				jsonError('Вид платежа <u>'.$prihod.'</u> задействован в другом счёте');
+		}
+		$sql = "INSERT INTO `gazeta_invoice` (
+					`name`,
+					`about`
+				) VALUES (
+					'".addslashes($name)."',
+					'".addslashes($about)."'
+				)";
+		query($sql);
+
+		if(!empty($types))
+			query("UPDATE `setup_income` SET `invoice_id`=".mysql_insert_id()." WHERE `id` IN (".$types.")");
+
+		xcache_unset(CACHE_PREFIX.'invoice');
+		GvaluesCreate();
+
+		history_insert(array(
+			'type' => 1121,
+			'value' => $name
+		));
+
+
+		$send['html'] = utf8(setup_invoice_spisok());
+		jsonSuccess($send);
+		break;
+	case 'setup_invoice_edit':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		$invoice_id = intval($_POST['id']);
+		$name = win1251(htmlspecialchars(trim($_POST['name'])));
+		$about = win1251(htmlspecialchars(trim($_POST['about'])));
+		$types = trim($_POST['types']);
+		if(empty($name))
+			jsonError();
+
+		if(!empty($types)) {
+			foreach(explode(',', $types) as $id)
+				if(!preg_match(REGEXP_NUMERIC, $id))
+					jsonError();
+			$prihod = query_value("SELECT `name`
+								   FROM `setup_income`
+								   WHERE `id` IN (".$types.")
+								     AND `invoice_id`>0
+								     AND `invoice_id`!=".$invoice_id."
+								   LIMIT 1");
+			if($prihod)
+				jsonError('Вид платежа <u>'.$prihod.'</u> задействован в другом счёте');
+		}
+
+		$sql = "SELECT * FROM `gazeta_invoice` WHERE `id`=".$invoice_id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$sql = "UPDATE `gazeta_invoice`
+				SET `name`='".addslashes($name)."',
+					`about`='".addslashes($about)."'
+				WHERE `id`=".$invoice_id;
+		query($sql);
+
+		query("UPDATE `setup_income` SET `invoice_id`=0 WHERE `invoice_id`=".$invoice_id);
+		if(!empty($types))
+			query("UPDATE `setup_income` SET `invoice_id`=".$invoice_id." WHERE `id` IN (".$types.")");
+
+
+		xcache_unset(CACHE_PREFIX.'invoice');
+		GvaluesCreate();
+
+		$changes = '';
+		if($r['name'] != $name)
+			$changes .= '<tr><th>Наименование:<td>'.$r['name'].'<td>»<td>'.$name;
+		if($r['about'] != $about)
+			$changes .= '<tr><th>Описание:<td>'.str_replace("\n", '<br />', $r['about']).'<td>»<td>'.str_replace("\n", '<br />', $about);
+		if($changes)
+			history_insert(array(
+				'type' => 1122,
+				'value' => $name,
+				'value1' => '<table>'.$changes.'</table>'
+			));
+
+		$send['html'] = utf8(setup_invoice_spisok());
+		jsonSuccess($send);
+		break;
+	case 'setup_invoice_del':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		$invoice_id = intval($_POST['id']);
+
+		$sql = "SELECT * FROM `gazeta_invoice` WHERE `id`=".$invoice_id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		query("DELETE FROM `gazeta_invoice` WHERE `id`=".$invoice_id);
+		query("UPDATE `setup_income` SET `invoice_id`=0 WHERE `invoice_id`=".$invoice_id);
+
+		xcache_unset(CACHE_PREFIX.'invoice');
+		GvaluesCreate();
+
+		history_insert(array(
+			'type' => 1123,
+			'value' => $r['name']
+		));
+
+		$send['html'] = utf8(setup_invoice_spisok());
 		jsonSuccess($send);
 		break;
 

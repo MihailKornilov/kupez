@@ -101,18 +101,24 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 
 	zayavFilter = function() {
 		var v = {
-			find:zFind.inp(),
-			cat:$('#cat').val(),
-			gnyear:$('#gnyear').val(),
-			nomer:$('#nomer').val(),
-			nopublic:$('#nopublic').val()
+			op:'zayav_spisok',
+			find:$('#fz-find').val(),
+			client_id:$('#fz-client_id').val(),
+			cat:$('#fz-cat').val(),
+			gnyear:$('#fz-gnyear').val(),
+			nomer:$('#fz-nomer').val(),
+			nopublic:$('#fz-nopublic').val()
 		};
-		$('.filter')[v.find ? 'hide' : 'show']();
 		return v;
 	},
-	zayavSpisokLoad = function(year) {
+	zayavSpisok = function(v, id) {
 		var send = zayavFilter();
-		send.op = 'zayav_spisok';
+		send[id] = v;
+		if(id == 'gnyear') {
+			$('#nomer')._select(0);
+			send.nomer = 0;
+		}
+		$('.filter')[send.find ? 'hide' : 'show']();
 		if($('#mainLinks').hasClass('busy'))
 			return;
 		$('#mainLinks').addClass('busy');
@@ -121,12 +127,12 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 			if(res.success) {
 				$('.result').html(res.result);
 				$('.left').html(res.spisok);
-				if(year == 'change')
+				if(v == 'change')
 					$('#nomer')._select({
 						width:147,
 						title0:'Номер не указан',
 						spisok:res.gn_sel,
-						func:zayavSpisokLoad
+						func:zayavSpisok
 					});
 			}
 		}, 'json');
@@ -635,16 +641,15 @@ $(document)
 	})
 
 	.on('click', '.zayav_next', function() {
-		if($(this).hasClass('busy'))
-			return;
 		var next = $(this),
 			send = zayavFilter();
-		send.op = 'zayav_next',
 		send.page = next.attr('val');
+		if(next.hasClass('busy'))
+			return;
 		next.addClass('busy');
 		$.post(AJAX_GAZ, send, function(res) {
 			if(res.success)
-				next.after(res.html).remove();
+				next.after(res.spisok).remove();
 			else
 				next.removeClass('busy');
 		}, 'json');
@@ -825,10 +830,19 @@ $(document)
 					}, 'json');
 				}
 			});
+			$('#dopLinks .link').click(function() {
+				$('#dopLinks .link').removeClass('sel');
+				$(this).addClass('sel');
+				var val = $(this).attr('val');
+				$('#zayav_spisok').css('display', val == 'zayav' ? 'block' : 'none');
+				$('#income_spisok').css('display', val == 'inc' ? 'block' : 'none');
+				$('#notes').css('display', val == 'note' ? 'block' : 'none');
+				$('#histories').css('display', val == 'hist' ? 'block' : 'none');
+			});
 		}
 
 		if($('#zayav').length) {
-			window.zFind = $('#find')
+			$('#find')
 				.vkHint({
 					width:145,
 					msg:'<div style="text-align:justify">' +
@@ -848,9 +862,9 @@ $(document)
 					focus:1,
 					enter:1,
 					txt:'Быстрый поиск..',
-					func:zayavSpisokLoad
+					func:zayavSpisok
 				});
-			$('#cat').rightLink(zayavSpisokLoad);
+			$('#cat').rightLink(zayavSpisok);
 			$('.img_word')
 				.click(function () {
 					var gn = $('#nomer').val();
@@ -881,9 +895,9 @@ $(document)
 					top:-30,
 					left:-193
 				});
-			$('#nopublic')._check(function() {
+			$('#nopublic')._check(function(v, id) {
 				$('.filter_nomer').toggle();
-				zayavSpisokLoad();
+				zayavSpisok(v, id);
 			});
 			$('#nopublic_check').vkHint({
 				width:145,
@@ -892,16 +906,11 @@ $(document)
 				top:-64,
 				left:-61
 			});
-			$('#gnyear').years({
-				func:function() {
-					$('#nomer').val(0);
-					zayavSpisokLoad('change');
-				}
-			});
+			$('#gnyear').years({func:zayavSpisok});
 			$('#nomer')._select({
 				title0:'Номер не указан',
 				spisok:GN_SEL,
-				func:zayavSpisokLoad
+				func:zayavSpisok
 			});
 		}
 		if($('#zayav-add').length) {

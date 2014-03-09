@@ -361,7 +361,7 @@ function client_data($page=1, $filter=array()) {
 		$send['spisok'] .=
 		'<div class="unit">'.
 			(!empty($r['balans']) ? '<div class="balans">Баланс: <b'.($r['balans'] < 0 ? ' class="minus"' : '').'>'.$r['balans'].'</b></div>' : '').
-			'<table>'.
+			'<table class="cltab">'.
 				'<tr><td class="label">'.$r['name_label'].':<td><a href="'.URL.'&p=gazeta&d=client&d1=info&id='.$id.'">'.$r['name'].'</a>'.
 				(!empty($r['telefon']) ? '<tr><td class="label">Телефон:<td>'.$r['telefon'] : '').
 				(!empty($r['adres']) ? '<tr><td class="label">Адрес:<td>'.$r['adres'] : '').
@@ -453,7 +453,7 @@ function clientInfoGet($client) {
 	if(empty($name))
 		$name = $client['org_name'];
 	return
-	'<div class="name">'.$name.'</div>'.
+	'<div class="cname">'.$name.'</div>'.
 	'<table class="cinf">'.
 		($client['person'] != 1 ? '<tr><td class="label">Контактное лицо:<td>'.$client['fio'] : '').
 		($client['telefon'] ? '<tr><td class="label">Телефоны:<td>'.$client['telefon'] : '').
@@ -480,6 +480,8 @@ function client_info($client_id) {
 								AND `parent_id`=0
 								AND `table_name`='client'
 								AND `table_id`=".$client_id);
+
+	$zayav = zayav_data(array('client_id'=>$client_id));
 
 	$money['all'] = 0;
 //	$money = money_spisok(1, array('client_id'=>$client_id,'limit'=>15));
@@ -516,18 +518,18 @@ function client_info($client_id) {
 			'</table>'.
 
 			'<div id="dopLinks">'.
-				'<a class="link sel" val="zayav">Заявки</a>'.
-				'<a class="link" val="money">Платежи'.($money['all'] ? ' ('.$money['all'].')' : '').'</a>'.
-				'<a class="link" val="comm">Заметки'.($commCount ? ' ('.$commCount.')' : '').'</a>'.
+				'<a class="link sel" val="zayav">Заявки'.($zayav['all'] ? ' ('.$zayav['all'].')' : '').'</a>'.
+				'<a class="link" val="inc">Платежи'.($money['all'] ? ' ('.$money['all'].')' : '').'</a>'.
+				'<a class="link" val="note">Заметки'.($commCount ? ' ('.$commCount.')' : '').'</a>'.
 				'<a class="link" val="hist">История'.($histCount ? ' ('.$histCount.')' : '').'</a>'.
 			'</div>'.
 
 			'<table class="tabLR">'.
 				'<tr><td class="left">'.
-						//'<div id="zayav_spisok">'.($zayavSpisok ? $zayavSpisok : '<div class="_empty">Заявок нет</div>').'</div>'.
-						//'<div id="money_spisok">'.$money['spisok'].'</div>'.
-						'<div id="comments">'._vkComment('client', $client_id).'</div>'.
-						//'<div id="histories">'.history_spisok(1, array('client_id'=>$client_id)).'</div>'.
+						'<div id="zayav_spisok">'.$zayav['spisok'].'</div>'.
+						'<div id="income_spisok">платежи</div>'.
+						'<div id="notes">'._vkComment('client', $client_id).'</div>'.
+						'<div id="histories">'.history_spisok(1, array('client_id'=>$client_id)).'</div>'.
 					'<td class="right">'.
 			'</table>'.
 		'</div>';
@@ -667,31 +669,26 @@ function zayav_add() {
 }//zayav_add()
 
 function zayavFilter($v=array()) {
-	if(empty($v['find']))
-		$v['find'] = '';
-	if(empty($v['cat']) || !preg_match(REGEXP_NUMERIC, $v['cat']))
-		$v['cat'] = 0;
-	if(empty($v['nopublic']) || !preg_match(REGEXP_BOOL, $v['nopublic']))
-		$v['nopublic'] = 0;
-	if(empty($v['gnyear']) || !preg_match(REGEXP_YEAR, $v['gnyear']))
-		$v['gnyear'] = strftime('%Y', time());
-	if(!isset($v['nomer']) || !preg_match(REGEXP_NUMERIC, $v['nomer']))
-		$v['nomer'] = GN_FIRST_ACTIVE;
-	$filter = array(
-		'find' => win1251(htmlspecialchars(trim($v['find']))),
-		'cat' => intval($v['cat']),
-		'gnyear' => intval($v['gnyear']),
-		'nomer' => intval($v['nomer']),
-		'nopublic' => intval($v['nopublic'])
+	return array(
+		'page' => !empty($v['page']) && preg_match(REGEXP_NUMERIC, $v['page']) ? $v['page'] : 1,
+		'limit' => !empty($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) ? $v['limit'] : 20,
+		'client_id' => !empty($v['client_id']) && preg_match(REGEXP_NUMERIC, $v['client_id']) ? intval($v['client_id']) : 0,
+		'find' => !empty($v['find']) ? win1251(htmlspecialchars(trim($v['find']))) : '',
+		'cat' => !empty($v['cat']) && preg_match(REGEXP_NUMERIC, $v['cat']) ? intval($v['cat']) : 0,
+		'gnyear' => !empty($v['gnyear']) && preg_match(REGEXP_YEAR, $v['gnyear']) ? intval($v['gnyear']) : strftime('%Y'),
+		'nomer' => isset($v['nomer']) && preg_match(REGEXP_NUMERIC, $v['nomer']) ? intval($v['nomer']) : GN_FIRST_ACTIVE,
+		'nopublic' => !empty($v['nopublic']) && preg_match(REGEXP_BOOL, $v['nopublic']) ? intval($v['nopublic']) : 0
 	);
-	return $filter;
 }//zayavFilter()
-function zayav_data($page=1, $filter=array(), $limit=20) {
-	if(empty($filter))
-		$filter = zayavFilter();
-	$cond = "`deleted`=0";
+function zayav_data($v=array()) {
+	$filter = zayavFilter($v);
 
-	if(!empty($filter['find'])) {
+	$limit = $filter['limit'];
+	$page = $filter['page'];
+
+	$cond = "!`deleted`";
+
+	if($filter['find']) {
 		$find = preg_replace( '/\s+/', '', $filter['find']);
 		$cond .= " AND (
 			REPLACE(`txt`,' ','') LIKE '%".$find."%' OR
@@ -702,12 +699,14 @@ function zayav_data($page=1, $filter=array(), $limit=20) {
             `adres` LIKE '%".$filter['find']."%')";
 		$reg = '/('.$filter['find'].')/i';
 		$regNoSpace = '/('.$find.')/i';
-		if($page ==1 && preg_match(REGEXP_NUMERIC, $filter['find']))
+		if($page == 1 && preg_match(REGEXP_NUMERIC, $filter['find']))
 			$find_id = intval($filter['find']);
 	} else {
-		if(!empty($filter['cat']))
+		if($filter['cat'])
 			$cond .= " AND `category`=".$filter['cat'];
-		if($filter['nopublic'])
+		if($filter['client_id'])
+			$cond .= " AND `client_id`=".$filter['client_id'];
+		elseif($filter['nopublic'])
 			$cond .= " AND `gn_count`=0";
 		else {
 			if($filter['nomer'])
@@ -726,7 +725,6 @@ function zayav_data($page=1, $filter=array(), $limit=20) {
 		$sql = "SELECT * FROM `gazeta_zayav` WHERE `deleted`=0 AND `id`=".$find_id." LIMIT 1";
 		if($r = mysql_fetch_assoc(query($sql))) {
 			$all++;
-			$limit--;
 			$r['find_id'] = 1;
 			$zayav[$r['id']] = $r;
 		}
@@ -736,11 +734,13 @@ function zayav_data($page=1, $filter=array(), $limit=20) {
 		return array(
 			'all' => 0,
 			'result' => 'Заявок не найдено.',
-			'spisok' => '<div class="_empty">Заявок не найдено.</div>'
+			'spisok' => '<div class="_empty">Заявок не найдено.</div>',
+			'filter' => $filter
 		);
 
 	$send['all'] = $all;
 	$send['result'] = 'Показан'._end($all, '', 'о').' '.$all.' заяв'._end($all, 'ка', 'ки', 'ок');
+	$send['filter'] = $filter;
 
 	$start = ($page - 1) * $limit;
 	$sql = "SELECT *
@@ -750,7 +750,7 @@ function zayav_data($page=1, $filter=array(), $limit=20) {
 			LIMIT ".$start.",".$limit;
 	$q = query($sql);
 	while($r = mysql_fetch_assoc($q)) {
-		if(!empty($filter['find'])) {
+		if($filter['find']) {
 			if(preg_match($reg, $r['txt']))
 				$r['txt'] = preg_replace($reg, '<em>\\1</em>', $r['txt'], 1);
 
@@ -769,14 +769,22 @@ function zayav_data($page=1, $filter=array(), $limit=20) {
 
 	$zayav = _clientLink($zayav);
 
-	$send['spisok'] = '';
+	$send['spisok'] =
+		$page == 1
+		? '<input type="hidden" id="fz-client_id" value="'.$filter['client_id'].'" />'.
+		  '<input type="hidden" id="fz-find" value="'.addslashes($filter['find']).'" />'.
+		  '<input type="hidden" id="fz-cat" value="'.$filter['cat'].'" />'.
+		  '<input type="hidden" id="fz-gnyear" value="'.$filter['gnyear'].'" />'.
+		  '<input type="hidden" id="fz-nomer" value="'.$filter['nomer'].'" />'.
+		  '<input type="hidden" id="fz-nopublic" value="'.$filter['nopublic'].'" />'
+		: '';
 	foreach($zayav as $id => $r) {
 		$send['spisok'] .=
 			'<div class="zayav_unit">'.
 				'<div class="dtime">'.FullDataTime($r['dtime_add']).'</div>'.
 				'<a href="'.URL.'&p=gazeta&d=zayav&d1=info&id='.$id.'" class="name">'._category($r['category']).' №'.(isset($r['find_id']) ? '<em>'.$id.'</em>' : $id).'</a>'.
 				'<table class="values">'.
-					($r['client_id'] ? '<tr><td class="label">Клиент:<td>'.$r['client_link'] : '').
+					($r['client_id'] && !$filter['client_id'] ? '<tr><td class="label">Клиент:<td>'.$r['client_link'] : '').
 					($r['category'] == 1 ?
 						'<tr><td class="label">Рубрика:<td>'._rubric($r['rubric_id']).
 							($r['rubric_sub_id'] ? '<span class="ug">»</span>'._rubricsub($r['rubric_sub_id']) : '').
@@ -1188,6 +1196,10 @@ function history_types($v) {
 		case 1112: return 'В настройках изменён вид платежа <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
 		case 1113: return 'В настройках удалён вид платежа <u>'.$v['value'].'</u>.';
 
+		case 1121: return 'В настройках: внесение нового счёта <u>'.$v['value'].'</u>.';
+		case 1122: return 'В настройках: изменение данных счёта <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
+		case 1123: return 'В настройках: удаление счёта <u>'.$v['value'].'</u>.';
+
 		default: return $v['type'];
 	}
 }//history_types()
@@ -1261,6 +1273,7 @@ function setup() {
 		'oblen' => 'Стоимость длины объявления',
 		'obdop' => 'Доп. параметры объявления',
 		'polosa' => 'Стоимость см&sup2; рекламы',
+		'invoice' => 'Счета',
 		'money' => 'Виды платежей',
 		'skidka' => 'Скидки',
 		'rashod' => 'Категории расходов'
@@ -1292,6 +1305,7 @@ function setup() {
 		case 'oblen': $left = setup_oblen(); break;
 		case 'obdop': $left = setup_obdop(); break;
 		case 'polosa': $left = setup_polosa(); break;
+		case 'invoice': $left = setup_invoice(); break;
 		case 'money': $left = setup_money(); break;
 		case 'skidka': $left = setup_skidka(); break;
 		case 'rashod': $left = setup_rashod(); break;
@@ -1626,6 +1640,53 @@ function setup_polosa_spisok() {
 	$send .= '</dl>';
 	return $send;
 }//setup_polosa_spisok()
+
+function setup_invoice() {
+	return
+		'<div id="setup_invoice">'.
+			'<div class="headName">Управление счетами<a class="add">Новый счёт</a></div>'.
+			'<div class="spisok">'.setup_invoice_spisok().'</div>'.
+		'</div>';
+}//setup_invoice()
+function setup_invoice_spisok() {
+	$sql = "SELECT * FROM `gazeta_invoice` ORDER BY `id`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return 'Список пуст.';
+
+	$spisok = array();
+	while($r = mysql_fetch_assoc($q))
+		$spisok[$r['id']] = $r;
+
+	$sql = "SELECT *
+	        FROM `setup_income`
+	        WHERE `invoice_id`>0
+	        ORDER BY `sort`";
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q)) {
+		$spisok[$r['invoice_id']]['type_name'][] = $r['name'];
+		$spisok[$r['invoice_id']]['type_id'][] = $r['id'];
+	}
+
+	$send =
+		'<table class="_spisok">'.
+			'<tr><th class="name">Наименование'.
+				'<th class="type">Виды платежей'.
+				'<th class="set">';
+	foreach($spisok as $id => $r)
+		$send .=
+		'<tr val="'.$id.'">'.
+			'<td class="name">'.
+				'<div>'.$r['name'].'</div>'.
+				'<pre>'.$r['about'].'</pre>'.
+			'<td class="type">'.
+				(isset($r['type_name']) ? implode('<br />', $r['type_name']) : '').
+				'<input type="hidden" class="type_id" value="'.(isset($r['type_id']) ? implode(',', $r['type_id']) : 0).'" />'.
+			'<td class="set">'.
+				'<div class="img_edit"></div>';
+	$send .= '</table>';
+	return $send;
+}//setup_invoice_spisok()
 
 function setup_money() {
 	return

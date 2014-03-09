@@ -925,6 +925,151 @@ $(document)
 		}
 	})
 
+	.on('click', '#setup_invoice .add', function() {
+		var t = $(this),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" />' +
+				'<tr><td class="label topi">Описание:<td><textarea id="about"></textarea>' +
+				'<tr><td class="label topi">Виды платежей:<td><input type="hidden" id="types" />' +
+				'</table>',
+			dialog = _dialog({
+				width:400,
+				head:'Добавление нового счёта',
+				content:html,
+				submit:submit
+			});
+		$('#name').focus().keyEnter(submit);
+		$('#types')._select({
+			width:218,
+			multiselect:1,
+			spisok:INCOME_SPISOK
+		});
+		function submit() {
+			var send = {
+				op:'setup_invoice_add',
+				name:$('#name').val(),
+				about:$('#about').val(),
+				types:$('#types').val()
+			};
+			if(!send.name) {
+				err('Не указано наименование');
+				$('#name').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('.spisok').html(res.html);
+						dialog.close();
+						_msg('Внесено!');
+					} else {
+						dialog.abort();
+						err(res.text);
+					}
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class=red>' + msg + '</SPAN>',
+				top:-47,
+				left:100,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
+	})
+	.on('click', '#setup_invoice .img_edit', function() {
+		var t = $(this);
+		while(t[0].tagName != 'TR')
+			t = t.parent();
+		var id = t.attr('val'),
+			name = t.find('.name div').html(),
+			about = t.find('.name pre').html(),
+			types = t.find('.type_id').val(),
+			html = '<table class="setup-tab">' +
+				'<tr><td class="label r">Наименование:<td><input id="name" type="text" maxlength="100" value="' + name + '" />' +
+				'<tr><td class="label r top">Описание:<td><textarea id="about">' + about + '</textarea>' +
+				'<tr><td class="label topi">Виды платежей:<td><input type="hidden" id="types" value="' + types + '" />' +
+				'</table>',
+			dialog = _dialog({
+				width:400,
+				head:'Редактирование данных счёта',
+				content:html,
+				butSubmit:'Сохранить',
+				submit:submit
+			});
+		$('#name').focus().keyEnter(submit);
+		$('#types')._select({
+			width:218,
+			multiselect:1,
+			spisok:INCOME_SPISOK
+		});
+		function submit() {
+			var send = {
+				op:'setup_invoice_edit',
+				id:id,
+				name:$('#name').val(),
+				about:$('#about').val(),
+				types:$('#types').val()
+			};
+			if(!send.name) {
+				err('Не указано наименование');
+				$('#name').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						$('.spisok').html(res.html);
+						dialog.close();
+						_msg('Сохранено!');
+					} else {
+						dialog.abort();
+						err(res.text);
+					}
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class=red>' + msg + '</SPAN>',
+				top:-47,
+				left:100,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
+	})
+	.on('click', '#setup_invoice .img_del', function() {
+		var t = $(this),
+			dialog = _dialog({
+				top:90,
+				width:300,
+				head:'Удаление счёта',
+				content:'<center><b>Подтвердите удаление счёта.</b></center>',
+				butSubmit:'Удалить',
+				submit:submit
+			});
+		function submit() {
+			while(t[0].tagName != 'TR')
+				t = t.parent();
+			var send = {
+				op:'setup_invoice_del',
+				id:t.attr('val')
+			};
+			dialog.process();
+			$.post(AJAX_GAZ, send, function(res) {
+				if(res.success) {
+					$('.spisok').html(res.html);
+					dialog.close();
+					_msg('Удалено!');
+				} else
+					dialog.abort();
+			}, 'json');
+		}
+	})
+
 	.on('click', '#setup_money .add', function() {
 		var t = $(this),
 			html = '<table class="setup-tab">' +
