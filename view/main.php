@@ -63,6 +63,7 @@ function _cacheClear() {
 	xcache_unset(CACHE_PREFIX.'obdop');
 	xcache_unset(CACHE_PREFIX.'polosa');
 	xcache_unset(CACHE_PREFIX.'invoice');
+	xcache_unset(CACHE_PREFIX.'income');
 	GvaluesCreate();
 }//_cacheClear()
 

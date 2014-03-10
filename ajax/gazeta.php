@@ -502,6 +502,62 @@ switch(@$_POST['op']) {
 		jsonSuccess();
 		break;
 
+	case 'income_spisok':
+		$data = income_spisok($_POST);
+		$send['path'] = utf8(income_path($_POST['day']));
+		$send['html'] = utf8($data['spisok']);
+		jsonSuccess($send);
+		break;
+	case 'income_add':
+		if(!empty($_POST['client_id']) && !preg_match(REGEXP_NUMERIC, $_POST['client_id']))
+			jsonError();
+		if(!empty($_POST['zayav_id']) && !preg_match(REGEXP_NUMERIC, $_POST['zayav_id']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['income_id']) || !$_POST['income_id'])
+			jsonError();
+		if(!preg_match(REGEXP_CENA, $_POST['sum']) || $_POST['sum'] == 0)
+			jsonError();
+
+		$send['html'] = utf8(income_insert($_POST));
+		if(empty($send))
+			jsonError();
+		jsonSuccess($send);
+		break;
+	case 'income_del':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		$id = intval($_POST['id']);
+
+		$sql = "SELECT *
+				FROM `gazeta_money`
+				WHERE !`deleted`
+				  AND `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$sql = "UPDATE `gazeta_money`
+		        SET	`deleted`=1,
+					`viewer_id_del`=".VIEWER_ID.",
+					`dtime_del`=CURRENT_TIMESTAMP
+				WHERE `id`=".$id;
+		query($sql);
+
+		clientBalansUpdate($r['client_id']);
+		//_zayavBalansUpdate($r['zayav_id']);
+
+		history_insert(array(
+			'type' => 47,
+			'zayav_id' => $r['zayav_id'],
+			'client_id' => $r['client_id'],
+			'value' => round($r['sum'], 2),
+			'value1' => $r['prim'],
+			'value2' => $r['income_id']
+		));
+
+		jsonSuccess();
+		break;
+
+
 	case 'history_next':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['page']))
 			jsonError();

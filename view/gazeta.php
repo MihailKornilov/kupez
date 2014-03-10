@@ -189,25 +189,25 @@ function _income($type_id=false, $i='name') {//Список изделий для заявок
 			$q = query($sql);
 			while($r = mysql_fetch_assoc($q))
 				$arr[$r['id']] = array(
-					'name' => $r['name']
-//					'invoice_id' => $r['invoice_id']
+					'name' => $r['name'],
+					'invoice_id' => $r['invoice_id']
 				);
 			xcache_set($key, $arr, 86400);
 		}
 		if(!defined('INCOME_LOADED')) {
 			foreach($arr as $id => $r) {
 				define('INCOME_'.$id, $r['name']);
-//				define('INCOME_INVOICE_'.$id, $r['invoice_id']);
+				define('INCOME_INVOICE_'.$id, $r['invoice_id']);
 			}
 			define('INCOME_0', '');
-//			define('INCOME_INVOICE_0', 0);
+			define('INCOME_INVOICE_0', 0);
 			define('INCOME_LOADED', true);
 		}
 	}
 	if($type_id === false)
 		return $arr;
-//	if($i == 'invoice')
-//		return constant('INCOME_INVOICE_'.$type_id);
+	if($i == 'invoice')
+		return constant('INCOME_INVOICE_'.$type_id);
 	return constant('INCOME_'.$type_id);
 }//_income()
 
@@ -483,8 +483,8 @@ function client_info($client_id) {
 
 	$zayav = zayav_data(array('client_id'=>$client_id));
 
-	$money['all'] = 0;
-//	$money = money_spisok(1, array('client_id'=>$client_id,'limit'=>15));
+	//Платежи
+	$income = income_spisok(array('client_id'=>$client_id));
 
 	$histCount = 0;
 //	$histCount = query_value("SELECT COUNT(`id`) FROM `history` WHERE `client_id`=".$client_id);
@@ -519,7 +519,7 @@ function client_info($client_id) {
 
 			'<div id="dopLinks">'.
 				'<a class="link sel" val="zayav">Заявки'.($zayav['all'] ? ' ('.$zayav['all'].')' : '').'</a>'.
-				'<a class="link" val="inc">Платежи'.($money['all'] ? ' ('.$money['all'].')' : '').'</a>'.
+				'<a class="link" val="inc">Платежи'.($income['all'] ? ' ('.$income['all'].')' : '').'</a>'.
 				'<a class="link" val="note">Заметки'.($commCount ? ' ('.$commCount.')' : '').'</a>'.
 				'<a class="link" val="hist">История'.($histCount ? ' ('.$histCount.')' : '').'</a>'.
 			'</div>'.
@@ -527,7 +527,7 @@ function client_info($client_id) {
 			'<table class="tabLR">'.
 				'<tr><td class="left">'.
 						'<div id="zayav_spisok">'.$zayav['spisok'].'</div>'.
-						'<div id="income_spisok">платежи</div>'.
+						'<div id="income_spisok">'.$income['spisok'].'</div>'.
 						'<div id="notes">'._vkComment('client', $client_id).'</div>'.
 						'<div id="histories">'.history_spisok(1, array('client_id'=>$client_id)).'</div>'.
 					'<td class="right">'.
@@ -883,14 +883,23 @@ function zayav_info($zayav_id) {
 	}
 
 	//Платежи
-	$income = income_spisok(1, array('zayav_id'=>$zayav_id));
+	$income = income_spisok(array('zayav_id'=>$zayav_id));
 
 	return
+	'<script type="text/javascript">'.
+		'var OPL={'.
+			'from:"zayav",'.
+			'client_id:'.$z['client_id'].','.
+			'client_fio:"'.addslashes(_clientLink($z['client_id'], 1)).'",'.
+			'zayav_id:'.$zayav_id.','.
+			'zayav_name:"'._category($z['category']).' №'.$zayav_id.'"'.
+		'};'.
+	'</script>'.
 	'<div id="zayav-info">'.
 		'<div id="dopLinks">'.
 			'<a class="link zinfo sel">Просмотр</a>'.
 			'<a class="link" href="'.URL.'&p=gazeta&d=zayav&d1=edit&id='.$zayav_id.'">Редактирование</a>'.
-			'<a class="link">Внести платёж</a>'.
+			'<a class="link income-add">Внести платёж</a>'.
 			'<a class="link hist">История</a>'.
 		'</div>'.
 		'<div class="headName">'._category($z['category']).' №'.$zayav_id.'</div>'.
@@ -920,8 +929,8 @@ function zayav_info($zayav_id) {
 				($public ? '<tr><td class="label top">Номера выпуска:<td>'.$public : '').
 			'</table>'.
 			'<div class="added">Заявку '.viewerAdded($z['viewer_id_add']).' '.FullDataTime($z['dtime_add']).'</div>'.
-			'<div class="headBlue">Платежи</div>'.
-			'<div class="zmoney">'.($income['all'] ? $income['spisok'] : '').'</div>'.
+			'<div class="headBlue">Платежи<a class="add income-add">Внести платёж</a></div>'.
+			'<div id="income_spisok">'.($income['all'] ? $income['spisok'] : '').'</div>'.
 			_vkComment('zayav', $zayav_id).
 		'</div>'.
 		'<div class="histories">'.history_spisok(1, array('zayav_id'=>$zayav_id)).'</div>'.
@@ -993,97 +1002,6 @@ function zayav_edit($zayav_id) {
 	'</div>';
 }//zayav_edit()
 
-function incomeFilter($v) {
-	$send = array(
-		'limit' => 30,
-		'client_id' => 0,
-		'zayav_id' => 0
-	);
-	if(isset($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) && $v['limit'] > 0)
-		$send['limit'] = $v['limit'];
-	if(isset($v['client_id']) && preg_match(REGEXP_NUMERIC, $v['client_id']))
-		$send['client_id'] = $v['client_id'];
-	if(isset($v['zayav_id']) && preg_match(REGEXP_NUMERIC, $v['zayav_id']))
-		$send['zayav_id'] = $v['zayav_id'];
-	return $send;
-}//incomeFilter()
-function income_spisok($page=1, $filter=array()) {
-	$cond = '`deleted`=0 AND `sum`>0';
-
-	$filter = incomeFilter($filter);
-	if($filter['client_id'])
-		$cond .= " AND `client_id`=".$filter['client_id'];
-	if($filter['zayav_id'])
-		$cond .= " AND `zayav_id`=".$filter['zayav_id'];
-
-	$sql = "SELECT
-	            COUNT(`id`) AS `all`,
-				SUM(`sum`) AS `sum`
-			FROM `gazeta_money`
-			WHERE ".$cond."
-			LIMIT 1";
-	$send = mysql_fetch_assoc(query($sql));
-	if(!$send['all'])
-		return array(
-			'all' => 0,
-			'spisok' => '<div class="_empty">Платежей нет.</div>'
-		);
-
-	$start = ($page - 1) * $filter['limit'];
-	$sql = "SELECT *
-			FROM `gazeta_money`
-			WHERE ".$cond."
-			ORDER BY `id` ASC
-			LIMIT ".$start.",".$filter['limit'];
-	$q = query($sql);
-	$money = array();
-	while($r = mysql_fetch_assoc($q))
-		$money[$r['id']] = $r;
-
-	$send['spisok'] = '';
-	if($page == 1)
-		$send['spisok'] =
-			'<input type="hidden" id="money_limit" value="'.$filter['limit'].'" />'.
-			'<input type="hidden" id="money_client_id" value="'.$filter['client_id'].'" />'.
-			'<input type="hidden" id="money_zayav_id" value="'.$filter['zayav_id'].'" />'.
-			(!$filter['zayav_id'] ?
-				'<div class="_moneysum">'.
-				'Показан'._end($send['all'], '', 'о').
-				' <b>'.$send['all'].'</b> платеж'._end($send['all'], '', 'а', 'ей').
-				' на сумму <b>'._sumSpace($send['sum']).'</b> руб.'.
-				'</div>' : '').
-			'<table class="_spisok _money">'.
-			(!$filter['zayav_id'] ?
-				'<tr><th class="sum">Сумма'.
-				'<th>Описание'.
-				'<th class="data">Дата'.
-				'<th>'
-				: '');
-	foreach($money as $r)
-		$send['spisok'] .= income_unit($r, $filter);
-	if($start + $filter['limit'] < $send['all']) {
-		$c = $send['all'] - $start - $filter['limit'];
-		$c = $c > $filter['limit'] ? $filter['limit'] : $c;
-		$send['spisok'] .=
-			'<tr class="_next" val="'.($page + 1).'" id="money_next"><td colspan="4">'.
-			'<span>Показать ещё '.$c.' платеж'._end($c, '', 'а', 'ей').'</span>';
-	}
-	$send['spisok'] .= '</table>';
-	return $send;
-}//income_spisok()
-function income_unit($r, $filter=array()) {
-	$about = '';
-//	if($r['zayav_id'] && !$filter['zayav_id'])
-//		$about .= 'Заявка '.$r['zayav_link'].'. ';
-	$about .= $r['prim'];
-	$sumTitle = !$filter['zayav_id'] ? ' title="Платёж"' : '';
-	return
-		'<tr val="'.$r['id'].'">'.
-			'<td class="sum opl"'.$sumTitle.'><b>'._sumSpace($r['sum']).'</b>'.
-			'<td><span class="type">'._income($r['income_id']).(empty($about) ? '' : ':').'</span> '.$about.
-			'<td class="dtime" title="Вн'.(_viewer($r['viewer_id_add'], 'sex') == 1 ? 'есла' : 'ёс').' '._viewer($r['viewer_id_add'], 'name').'">'.FullDataTime($r['dtime_add']).
-			'<td class="ed"><div class="img_del oplata-del"></div>';
-}//income_unit()
 
 
 // ---===! report !===--- Секция отчётов
@@ -1096,30 +1014,78 @@ function report() {
 		'money' => 'Деньги'
 	);
 
-	$d = empty($_GET['d1']) ? $def : $_GET['d1'];
+	$d1 = '';
+	if(!empty($_GET['d1']))
+		foreach($pages as $p => $name)
+			if(isset($pages[$_GET['d1']])) {
+				$d1 = $_GET['d1'];
+				break;
+			}
+	if(!$d1)
+		$d1 = $def;
 
 	$links = '';
 	foreach($pages as $p => $name)
-		$links .= '<a href="'.URL.'&p=gazeta&d=report&d1='.$p.'"'.($d == $p ? ' class="sel"' : '').'>'.$name.'</a>';
+		$links .= '<a href="'.URL.'&p=gazeta&d=report&d1='.$p.'"'.($d1 == $p ? ' class="sel"' : '').'>'.$name.'</a>';
 
+	$d2 = '';
+	$right = '';
 	switch(@$_GET['d1']) {
 		default:
-		case 'history':
-			$left = history_spisok();
-			break;
+		case 'history': $left = history_spisok(); break;
 		case 'zayav':
 			$data = '';
 			$left = '';
 			break;
 		case 'money':
-			$data = '';
-			$left = '<div class="headName">Список платежей</div>';
+			$d2 = empty($_GET['d2']) ? 'income' : $_GET['d2'];
+			switch($d2) {
+				default: $d2 = 'income';
+				case 'income':
+					switch(@$_GET['d3']) {
+						case 'all': $left = income_all(); break;
+						case 'year':
+							if(empty($_GET['year']) || !preg_match(REGEXP_YEAR, $_GET['year'])) {
+								$left = 'Указан некорректный год.';
+								break;
+							}
+							$left = income_year(intval($_GET['year']));
+							break;
+						case 'month':
+							if(empty($_GET['mon']) || !preg_match(REGEXP_YEARMONTH, $_GET['mon'])) {
+								$left = 'Указан некорректный месяц.';
+								break;
+							}
+							$left = income_month($_GET['mon']);
+							break;
+						default:
+							if(!_calendarDataCheck(@$_GET['day']))
+								$_GET['day'] = strftime('%Y-%m-%d');
+							$left = income_day($_GET['day']);
+							$right = income_right($_GET['day']);
+					}
+					break;
+				case 'expense':
+					$left = 'expense';//expense();
+					//$right = expense_right();
+					break;
+				case 'invoice': $left = 'invoice';//invoice(); break;
+			}
+			$left =
+				'<div id="dopLinks">'.
+					'<a class="link'.($d2 == 'income' ? ' sel' : '').'" href="'.URL.'&p=gazeta&d=report&d1=money&d2=income">Платежи</a>'.
+					'<a class="link'.($d2 == 'expense' ? ' sel' : '').'" href="'.URL.'&p=gazeta&d=report&d1=money&d2=expense">Расходы</a>'.
+					'<a class="link'.($d2 == 'invoice' ? ' sel' : '').'" href="'.URL.'&p=gazeta&d=report&d1=money&d2=invoice">Счета</a>'.
+				'</div>'.
+				$left;
 			break;
 	}
 	return
-	'<table class="tabLR" id="report">'.
+	'<table class="tabLR '.($d2 ? $d2 : $d1).'" id="report">'.
 		'<tr><td class="left">'.$left.
-		'<td class="right"><div class="rightLink">'.$links.'</div>'.
+			'<td class="right">'.
+				'<div class="rightLink">'.$links.'</div>'.
+				$right.
 	'</table>';
 }//report()
 function history_insert($arr) {
@@ -1149,13 +1115,24 @@ function history_types($v) {
 		case 31: return 'Редактирование заявки '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>'.
 						($v['value'] ? ':<div class="changes">'.$v['value'].'</div>' : '.');
 
-		case 45: return 'Внесение платёжа на сумму <b>'.$v['value'].'</b> руб. '.
-						($v['value1'] ? '<span class="prim">('.$v['value1'].')</span> ' : '').
-						($v['zayav_id'] ? 'по заявке '.$v['zayav_link'].'.' : '');
+		case 45: return
+			'Платёж <span class="oplata">'._income($v['value2']).'</span> '.
+			'на сумму <b>'.$v['value'].'</b> руб.'.
+			($v['value1'] ? ' <em>('.$v['value1'].')</em>' : '').
+			($v['zayav_id'] ? ' по заявке '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>' : '').
+			'.';
+		case 47: return
+			'Удаление платежа <span class="oplata">'._income($v['value2']).'</span> '.
+			'на сумму <b>'.$v['value'].'</b> руб.'.
+			($v['value1'] ? ' <em>('.$v['value1'].')</em>' : '').
+			($v['zayav_id'] ? ' у заявки '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>' : '').
+			'.';
 
 		case 51: return 'Внесение нового клиента '.$v['client_link'].'.';
 		case 52: return 'Изменение данных клиента '.$v['client_link'].':<div class="changes">'.$v['value'].'</div>';
 		case 53: return 'Удаление клиента '.$v['client_link'].'.';
+
+		case 81: return 'Внесение расхода.';
 
 		case 1011: return 'В настройках добавлена новая категория клиентов <u>'.$v['value'].'</u>.';
 	    case 1012: return 'В настройках изменены данные категории клиентов <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
@@ -1260,6 +1237,375 @@ function history_spisok($page=1, $filter=array()) {
 	return $send;
 }//history_spisok()
 
+function income_path($data) {
+	$ex = explode(':', $data);
+	$d = explode('-', $ex[0]);
+	define('YEAR', $d[0]);
+	define('MON', @$d[1]);
+	define('DAY', @$d[2]);
+	$to = '';
+	if(!empty($ex[1])) {
+		$d = explode('-', $ex[1]);
+		$to = ' - '.intval($d[2]).
+			($d[1] != MON ? ' '._monthDef($d[1]) : '').
+			($d[0] != YEAR ? ' '.$d[0] : '');
+	}
+	return
+		'<a href="'.URL.'&p=gazeta&d=report&d1=money&d2=income&d3=all">Год</a> » '.(YEAR ? '' : '<b>За всё время</b>').
+		(MON ? '<a href="'.URL.'&p=gazeta&d=report&d1=money&d2=income&d3=year&year='.YEAR.'">'.YEAR.'</a> » ' : '<b>'.YEAR.'</b>').
+		(DAY ? '<a href="'.URL.'&p=gazeta&d=report&d1=money&d2=income&d3=month&mon='.YEAR.'-'.MON.'">'._monthDef(MON, 1).'</a> » ' : (MON ? '<b>'._monthDef(MON, 1).'</b>' : '')).
+		(DAY ? '<b>'.intval(DAY).$to.'</b>' : '');
+
+}//income_path()
+function income_all() {
+	$sql = "SELECT DATE_FORMAT(`dtime_add`,'%Y') AS `year`,
+				   SUM(`sum`) AS `sum`
+			FROM `gazeta_money`
+			WHERE !`deleted`
+			  AND `sum`>0
+			GROUP BY DATE_FORMAT(`dtime_add`,'%Y')
+			ORDER BY `dtime_add` ASC";
+	$q = query($sql);
+	$spisok = array();
+	while($r = mysql_fetch_assoc($q))
+		$spisok[$r['year']] = '<tr>'.
+			'<td><a href="'.URL.'&p=gazeta&d=report&d1=money&d2=income&d3=year&year='.$r['year'].'">'.$r['year'].'</a>'.
+			'<td class="r"><b>'._sumSpace($r['sum']).'</b>';
+
+	$th = '';
+	foreach(_income() as $income_id => $i) {
+		$th .= '<th>'.$i['name'];
+		foreach($spisok as $y => $r)
+			$spisok[$y] .= '<td class="r">';
+		$sql = "SELECT DATE_FORMAT(`dtime_add`,'%Y') AS `year`,
+					   SUM(`sum`) AS `sum`
+				FROM `gazeta_money`
+				WHERE !`deleted`
+				  AND `sum`>0
+				  AND `income_id`=".$income_id."
+				GROUP BY DATE_FORMAT(`dtime_add`,'%Y')
+				ORDER BY `dtime_add` ASC";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q))
+			$spisok[$r['year']] .= _sumSpace($r['sum']);
+	}
+
+	return
+		'<div class="headName">Суммы платежей по годам</div>'.
+		'<table class="_spisok sums">'.
+			'<tr><th>Год'.
+				'<th>Всего'.
+				$th.
+				implode('', $spisok).
+		'</table>';
+}//income_all()
+function income_year($year) {
+	$spisok = array();
+	for($n = 1; $n <= (strftime('%Y', time()) == $year ? intval(strftime('%m', time())) : 12); $n++)
+		$spisok[$n] =
+			'<tr><td class="r grey">'._monthDef($n, 1).
+			'<td class="r">';
+	$sql = "SELECT DATE_FORMAT(`dtime_add`,'%m') AS `mon`,
+				   SUM(`sum`) AS `sum`
+			FROM `gazeta_money`
+			WHERE !`deleted`
+			  AND `sum`>0
+			  AND `dtime_add` LIKE '".$year."%'
+			GROUP BY DATE_FORMAT(`dtime_add`,'%m')
+			ORDER BY `dtime_add` ASC";
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q))
+		$spisok[intval($r['mon'])] =
+			'<tr><td class="r"><a href="'.URL.'&p=gazeta&d=report&d1=money&d2=income&d3=month&mon='.$year.'-'.$r['mon'].'">'._monthDef($r['mon'], 1).'</a>'.
+				'<td class="r"><b>'._sumSpace($r['sum']).'</b>';
+
+	$th = '';
+	foreach(_income() as $income_id => $i) {
+		$th .= '<th>'.$i['name'];
+		foreach($spisok as $y => $r)
+			$spisok[$y] .= '<td class="r">';
+		$sql = "SELECT DATE_FORMAT(`dtime_add`,'%m') AS `mon`,
+					   SUM(`sum`) AS `sum`
+				FROM `gazeta_money`
+				WHERE !`deleted`
+				  AND `sum`>0
+				  AND `dtime_add` LIKE '".$year."%'
+				  AND `income_id`=".$income_id."
+				GROUP BY DATE_FORMAT(`dtime_add`,'%m')
+				ORDER BY `dtime_add` ASC";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q))
+			$spisok[intval($r['mon'])] .= _sumSpace($r['sum']);
+	}
+	return
+		'<div class="headName">Суммы платежей по месяцам за '.$year.' год</div>'.
+		'<div class="inc-path">'.income_path($year).'</div>'.
+		'<table class="_spisok sums">'.
+			'<tr><th>Месяц'.
+			'<th>Всего'.
+			$th.
+			implode('', $spisok).
+		'</table>';
+}//income_year()
+function income_month($mon) {
+	$path = income_path($mon);
+	$spisok = array();
+	for($n = 1; $n <= (strftime('%Y%m', time()) == YEAR.MON ? intval(strftime('%d', time())) : date('t', strtotime($mon.'-01'))); $n++)
+		$spisok[$n] =
+			'<tr><td class="r grey">'.$n.'.'.MON.'.'.YEAR.
+			'<td class="r">';
+	$sql = "SELECT DATE_FORMAT(`dtime_add`,'%d') AS `day`,
+				   SUM(`sum`) AS `sum`
+			FROM `gazeta_money`
+			WHERE !`deleted`
+			  AND `sum`>0
+			  AND `dtime_add` LIKE '".$mon."%'
+			GROUP BY DATE_FORMAT(`dtime_add`,'%d')
+			ORDER BY `dtime_add` ASC";
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q))
+		$spisok[intval($r['day'])] =
+			'<tr><td class="r"><a href="'.URL.'&p=gazeta&d=report&d1=money&d2=income&day='.$mon.'-'.$r['day'].'">'.intval($r['day']).'.'.MON.'.'.YEAR.'</a>'.
+				'<td class="r"><b>'._sumSpace($r['sum']).'</b>';
+
+	$th = '';
+	foreach(_income() as $income_id => $i) {
+		$th .= '<th>'.$i['name'];
+		foreach($spisok as $y => $r)
+			$spisok[$y] .= '<td class="r">';
+		$sql = "SELECT DATE_FORMAT(`dtime_add`,'%d') AS `day`,
+					   SUM(`sum`) AS `sum`
+				FROM `gazeta_money`
+				WHERE !`deleted`
+				  AND `sum`>0
+				  AND `dtime_add` LIKE '".$mon."%'
+				  AND `income_id`=".$income_id."
+				GROUP BY DATE_FORMAT(`dtime_add`,'%d')
+				ORDER BY `dtime_add` ASC";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q))
+			$spisok[intval($r['day'])] .= _sumSpace($r['sum']);
+	}
+	return
+		'<div class="headName">Суммы платежей по дням за '._monthDef(MON, 1).' '.YEAR.'</div>'.
+		'<div class="inc-path">'.$path.'</div>'.
+		'<table class="_spisok sums">'.
+			'<tr><th>Месяц'.
+				'<th>Всего'.
+				$th.
+				implode('', $spisok).
+		'</table>';
+}//income_month()
+function income_day($day) {
+	$data = income_spisok(array('day' => $day));
+	return
+		'<script type="text/javascript">var OPL={from:"income"};</script>'.
+		'<div class="headName">Список платежей<a class="add income-add">Внести платёж</a></div>'.
+		'<div class="inc-path">'.income_path($day).'</div>'.
+		'<div id="spisok">'.$data['spisok'].'</div>';
+
+}//income_day()
+function income_days($month=0) {
+	$sql = "SELECT DATE_FORMAT(`dtime_add`,'%Y-%m-%d') AS `day`
+			FROM `gazeta_money`
+			WHERE !`deleted`
+			  AND `sum`>0
+			  AND `dtime_add` LIKE ('".($month ? $month : strftime('%Y-%m'))."%')
+			GROUP BY DATE_FORMAT(`dtime_add`,'%d')";
+	$q = query($sql);
+	$days = array();
+	while($r = mysql_fetch_assoc($q))
+		$days[$r['day']] = 1;
+	return $days;
+}//income_days()
+function income_right($sel) {
+	$workers = query_selJson("
+		SELECT
+			DISTINCT `m`.`viewer_id_add`,
+			CONCAT(`u`.`first_name`,' ',`u`.`last_name`)
+        FROM `gazeta_money` `m`,`vk_user` `u`
+        WHERE `m`.`viewer_id_add`=`u`.`viewer_id`
+          AND !`m`.`deleted`
+          AND `m`.`sum`>0");
+	return
+		_calendarFilter(array(
+			'days' => income_days(),
+			'func' => 'income_days',
+			'sel' => $sel
+		)).
+		'<div class="findHead">Виды платежей</div>'.
+		'<input type="hidden" id="income_id">'.
+		'<script type="text/javascript">var WORKERS='.$workers.';</script>'.
+		'<div class="findHead">Вносил сотрудник</div>'.
+		'<input type="hidden" id="worker_id" value="0">';
+}//income_right()
+
+function income_insert($v) {//Внесение платежа
+	$v = array(
+		'from' => empty($v['from']) ? '' : $v['from'],
+		'client_id' => !empty($v['client_id']) ? intval($v['client_id']) : 0,
+		'zayav_id' => !empty($v['zayav_id']) ? intval($v['zayav_id']) : 0,
+		'income_id' => intval($v['income_id']),
+		'sum' => str_replace(',', '.', $_POST['sum']),
+		'prim' => empty($v['prim']) ? '' : win1251(htmlspecialchars(trim($v['prim'])))
+	);
+
+	if($v['zayav_id']) {
+		$sql = "SELECT * FROM `gazeta_zayav` WHERE !`deleted` AND `id`=".$v['zayav_id'];
+		if(!$z = mysql_fetch_assoc(query($sql)))
+			return false;
+		if($v['client_id'] && $v['client_id'] != $z['client_id'])
+			return false;
+		$v['client_id'] = $z['client_id'];
+	}
+
+	$sql = "INSERT INTO `gazeta_money` (
+				`zayav_id`,
+				`client_id`,
+				`invoice_id`,
+				`income_id`,
+				`sum`,
+				`prim`,
+				`viewer_id_add`
+			) VALUES (
+				".$v['zayav_id'].",
+				".$v['client_id'].",
+				"._income($v['income_id'], 'invoice').",
+				".$v['income_id'].",
+				".$v['sum'].",
+				'".addslashes($v['prim'])."',
+				".VIEWER_ID."
+			)";
+	query($sql);
+	$insert_id = mysql_insert_id();
+
+	clientBalansUpdate($v['client_id']);
+//	_zayavBalansUpdate($v['zayav_id']);
+
+	history_insert(array(
+		'type' => 45,
+		'zayav_id' => $v['zayav_id'],
+		'client_id' => $v['client_id'],
+		'value' => $v['sum'],
+		'value1' => $v['prim'],
+		'value2' => $v['income_id']
+	));
+
+	switch($v['from']) {
+		case 'client':
+			$data = income_spisok(array('client_id'=>$v['client_id'],'limit'=>15));
+			return $data['spisok'];
+		case 'zayav':
+			$data = income_spisok(array('zayav_id'=>$v['zayav_id']));
+			return $data['spisok'];
+		default: return $insert_id;
+	}
+}//income_insert()
+function incomeFilter($v) {
+	$send = array(
+		'page' => !empty($v['page']) && preg_match(REGEXP_NUMERIC, $v['page']) ? $v['page'] : 1,
+		'limit' => !empty($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) ? $v['limit'] : 30,
+		'income_id' => !empty($v['income_id']) && preg_match(REGEXP_NUMERIC, $v['income_id']) ? $v['income_id'] : 0,
+		'worker_id' => !empty($v['worker_id']) && preg_match(REGEXP_NUMERIC, $v['worker_id']) ? $v['worker_id'] : 0,
+		'client_id' => !empty($v['client_id']) && preg_match(REGEXP_NUMERIC, $v['client_id']) ? intval($v['client_id']) : 0,
+		'zayav_id' => !empty($v['zayav_id']) && preg_match(REGEXP_NUMERIC, $v['zayav_id']) ? intval($v['zayav_id']) : 0,
+		'day' => '',
+		'from' => '',
+		'to' => ''
+	);
+	return _calendarPeriod(@$v['day']) + $send;
+}//incomeFilter()
+function income_spisok($v=array()) {
+	$filter = incomeFilter($v);
+
+	$page = $filter['page'];
+
+	$cond = '`deleted`=0 AND `sum`>0';
+
+	if($filter['worker_id'])
+		$cond .= " AND `viewer_id_add`=".$filter['worker_id'];
+	if($filter['income_id'])
+		$cond .= " AND `income_id`=".$filter['income_id'];
+	if($filter['client_id'])
+		$cond .= " AND `client_id`=".$filter['client_id'];
+	if($filter['zayav_id'])
+		$cond .= " AND `zayav_id`=".$filter['zayav_id'];
+	if($filter['day'])
+		$cond .= " AND `dtime_add` LIKE '".$filter['day']."%'";
+	if($filter['from'])
+		$cond .= " AND `dtime_add`>='".$filter['from']." 00:00:00' AND `dtime_add`<='".$filter['to']." 23:59:59'";
+
+	$sql = "SELECT
+	            COUNT(*) AS `all`,
+				SUM(`sum`) AS `sum`
+			FROM `gazeta_money`
+			WHERE ".$cond."
+			LIMIT 1";
+	$send = mysql_fetch_assoc(query($sql));
+	if(!$send['all'])
+		return array(
+			'all' => 0,
+			'spisok' => '<div class="_empty">Платежей нет.</div>'
+		);
+
+	$start = ($page - 1) * $filter['limit'];
+	$sql = "SELECT *
+			FROM `gazeta_money`
+			WHERE ".$cond."
+			ORDER BY `id` ASC
+			LIMIT ".$start.",".$filter['limit'];
+	$q = query($sql);
+	$money = array();
+	while($r = mysql_fetch_assoc($q))
+		$money[$r['id']] = $r;
+
+	$money = _zayavLink($money);
+
+	$send['spisok'] = '';
+	if($page == 1)
+		$send['spisok'] =
+			'<input type="hidden" id="money_limit" value="'.$filter['limit'].'" />'.
+			'<input type="hidden" id="money_client_id" value="'.$filter['client_id'].'" />'.
+			'<input type="hidden" id="money_zayav_id" value="'.$filter['zayav_id'].'" />'.
+			(!$filter['zayav_id'] ?
+				'<div class="_moneysum">'.
+					'Показан'._end($send['all'], '', 'о').
+					' <b>'.$send['all'].'</b> платеж'._end($send['all'], '', 'а', 'ей').
+					' на сумму <b>'._sumSpace($send['sum']).'</b> руб.'.
+				'</div>' : '').
+			'<table class="_spisok _money">'.
+			(!$filter['zayav_id'] ?
+				'<tr><th class="sum">Сумма'.
+					'<th>Описание'.
+					'<th class="data">Дата'.
+					'<th>'
+			: '');
+	foreach($money as $r)
+		$send['spisok'] .= income_unit($r, $filter);
+	if($start + $filter['limit'] < $send['all']) {
+		$c = $send['all'] - $start - $filter['limit'];
+		$c = $c > $filter['limit'] ? $filter['limit'] : $c;
+		$send['spisok'] .=
+			'<tr class="_next" val="'.($page + 1).'" id="money_next"><td colspan="4">'.
+				'<span>Показать ещё '.$c.' платеж'._end($c, '', 'а', 'ей').'</span>';
+	}
+	$send['spisok'] .= '</table>';
+	return $send;
+}//income_spisok()
+function income_unit($r, $filter=array()) {
+	$about = '';
+	if($r['zayav_id'] && !$filter['zayav_id'])
+		$about .= $r['zayav_type'].' '.$r['zayav_link'].'. ';
+	$about .= $r['prim'];
+	return
+		'<tr val="'.$r['id'].'">'.
+			'<td class="sum"><b>'._sumSpace($r['sum']).'</b>'.
+			'<td><span class="type">'._income($r['income_id']).(empty($about) ? '' : ':').'</span> '.$about.
+			'<td class="dtime'._tooltip(viewerAdded($r['viewer_id_add']), -20).FullDataTime($r['dtime_add']).
+			'<td class="ed"><div class="img_del income-del'._tooltip('Удалить платёж', -95, 'r').'</div>';
+}//income_unit()
+
+
 
 // ---===! setup !===--- Секция настроек
 
@@ -1282,16 +1628,16 @@ function setup() {
 	if(!GAZETA_ADMIN)
 		unset($pages['worker']);
 
-	$d = empty($_GET['d1']) ? $pageDef : $_GET['d1'];
-	if(empty($_GET['d1']) && !empty($pages) && empty($pages[$d])) {
+	$d1 = empty($_GET['d1']) ? $pageDef : $_GET['d1'];
+	if(empty($_GET['d1']) && !empty($pages) && empty($pages[$d1])) {
 		foreach($pages as $p => $name) {
-			$d = $p;
+			$d1 = $p;
 			break;
 		}
 	}
 
-	switch($d) {
-		default: $d = $pageDef;
+	switch($d1) {
+		default: $d1 = $pageDef;
 		case 'worker':  $left = setup_worker(); break;
 		case 'gn': $left = setup_gn(); break;
 		case 'person': $left = setup_person(); break;
@@ -1313,7 +1659,7 @@ function setup() {
 	$links = '';
 	if($pages)
 		foreach($pages as $p => $name)
-			$links .= '<a href="'.URL.'&p=gazeta&d=setup&d1='.$p.'"'.($d == $p ? ' class="sel"' : '').'>'.$name.'</a>';
+			$links .= '<a href="'.URL.'&p=gazeta&d=setup&d1='.$p.'"'.($d1 == $p ? ' class="sel"' : '').'>'.$name.'</a>';
 	return
 	'<script type="text/javascript" src="'.SITE.'/js/setup.js?'.VERSION.'"></script>'.
 	'<div id="setup">'.

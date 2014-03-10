@@ -14,7 +14,6 @@ else {
 	switch($_GET['p']) {
 		default:
 		case 'gazeta':
-			require_once(DOCUMENT_ROOT.'/view/gazeta.php');
 			if(empty($_GET['d']))
 				$_GET['d'] = 'client';
 			_mainLinks();

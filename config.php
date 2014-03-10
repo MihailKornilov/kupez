@@ -22,6 +22,7 @@ require_once(DOCUMENT_ROOT.'/syncro.php');
 require_once(VKPATH.'/vk.php');
 _appAuth();
 require_once(DOCUMENT_ROOT.'/view/main.php');
+require_once(DOCUMENT_ROOT.'/view/gazeta.php');
 
 _dbConnect();
 _getSetupGlobal();
@@ -50,6 +51,7 @@ function _getSetupGlobal() {//Получение глобальных данных
 function _getVkUser() {//Получение данных о пользователе
 	$u = _viewer();
 	define('VIEWER_NAME', $u['name']);
+	define('VIEWER_ADMIN', $u['gazeta_admin']);
 	define('GAZETA_ADMIN', $u['gazeta_admin']);
 	define('GAZETA_WORKER', $u['gazeta_worker']);
 }//end of _getVkUser()

@@ -220,6 +220,23 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 		if($('#summa_manual').val() == '0')
 			$('#summa').val(window.gnGet.summa());
 		$('#skidka-txt').html(window.gnGet.skidka());
+	},
+
+	incomeSpisok = function() {
+		var send = {
+			op:'income_spisok',
+			day:$('.selected').val(),
+			income_id:$('#income_id').val(),
+			worker_id:$('#worker_id').val()
+		};
+		$('.inc-path').addClass('_busy');
+		$.post(AJAX_GAZ, send, function(res) {
+			$('.inc-path').removeClass('_busy');
+			if(res.success) {
+				$('.inc-path').html(res.path);
+				$('#spisok').html(res.html);
+			}
+		}, 'json');
 	};
 
 $.fn.clientSel = function(o) {
@@ -653,6 +670,108 @@ $(document)
 			else
 				next.removeClass('busy');
 		}, 'json');
+	})
+
+	.on('click', '.income-add', function() {
+		var html =
+			'<table class="income-add-tab">' +
+				(OPL.client_fio ? '<tr><td class="label">Клиент:<td>' + OPL.client_fio : '') +
+				(OPL.zayav_name ? '<tr><td class="label">Заявка:<td><b>' + OPL.zayav_name + '</b>' : '') +
+				'<tr><td class="label">Вид платежа:<td><input type="hidden" id="income_id_add">' +
+					'<a href="' + URL + '&p=gazeta&d=setup&d1=money" class="img_edit' + _tooltip('Настройка видов платежей', -85) + '</a>' +
+				'<tr><td class="label">Сумма:<td><input type="text" id="sum" class="money" maxlength="11"> руб.' +
+				'<tr><td class="label">Комментарий:<td><input type="text" id="prim" maxlength="100">' +
+			'</table>',
+			dialog = _dialog({
+				width:400,
+				head:'Внесение платежа',
+				content:html,
+				submit:submit
+			});
+		$('#sum').focus();
+		$('#sum,#prim').keyEnter(submit);
+		$('#income_id_add')._select({
+			width:180,
+			title0:'Не указан',
+			spisok:INCOME_SPISOK,
+			func:function(uid) {
+				$('#sum').focus();
+			}
+		});
+		function submit() {
+			var send = {
+				op:'income_add',
+				from:OPL.from,
+				income_id:$('#income_id_add').val(),
+				sum:$('#sum').val(),
+				zayav_id:OPL.zayav_id || 0,
+				client_id:OPL.client_id || 0,
+				prim:$.trim($('#prim').val())
+			};
+			if(send.income_id == 0) err('Не указан вид платежа');
+			else if(!REGEXP_CENA.test(send.sum) || send.sum == 0) {
+				err('Некорректно указана сумма.');
+				$('#sum').focus();
+			} else if(!send.zayav_id && !send.prim) {
+				err('Необходимо указать комментарий');
+				$('#prim').focus();
+			} else {
+				dialog.process();
+				$.post(AJAX_GAZ, send, function(res) {
+					if(res.success) {
+						dialog.close();
+						_msg('Платёж успешно внесён!');
+						switch(OPL.from) {
+							case 'client':
+								$('#income_spisok').html(res.html);
+								$('.left:first').html(res.balans);
+								break;
+							case 'zayav': $('#income_spisok').html(res.html); break;
+							case 'income': incomeSpisok(); break;
+							default: break;
+						}
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<SPAN class="red">' + msg + '</SPAN>',
+				remove:1,
+				indent:40,
+				show:1,
+				top:-48,
+				left:115
+			});
+		}
+	})
+	.on('click', '.income-del', function() {
+		var t = $(this),
+			dialog = _dialog({
+				width:300,
+				head:'Удаление платежа',
+				content:'<center><b>Подтвердите удаление платежа.</b></center>',
+				butSubmit:'Удалить',
+				submit:submit
+			});
+		while(t[0].tagName != 'TR')
+			t = t.parent();
+		function submit() {
+			var send = {
+				op:'income_del',
+				id:t.attr('val')
+			};
+			dialog.process();
+			$.post(AJAX_GAZ, send, function(res) {
+				if(res.success) {
+					t.remove();
+					dialog.close();
+					_msg('Платёж удалён');
+				} else
+					dialog.abort();
+			}, 'json');
+		}
 	})
 
 	.on('click', '#history_next', function() {
@@ -1168,103 +1287,20 @@ $(document)
 				location.href = URL + '&p=gazeta&d=zayav&d1=info&id=' + ZAYAV.id;
 			});
 		}
+
+		if($('#report.income').length) {
+			window._calendarFilter = incomeSpisok;
+			$('#income_id')._select({
+				width:160,
+				title0:'Любые платежи',
+				spisok:INCOME_SPISOK,
+				func:incomeSpisok
+			});
+			$('#worker_id')._select({
+				width:160,
+				title0:'Все сотрудники',
+				spisok:WORKERS,
+				func:incomeSpisok
+			});
+		}
 	});
-
-/*
-// Внесение платежа
-function moneyAdd(obj) {
-    $("#dialog_prihod").remove();
-    $("BODY").append("<div id=dialog_prihod></div>");
-
-    var obj = $.extend({
-        zayav_id:0,
-        client_id:0,
-        func:function () { location.reload(); }
-    }, obj);
-
-    var html = "<table cellpadding=0 cellspacing=10 id=prihod_add_tab>" +
-        "<TR><TD class=tdAbout>Вид:<TD><INPUT type=hidden id=prihod_type><a class=img_edit href='" + G.url + "&p=gazeta&d=setup&id=11'></a>" +
-        "<TR><TD class=tdAbout>Сумма:<TD><INPUT type=text id=prihod_sum maxlength=8> руб." +
-        "<TR><TD class=tdAbout>Комментарий:<TD><INPUT type=text id=prihod_txt maxlength=250>" +
-        "<TR id=tr_kassa><TD class=tdAbout>Деньги поступили<br>в кассу?:<TD><INPUT type=hidden id=prihod_kassa value='-1'>" +
-        "</table>";
-    var dialog = $("#dialog_prihod").vkDialog({
-        top:50,
-        width:420,
-        head:"Внесение платежа",
-        content:html,
-        submit:submit,
-        focus:"#prihod_sum"
-    }).o;
-
-    $("#prihod_type")._select({
-        width:190,
-        title0:'Не указан',
-        spisok:G.money_type_spisok,
-        func:function (id) {
-            $("#tr_kassa")[id == 1 ? 'show' : 'hide']();
-            $("#prihod_kassa").val(-1);
-            $("#prihod_kassa").vkRadio({
-                display:'inline-block',
-                right:15,
-                spisok:[{uid:1, title:'да'},{uid:0, title:'нет'}],
-            });
-        }
-    });
-
-    function submit() {
-        var send = {
-            zayav_id:obj.zayav_id,
-            client_id:obj.client_id,
-            type:$("#prihod_type").val(),
-            txt:$("#prihod_txt").val(),
-            sum:$("#prihod_sum").val(),
-            kassa:$("#prihod_kassa").val()
-        };
-
-        var msg;
-        if (send.type == 0) { msg = "Не указан вид платежа."; }
-        else if (!G.reg_sum.test(send.sum)) { msg = "Некорректно указана сумма."; $("#prihod_sum").focus(); }
-        else if (!send.txt && send.zayav_id == 0 && send.client_id == 0) { msg = "Укажите комментарий."; $("#prihod_txt").focus(); }
-        else if (send.kassa == -1 && send.type == 1) { msg = "Укажите, деньги поступили в кассу или нет."; }
-        else {
-            if (send.kassa == -1) send.kassa = 0;
-            dialog.process();
-            $.post("/view/gazeta/report/money/AjaxPrihodRashodAdd.php?" + G.values, send, function (res) {
-                dialog.close();
-                vkMsgOk("Платёж успешно внесён.");
-                obj.func();
-            }, 'html');
-        }
-        if (msg) {
-            $("#dialog_prihod .bottom:first").vkHint({
-                msg:"<SPAN class=red>" + msg + "</SPAN>",
-                remove:1,
-                indent:40,
-                show:1,
-                top:-48,
-                left:125
-            });
-        }
-    }
-} // end moneyAdd()
-
-// Удаление платежа
-function moneyDel(id) {
-    $("#dialog_money").remove();
-    $("BODY").append("<div id=dialog_money></div>");
-
-    var dialog = $("#dialog_money").vkDialog({
-        width:250,
-        head:"Удаление платежа",
-        butSubmit:"Удалить",
-        content:"<CENTER><B>Подтвердите удаление платежа</B></CENTER>",
-        submit:function () {
-            dialog.process();
-            $.getJSON("/view/gazeta/report/money/AjaxMoneyDel.php?" + G.values + "&id=" + id, function () {
-                location.reload();
-            }, 'json');
-        }
-    }).o;
-} // end moneyDel()
-*/
