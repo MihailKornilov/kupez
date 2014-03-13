@@ -10,7 +10,7 @@ if (!isset($_POST['zayav_id'])) $_POST['zayav_id'] = 0;
 
 $send->id = $VK->Query("INSERT INTO `gazeta_money` (
 type,
-rashod_category,
+expense_id,
 sum,
 prim,
 client_id,
@@ -32,7 +32,7 @@ if ($_POST['client_id'] > 0) setClientBalans($_POST['client_id']);
 
 // Если есть категория расходов
 if ($_POST['cat'] > 0) {
-    $catName = $VK->QRow('SELECT `name` FROM `setup_rashod_category` WHERE `id`='.$_POST['cat']);
+    $catName = $VK->QRow('SELECT `name` FROM `setup_expense` WHERE `id`='.$_POST['cat']);
     $dop = $catName.($txt ? ': ' : '').$txt;
     $txt = '<b>'.$catName.($txt ? ': ' : '').'</b>'.$txt;
 } else $dop = $txt;

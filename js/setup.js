@@ -1312,10 +1312,11 @@ $(document)
 		}
 	})
 
-	.on('click', '#setup_rashod .add', function() {
+	.on('click', '#setup_expense .add', function() {
 		var t = $(this),
 			html = '<table class="setup-tab">' +
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="200" />' +
+				'<tr><td class="label r">Список сотрудников:<td><input id="show_worker" type="hidden" />' +
 				'</table>',
 			dialog = _dialog({
 				top:60,
@@ -1325,10 +1326,12 @@ $(document)
 				submit:submit
 			});
 		$('#name').focus().keyEnter(submit);
+		$('#show_worker')._check();
 		function submit() {
 			var send = {
-				op:'setup_rashod_add',
-				name:$('#name').val()
+				op:'setup_expense_add',
+				name:$('#name').val(),
+				show_worker:$('#show_worker').val()
 			};
 			if(!send.name) {
 				dialog.bottom.vkHint({
@@ -1354,17 +1357,18 @@ $(document)
 			}
 		}
 	})
-	.on('click', '#setup_rashod .img_edit', function() {
+	.on('click', '#setup_expense .img_edit', function() {
 		var t = $(this);
 		while(t[0].tagName != 'DD')
 			t = t.parent();
 		var id = t.attr('val'),
 			name = t.find('.name').html(),
+			worker = t.find('.worker').html() ? 1 : 0,
 			html = '<table class="setup-tab">' +
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="200" value="' + name + '" />' +
+				'<tr><td class="label r">Список сотрудников:<td><input id="show_worker" type="hidden" value="' + worker + '" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Редактирование категории расхода',
 				content:html,
@@ -1372,11 +1376,13 @@ $(document)
 				submit:submit
 			});
 		$('#name').focus().keyEnter(submit);
+		$('#show_worker')._check();
 		function submit() {
 			var send = {
 				op:'setup_rashod_edit',
 				id:id,
-				name:$('#name').val()
+				name:$('#name').val(),
+				show_worker:$('#show_worker').val()
 			};
 			if(!send.name) {
 				dialog.bottom.vkHint({
@@ -1402,7 +1408,7 @@ $(document)
 			}
 		}
 	})
-	.on('click', '#setup_rashod .img_del', function() {
+	.on('click', '#setup_expense .img_del', function() {
 		var t = $(this),
 			dialog = _dialog({
 				top:90,

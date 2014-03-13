@@ -96,7 +96,7 @@ function reportGet($d1) {
 </div>
 <div id=periodMonth><input type=hidden id=period_year /></div>
 <div class=findHead>Категория</div>
-<input type=hidden id=rashod_category>
+<input type=hidden id=expense_id>
 ';
                     $send->js = '<SCRIPT type="text/javascript" src="/view/gazeta/report/money/rashod/rashod.js?'.JS_VERSION.'"></SCRIPT>';
                     break;

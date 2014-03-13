@@ -11,7 +11,7 @@ $("#periodHead").on('click', function (e) {
     }
 });
 
-$("#rashod_category").vkSel({
+$("#expense_id").vkSel({
     width:140,
     title0:"Не выбрана",
     spisok: G.rashod_category_spisok,
@@ -74,7 +74,7 @@ function reportCalendarGet(month) {
         values:{
             day_begin:$("#day_begin").val(),
             day_end:$("#day_end").val(),
-            category:$("#rashod_category").val()
+            category:$("#expense_id").val()
         },
         callback:function (res) { $("#itog").html(G.spisok.data.sum); }
     });
@@ -87,7 +87,7 @@ function reportMonthGet() {
     $("#spisokHead").html('');
     $("#spisok").html('<img src=/img/upload.gif>');
     var val = "&year=" + $("#period_year").val() +
-        "&category=" + $("#rashod_category").val()
+        "&category=" + $("#expense_id").val()
     $.getJSON("/view/gazeta/report/money/rashod/AjaxRashodMonth.php?" + G.values + val, function (res) {
         $("#itog").html(res.sum);
         var html = "";

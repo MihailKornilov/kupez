@@ -203,7 +203,6 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 
-
 	case 'zayav_spisok':
 		$data = zayav_data($_POST);
 		$send['result'] = utf8($data['result']);
@@ -545,6 +544,12 @@ switch(@$_POST['op']) {
 		clientBalansUpdate($r['client_id']);
 		//_zayavBalansUpdate($r['zayav_id']);
 
+		invoice_history_insert(array(
+			'action' => 2,
+			'table' => 'gazeta_money',
+			'id' => $id
+		));
+
 		history_insert(array(
 			'type' => 47,
 			'zayav_id' => $r['zayav_id'],
@@ -557,6 +562,97 @@ switch(@$_POST['op']) {
 		jsonSuccess();
 		break;
 
+	case 'expense_spisok':
+		$data = expense_spisok($_POST);
+		$send['html'] = utf8($data['spisok']);
+		$send['mon'] = utf8(expenseMonthSum($_POST));
+		jsonSuccess($send);
+		break;
+	case 'expense_add':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['category']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['worker']))
+			jsonError();
+		if(!preg_match(REGEXP_CENA, $_POST['sum']) && $_POST['sum'] ==0)
+			jsonError();
+		if(empty($_POST['invoice']) || !preg_match(REGEXP_NUMERIC, $_POST['invoice']))
+			jsonError();
+
+		$category = intval($_POST['category']);
+		$about = win1251(htmlspecialchars(trim($_POST['about'])));
+		if(!$category && empty($about))
+			jsonError();
+		$worker = intval($_POST['worker']);
+		$invoice = intval($_POST['invoice']);
+		$sum = str_replace(',', '.', $_POST['sum']);
+		$sql = "INSERT INTO `gazeta_money` (
+					`sum`,
+					`prim`,
+					`invoice_id`,
+					`expense_id`,
+					`worker_id`,
+					`viewer_id_add`
+				) VALUES (
+					-".$sum.",
+					'".addslashes($about)."',
+					".$invoice.",
+					".$category.",
+					".$worker.",
+					".VIEWER_ID."
+				)";
+		query($sql);
+
+		invoice_history_insert(array(
+			'action' => 6,
+			'table' => 'gazeta_money',
+			'id' => mysql_insert_id()
+		));
+
+		history_insert(array(
+			'type' => 81,
+			'value' => abs($sum),
+			'value1' => $category,
+			'value2' => $about,
+			'value3' => $worker ? $worker : ''
+		));
+		jsonSuccess();
+		break;
+	case 'expense_del':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		$id = intval($_POST['id']);
+
+		$sql = "SELECT *
+				FROM `gazeta_money`
+				WHERE !`deleted`
+				  AND `sum`<0
+				  AND `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$sql = "UPDATE `gazeta_money` SET
+					`deleted`=1,
+					`viewer_id_del`=".VIEWER_ID.",
+					`dtime_del`=CURRENT_TIMESTAMP
+				WHERE `id`=".$id;
+		query($sql);
+
+		invoice_history_insert(array(
+			'action' => 7,
+			'table' => 'gazeta_money',
+			'id' => $id
+		));
+
+		history_insert(array(
+			'type' => 82,
+			'value' => round(abs($r['sum']), 2),
+			'value1' => $r['expense_id'],
+			'value2' => $r['prim'],
+			'value3' => $r['worker_id'] ? $r['worker_id'] : ''
+		));
+
+		jsonSuccess();
+		break;
 
 	case 'history_next':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['page']))
@@ -565,6 +661,100 @@ switch(@$_POST['op']) {
 		$send['html'] = utf8(history_spisok($page));
 		jsonSuccess($send);
 		break;
+
+	case 'invoice_set':
+		if(!VIEWER_ADMIN)
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['invoice_id']))
+			jsonError();
+		if(!preg_match(REGEXP_CENA, $_POST['sum']))
+			jsonError();
+
+		$invoice_id = intval($_POST['invoice_id']);
+		$sum = str_replace(',', '.', $_POST['sum']);
+
+		$sql = "SELECT * FROM `gazeta_invoice` WHERE `id`=".$invoice_id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		query("UPDATE `gazeta_invoice` SET `start`="._invoiceBalans($invoice_id, $sum)." WHERE `id`=".$invoice_id);
+		xcache_unset(CACHE_PREFIX.'invoice');
+
+		invoice_history_insert(array(
+			'action' => 5,
+			'invoice_id' => $invoice_id
+		));
+
+		history_insert(array(
+			'type' => 91,
+			'value' => $sum,
+			'value1' => $invoice_id
+		));
+
+		$send['i'] = utf8(invoice_spisok());
+		jsonSuccess($send);
+		break;
+	case 'invoice_history':
+		if(empty($_POST['invoice_id']) || !preg_match(REGEXP_NUMERIC, $_POST['invoice_id']))
+			jsonError();
+		$send['html'] = utf8(invoice_history($_POST));
+		jsonSuccess($send);
+		break;
+	case 'invoice_transfer':
+		if(empty($_POST['from']) || !preg_match(REGEXP_NUMERIC, $_POST['from']))
+			jsonError();
+		if(empty($_POST['to']) || !preg_match(REGEXP_NUMERIC, $_POST['to']))
+			jsonError();
+		if(!preg_match(REGEXP_CENA, $_POST['sum']) || $_POST['sum'] == 0)
+			jsonError();
+
+		$from = intval($_POST['from']);
+		$to = intval($_POST['to']);
+		$sum = str_replace(',', '.', $_POST['sum']);
+		$note = win1251(htmlspecialchars(trim($_POST['note'])));
+
+		if($from == $to)
+			jsonError();
+
+		$invoice_from = $from;
+		$invoice_to = $to;
+		$sql = "INSERT INTO `gazeta_invoice_transfer` (
+					`invoice_from`,
+					`invoice_to`,
+					`worker_from`,
+					`worker_to`,
+					`sum`,
+					`note`,
+					`viewer_id_add`
+				) VALUES (
+					".$invoice_from.",
+					".$invoice_to.",
+					".($from > 100 ? $from : 0).",
+					".($to > 100  ? $to : 0).",
+					".$sum.",
+					'".addslashes($note)."',
+					".VIEWER_ID."
+				)";
+		query($sql);
+
+		invoice_history_insert(array(
+			'action' => 4,
+			'table' => 'gazeta_invoice_transfer',
+			'id' => mysql_insert_id()
+		));
+
+		history_insert(array(
+			'type' => 92,
+			'value' => $sum,
+			'value1' => $from,
+			'value2' => $to
+		));
+
+		$send['i'] = utf8(invoice_spisok());
+		$send['t'] = utf8(transfer_spisok());
+		jsonSuccess($send);
+		break;
+
 
 	case 'setup_worker_add':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
@@ -1513,20 +1703,27 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 
-	case 'setup_rashod_add':
+	case 'setup_expense_add':
+		if(!preg_match(REGEXP_BOOL, $_POST['show_worker']))
+			jsonError();
+
 		$name = win1251(htmlspecialchars(trim($_POST['name'])));
+		$show_worker = intval($_POST['show_worker']);
+
 		if(empty($name))
 			jsonError();
-		$sql = "INSERT INTO `setup_rashod_category` (
+		$sql = "INSERT INTO `setup_expense` (
 					`name`,
+					`show_worker`,
 					`sort`
 				) VALUES (
 					'".addslashes($name)."',
-					"._maxSql('setup_rashod_category', 'sort')."
+					".$show_worker.",
+					"._maxSql('setup_expense', 'sort')."
 				)";
 		query($sql);
 
-		xcache_unset(CACHE_PREFIX.'rashod_category');
+		xcache_unset(CACHE_PREFIX.'expense');
 		GvaluesCreate();
 
 		history_insert(array(
@@ -1534,32 +1731,40 @@ switch(@$_POST['op']) {
 			'value' => $name
 		));
 
-		$send['html'] = utf8(setup_rashod_spisok());
+		$send['html'] = utf8(setup_expense_spisok());
 		jsonSuccess($send);
 		break;
 	case 'setup_rashod_edit':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
 			jsonError();
+		if(!preg_match(REGEXP_BOOL, $_POST['show_worker']))
+			jsonError();
+
 		$id = intval($_POST['id']);
 		$name = win1251(htmlspecialchars(trim($_POST['name'])));
+		$show_worker = intval($_POST['show_worker']);
+
 		if(empty($name))
 			jsonError();
 
-		$sql = "SELECT * FROM `setup_rashod_category` WHERE `id`=".$id;
+		$sql = "SELECT * FROM `setup_expense` WHERE `id`=".$id;
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
-		$sql = "UPDATE `setup_rashod_category`
-				SET `name`='".addslashes($name)."'
+		$sql = "UPDATE `setup_expense`
+				SET `name`='".addslashes($name)."',
+					`show_worker`=".$show_worker."
 				WHERE `id`=".$id;
 		query($sql);
 
-		xcache_unset(CACHE_PREFIX.'rashod_category');
+		xcache_unset(CACHE_PREFIX.'expense');
 		GvaluesCreate();
 
 		$changes = '';
 		if($r['name'] != $name)
 			$changes .= '<tr><th>Наименование:<td>'.$r['name'].'<td>»<td>'.$name;
+		if($r['show_worker'] != $show_worker)
+			$changes .= '<tr><th>Список сотрудников:<td>'.($r['show_worker'] ? 'да' : 'нет').'<td>»<td>'.($show_worker ? 'да' : 'нет');
 		if($changes)
 			history_insert(array(
 				'type' => 1102,
@@ -1567,7 +1772,7 @@ switch(@$_POST['op']) {
 				'value1' => '<table>'.$changes.'</table>'
 			));
 
-		$send['html'] = utf8(setup_rashod_spisok());
+		$send['html'] = utf8(setup_expense_spisok());
 		jsonSuccess($send);
 		break;
 	case 'setup_rashod_del':
@@ -1575,16 +1780,16 @@ switch(@$_POST['op']) {
 			jsonError();
 		$id = intval($_POST['id']);
 
-		$sql = "SELECT * FROM `setup_rashod_category` WHERE `id`=".$id;
+		$sql = "SELECT * FROM `setup_expense` WHERE `id`=".$id;
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
-		if(query_value("SELECT COUNT(`id`) FROM `gazeta_money` WHERE `rashod_category`=".$id))
+		if(query_value("SELECT COUNT(`id`) FROM `gazeta_money` WHERE `expense_id`=".$id))
 			jsonError();
-		$sql = "DELETE FROM `setup_rashod_category` WHERE `id`=".$id;
+		$sql = "DELETE FROM `setup_expense` WHERE `id`=".$id;
 		query($sql);
 
-		xcache_unset(CACHE_PREFIX.'rashod_category');
+		xcache_unset(CACHE_PREFIX.'expense');
 		GvaluesCreate();
 
 		history_insert(array(
@@ -1592,7 +1797,7 @@ switch(@$_POST['op']) {
 			'value' => $r['name']
 		));
 
-		$send['html'] = utf8(setup_rashod_spisok());
+		$send['html'] = utf8(setup_expense_spisok());
 		jsonSuccess($send);
 		break;
 }

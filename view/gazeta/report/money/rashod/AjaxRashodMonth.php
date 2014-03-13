@@ -3,7 +3,7 @@ require_once('../../../../../include/AjaxHeader.php');
 
 $find = "WHERE `status`=1 AND `sum`<0 AND DATE_FORMAT(`dtime_add`,'%Y')=".$_GET['year'];
 if ($_GET['category'] > 0)
-    $find .= " AND `rashod_category`=".$_GET['category'];
+    $find .= " AND `expense_id`=".$_GET['category'];
 
 $spisok = $VK->QueryObjectArray("SELECT
                                     DISTINCT(DATE_FORMAT(`dtime_add`,'%m')) AS `month`,

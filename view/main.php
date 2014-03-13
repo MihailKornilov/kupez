@@ -64,6 +64,7 @@ function _cacheClear() {
 	xcache_unset(CACHE_PREFIX.'polosa');
 	xcache_unset(CACHE_PREFIX.'invoice');
 	xcache_unset(CACHE_PREFIX.'income');
+	xcache_unset(CACHE_PREFIX.'expense');
 	GvaluesCreate();
 }//_cacheClear()
 
@@ -164,7 +165,11 @@ function GvaluesCreate() {// составление файла G_values.js
 	$save = //'function _toSpisok(s){var a=[];for(k in s)a.push({uid:k,title:s[k]});return a}'.
 		//'function _toAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a}'.
 
-		'var CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],'.
+		'var WORKER_SPISOK='.query_selJson("SELECT `viewer_id`,CONCAT(`first_name`,' ',`last_name`) FROM `vk_user`
+											 WHERE `gazeta_worker`=1
+											   AND `viewer_id`!=982006
+											 ORDER BY `dtime_add`").','.
+		"\n".'CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],'.
 		"\n".'PERSON_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`").','.
 		"\n".'RUBRIC_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_rubric` ORDER BY `sort`").','.
 		"\n".'INCOME_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_income` ORDER BY `sort`").','.
@@ -177,7 +182,9 @@ function GvaluesCreate() {// составление файла G_values.js
 		"\n".'OBDOP_CENA_ASS='.query_ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').','.
 		"\n".'POLOSA_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').','.
 		"\n".'POLOSA_CENA_ASS='.query_ptpJson('SELECT `id`,ROUND(`cena`) FROM `setup_polosa_cost` ORDER BY `id`').','.
-		"\n".'RASHOD_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_rashod_category` ORDER BY `sort`').',';
+		"\n".'INVOICE_SPISOK='.query_selJson("SELECT `id`,`name` FROM `gazeta_invoice` ORDER BY `id`").','.
+		"\n".'EXPENSE_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_expense` ORDER BY `sort`').','.
+		"\n".'EXPENSE_WORKER='.query_ptpJson("SELECT `id`,`show_worker` FROM `setup_expense` WHERE `show_worker`").',';
 
 
 	$sql = "SELECT * FROM `setup_rubric_sub` ORDER BY `rubric_id`,`sort`";

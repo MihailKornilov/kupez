@@ -1,3 +1,9 @@
+._dialog-tab{border-spacing:8px}
+._dialog-tab input[type="text"]:not(.money){width:210px}
+._dialog-tab .label{text-align:right}
+
+
+
 #client #find{background-color:#F7F7F7;padding:10px;border-bottom:#dae1e8 solid 1px}
 #client .left{padding:0 8px 8px 8px}
 #client .right{width:150px}
@@ -250,7 +256,31 @@
 .income #spisok{margin:15px 10px}
 .income ._empty{margin:0}
 .income_data{margin:15px 0 3px;text-align:center}
+.expense#report .headName{margin:10px}
+.expense #spisok{margin:15px 10px}
+.expense .years{margin-top:20px}
+.expense #monthList div{display:block;margin-bottom:5px}
+.expense #monthList .sum{float:right}
+.expense ._empty{margin:0}
+#expense-add-tab{border-spacing:8px}
+#expense-add-tab .label{width:80px;text-align:right}
+#expense-add-tab #about{width:230px}
+#expense-add-tab .img_edit{position:relative;top:-4px;left:4px}
 
+.invoice#report .headName{margin:10px}
+.invoice#report .headName span{display:inline-block;float:right;margin:0 6px}
+.invoice#report .transfer{color:#d33}
+.invoice pre{color:#777;font-size:10px;margin:3px 7px}
+.invoice .balans{text-align:right}
+.invoice .img_note{margin-bottom:-2px}
+.invoice #invoice-spisok{margin:10px 10px 25px}
+.invoice #transfer-spisok{margin:10px}
+.invoice-transfer{border-spacing:10px}
+.invoice-transfer #note{width:242px}
+.invoice-history{margin-top:10px}
+.invoice-history .action{width:80px}
+.invoice-history .balans{width:70px;text-align:right}
+.invoice-history .sum-change{font-size:10px;color:#555}
 
 
 
@@ -350,7 +380,8 @@
 #setup_skidka .razmer,#setup_skidka .cl{text-align:center}
 #setup_skidka .about{width:160px}
 
-#setup_rashod .name{width:250px}
-#setup_rashod td.name{cursor:move}
-#setup_rashod .opl{width:60px;text-align:center}
-#setup_rashod .set{width:40px}
+#setup_expense .name{width:180px}
+#setup_expense td.name{cursor:move}
+#setup_expense .worker{width:80px;text-align:center}
+#setup_expense .opl{width:60px;text-align:center}
+#setup_expense .set{width:35px}
