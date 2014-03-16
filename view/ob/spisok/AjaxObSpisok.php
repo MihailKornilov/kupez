@@ -3,10 +3,7 @@ require_once('../../../include/AjaxHeader.php');
 
 $find = "WHERE `status`=1 AND `day_active`>='".strftime("%Y-%m-%d",time())."'";
 
-if ($_GET['rub'] > 0) $find.=" AND rubrika=".$_GET['rub'];
 if ($_GET['podrub'] > 0) $find.=" AND podrubrika=".$_GET['podrub'];
-if ($_GET['foto_only'] == 1) $find.=" AND length(file)>0";
-if ($_GET['city_id'] > 0) $find.=" AND city_id=".$_GET['city_id'];
 if ($_GET['input']) {
   $input = win1251($_GET['input']);
   $find .= " AND `txt` LIKE '%".$input."%'";

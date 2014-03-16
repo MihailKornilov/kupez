@@ -15,6 +15,13 @@ switch(@$_POST['op']) {
 		_cacheClear();
 		jsonSuccess();
 		break;
+
+	case 'ob_spisok':
+		$data = ob_spisok($_POST);
+		$send['result'] = utf8($data['result']);
+		$send['spisok'] = utf8($data['spisok']);
+		jsonSuccess($send);
+		break;
 }
 
 jsonError();

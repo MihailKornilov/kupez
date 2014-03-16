@@ -7,50 +7,6 @@ $("#vkFind").topSearch({
 });
 
 
-// регион
-$("#countries").vkSel({
-    bottom:4,
-    width:150,
-    spisok:[{uid:1,title:'Россия'}]
-});
-$("#cities").vkSel({
-    bottom:4,
-    width:150,
-    title0:'Город не указан',
-    spisok:spisok.cities,
-    func:function (uid) { G.spisok.print({city_id:uid}); }
-});
-$("#vkSel_cities").vkHint({
-    msg:"Показываются города,<BR>для которых есть<BR>активные объявления.",
-    ugol:'right',
-    top:-16,
-    left:-175,
-    indent:15
-});
-
-
-$("#foto_only").myCheck({
-    title:"Только с фото",
-    func:function (id) { G.spisok.print({foto_only:id}); }
-});
-
-// добавление количества объявлений к каждой рубрике
-var rub_spisok = [{uid:0,title:'Все объявления'}];
-for (var n = 0; n < G.rubrika_spisok.length; n++) {
-    sp = G.rubrika_spisok[n];
-    var c = spisok.rubCount[sp.uid];
-    if (c) {
-        rub_spisok.push({
-            uid:sp.uid,
-            title:sp.title + "<B>" + c + "</B>"
-        });
-    }
-}
-$("#rubrika").infoLink({
-    spisok:rub_spisok,
-    func:rubrikaSet
-});
-
 
 
 // Клик по списку объявлений

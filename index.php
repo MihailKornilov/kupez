@@ -8,44 +8,48 @@ if(empty($_GET['p'])) {
 	$_GET['p'] = 'gazeta';
 }
 
-if(!GAZETA_WORKER)
-	$html .= _noauth();
-else {
-	switch($_GET['p']) {
-		default:
-		case 'gazeta':
-			if(empty($_GET['d']))
-				$_GET['d'] = 'client';
-			_mainLinks();
-			switch(@$_GET['d']) {
-				default:
-				case 'client':
-					switch(@$_GET['d1']) {
-						case 'info':
-							if(!preg_match(REGEXP_NUMERIC, $_GET['id'])) {
-								$html .= 'Страницы не существует';
-								break;
-							}
-							$html .= client_info(intval($_GET['id']));
-							break;
-						default:
-							$html .= client_list();
-					}
-				break;
-				case 'zayav':
-					switch(@$_GET['d1']) {
-						case 'add': $html .= zayav_add(); break;
-						case 'info': $html .= zayav_info(intval(@$_GET['id'])); break;
-						case 'edit': $html .= zayav_edit(intval(@$_GET['id'])); break;
-						default:
-							$html .= zayav_list();
-					}
-					break;
-				case 'report': $html .= report(); break;
-				case 'setup': $html .= setup(); break;
-			}
+
+switch($_GET['p']) {
+	default:
+	case 'ob':
+		$html .= ob();
+		break;
+	case 'gazeta':
+		if(!GAZETA_WORKER) {
+			$html .= _noauth();
 			break;
-	}
+		}
+		if(empty($_GET['d']))
+			$_GET['d'] = 'client';
+		_mainLinks();
+		switch(@$_GET['d']) {
+			default:
+			case 'client':
+				switch(@$_GET['d1']) {
+					case 'info':
+						if(!preg_match(REGEXP_NUMERIC, $_GET['id'])) {
+							$html .= 'Страницы не существует';
+							break;
+						}
+						$html .= client_info(intval($_GET['id']));
+						break;
+					default:
+						$html .= client_list();
+				}
+			break;
+			case 'zayav':
+				switch(@$_GET['d1']) {
+					case 'add': $html .= zayav_add(); break;
+					case 'info': $html .= zayav_info(intval(@$_GET['id'])); break;
+					case 'edit': $html .= zayav_edit(intval(@$_GET['id'])); break;
+					default:
+						$html .= zayav_list();
+				}
+				break;
+			case 'report': $html .= report(); break;
+			case 'setup': $html .= setup(); break;
+		}
+		break;
 }
 
 _footer();
