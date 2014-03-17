@@ -55,6 +55,7 @@ var hashLoc,
 $(document)
 	.on('click', '.rub', function() {
 		$('#rub').rightLink($(this).attr('val'));
+		$('#rubsub').val(0);
 		obSpisok();
 	})
 	.on('click', '.rubsub', function() {
@@ -96,13 +97,14 @@ $(document)
 				spisok:COUNTRIES,
 				func:function(id) {
 					$('#cities')._select(0);
+					$('#cities')._select(CITIES[id]);
 					$('.city-sel')[(id ? 'remove' : 'add') + 'Class']('dn');
 					obSpisok();
 				}
 			});
 			$('#cities')._select({
 				title0:'Город не выбран',
-				spisok:CITIES,
+				spisok:[],
 				func:obSpisok
 			});
 			$('#cities_select').vkHint({
@@ -116,5 +118,34 @@ $(document)
 				obSpisok();
 			});
 			$('#withfoto')._check(obSpisok);
+		}
+		if($('#ob-create').length) {
+			$('#rubric_id')._select({
+				width:120,
+				title0:'Не указана',
+				spisok:RUBRIC_SPISOK,
+				func:function(id) {
+					$('#rubric_sub_id').val(0);
+					if(RUBRIC_SUB_SPISOK[id])
+						$('#rubric_sub_id')._select({
+							width:200,
+							title0:'Подрубрика не указана',
+							spisok:RUBRIC_SUB_SPISOK[id],
+						});
+					else
+						$('#rubric_sub_id')._select('remove');
+				}
+			});
+			$('#txt').autosize().focus();
+			$('#country_id')._select({
+				width:180,
+				title0:'Страна не указана',
+				spisok:COUNTRY_SPISOK
+			});
+			//$('#viewer_id_show')._check();
+			//$('#pay_service')._check();
+			$('.vkCancel').click(function() {
+				location.href = URL + '&p=ob';
+			});
 		}
 	});

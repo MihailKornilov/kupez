@@ -42,10 +42,19 @@
 .ob-unit .adres a{float:right;margin-right:10px}
 
 
-#obSpisok #rubrika { margin-bottom:20px; }
-#obSpisok #rubrika IMG { float:right; position:relative; top:3px; left:-5px; }
-#obSpisok #podrubrika { margin-bottom:20px; }
+/* Создание нового объявления */
+#ob-create{background-color:#f7f7f7;padding-bottom:60px}
+#ob-create .headName{margin:0 30px;padding:15px 0 2px 0}
+#ob-create ._info{margin:15px 30px}
+#ob-create .tab{border-spacing:10px;margin-left:20px}
+#ob-create .label{width:140px;text-align:right}
+#ob-create #rubric_id_select{margin-right:5px}
+#ob-create #txt{width:317px;height:50px;font-size:12px}
+#ob-create #telefon{width:317px}
+#ob-create .pay{margin-top:-10px}
+#ob-create .vkButton{margin-right:5px}
 
+/*
 #obSpisok .unit .ramka { border:#333 solid 2px; padding:3px 5px; background-color:#F7F7F7; }
 #obSpisok .unit .black { background-color:#555; color:#FFF; padding:10px; }
 #obSpisok .unit .bold .txt { font:bold 13px Arial; }
@@ -57,3 +66,4 @@
 #obSpisok .rub { font:bold 17px Tahoma; margin:7px 0 0 10px; }
 #obSpisok .podrub { font:bold 17px Times New Roman; margin:5px 0 0 30px; }
 #obSpisok .enter { color:#B33; float:right; margin-right:10px; }
+*/

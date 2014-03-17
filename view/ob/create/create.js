@@ -30,31 +30,6 @@ $(".info A:first").click(function () {
     }).o;
 });
 
-var rubrika = $("#rubrika").vkSel({
-    width:120,
-    display:'inline-block',
-    title0:'Не указана',
-    spisok:G.rubrika_spisok,
-    func:function(uid){
-        $("#podrubrika").val(0);
-        $("#vkSel_podrubrika").remove();
-        if(G.podrubrika_spisok[uid]) {
-            $("#podrubrika").vkSel({
-                width:199,
-                display:'inline-block',
-                title0:'Подрубрика не указана',
-                spisok:G.podrubrika_spisok[uid],
-                func:preview
-            });
-        }
-        preview();
-    }
-}).o;
-
-$("#txt")
-    .autosize({callback:frameBodyHeightSet})
-    .focus()
-    .keyup(preview);
 
 
 fotoUpload();
@@ -224,9 +199,6 @@ $("#top_week .a").mousedown(function (e) {
 });
 
 $("#butts .vkButton BUTTON")[0].onclick = vkCreateGo;
-$("#butts .vkCancel BUTTON").click(function () { location.href = "/index.php?" + G.values + "&p=ob&d=" + create.back; });
-
-
 
 
 

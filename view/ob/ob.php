@@ -62,41 +62,12 @@ function obCreate()
     global $vku;
 ?>
 <DIV id=vk-create>
-  <DIV class=headName>Создание нового объявления</DIV>
-  <DIV class=info>
-    <P>Пожалуйста, заполните все необходимые поля. После размещения объявление сразу становится доступно для других пользователей ВКонтакте.
-    <P>Сотрудники приложения Купецъ оставляют за собой право изменять или запретить к показу объявление, если оно нарушает <A>правила</A>.
-    <P>Объявление будет размещено сроком на 1 месяц, в дальнейшем Вы сможете продлить этот срок.
-  </DIV>
-
-    <TABLE cellpadding=0 cellspacing=10 class=tab>
-        <TR><TD class=tdAbout>Рубрика:              <TD><INPUT TYPE=hidden id=rubrika><INPUT TYPE=hidden id=podrubrika>
-        <TR><TD class=tdAbout valign=top>Текст:     <TD><TEXTAREA id=txt></TEXTAREA>
-        <TR><TD class=tdAbout>Контактные телефоны:  <TD><INPUT TYPE=text id=telefon maxlength=200>
-        <TR><TD class=tdAbout valign=top>           <INPUT TYPE=hidden id=images><TD id=upload>
-        <TR><TD class='tdAbout top5' valign=top>Регион:<TD><INPUT TYPE=hidden id=countries value=<?=$vku['country_id']?>>
-                                                           <INPUT TYPE=hidden id=cities value=0>
-        <TR><TD class=tdAbout>Показывать имя из VK:    <TD><INPUT TYPE=hidden id=viewer_id_show value=0>
-        <TR><TD class=tdAbout>Платные сервисы:         <TD><INPUT TYPE=hidden id=pay_service value=0>
-    </TABLE>
-
   <TABLE cellpadding=0 cellspacing=8  id=payContent>
     <TR><TD class=tdAbout><TD><INPUT TYPE=hidden id=dop value=0>
     <TR><TD class=tdAbout>Поднять объявление:<TD valign=bottom><INPUT TYPE=hidden id=top><SPAN id=top_week>на <EM class=bok>&nbsp;</EM><EM class=a>-</EM><EM class=inp>1</EM><EM class=a>+</EM><EM class=bok>&nbsp;</EM> недел<EM class=end></EM></SPAN>
    </TABLE>
 
-  <INPUT TYPE=hidden id=file>
 
-  <DIV id=butts>
-    <DIV class=vkButton><BUTTON>Разместить объявление<SPAN></SPAN></BUTTON></DIV>
-    <DIV class=vkCancel><BUTTON>Отмена</BUTTON></DIV>
-  </DIV>
-
-<DIV id=callbacks></DIV>
-
-  <DIV class=headName>Предосмотр объявления</DIV>
-  <DIV id=obSpisok></DIV>
-  <DIV id=dialog_obCreate></DIV>
 </DIV>
 
 <SCRIPT type="text/javascript">
@@ -106,7 +77,6 @@ create = {
     top_week:1
 };
 </SCRIPT>
-<SCRIPT type="text/javascript" src="/view/ob/create/create.js?<?=JS_VERSION?>"></SCRIPT>
 <?php
 } // end of obCreate()
 

@@ -9,10 +9,15 @@ if(empty($_GET['p'])) {
 }
 
 
-switch($_GET['p']) {
+switch(@$_GET['p']) {
 	default:
 	case 'ob':
-		$html .= ob();
+		switch(@$_GET['d']) {
+			default:
+			case 'ob': $html .= ob(); break;
+			case 'create': $html .= ob_create(); break;
+			case 'my': $html .= ob_my(); break;
+		}
 		break;
 	case 'gazeta':
 		if(!GAZETA_WORKER) {

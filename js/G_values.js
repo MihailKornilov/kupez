@@ -15,6 +15,7 @@ POLOSA_CENA_ASS={1:24,2:18,3:16,4:18},
 INVOICE_SPISOK=[{uid:1,title:"Редакция"},{uid:2,title:"Банк"}],
 EXPENSE_SPISOK=[{uid:3,title:"Зарплата работникам"},{uid:7,title:"Отправка документов почтой"},{uid:5,title:"Канц. товары"},{uid:1,title:"Электричество"},{uid:4,title:"Ростелеком"},{uid:6,title:"Т/В программа"},{uid:8,title:"Хоз. товары"},{uid:9,title:"Интернет"}],
 EXPENSE_WORKER={3:1},
+COUNTRY_SPISOK=[{uid:1,title:"Россия"},{uid:2,title:"Украина"},{uid:3,title:"Беларусь"},{uid:4,title:"Казахстан"},{uid:5,title:"Азербайджан"},{uid:6,title:"Армения"},{uid:7,title:"Грузия"},{uid:8,title:"Израиль"},{uid:11,title:"Кыргызстан"},{uid:12,title:"Латвия"},{uid:13,title:"Литва"},{uid:14,title:"Эстония"},{uid:15,title:"Молдова"},{uid:16,title:"Таджикистан"},{uid:17,title:"Туркмения"},{uid:18,title:"Узбекистан"}],
 RUBRIC_SUB_SPISOK={1:[{uid:4,title:"Техника"},{uid:1,title:"Недвижимость"},{uid:9,title:"Земля"},{uid:3,title:"Бытовая и оргтехника"},{uid:6,title:"Мебель"},{uid:7,title:"Одежда"},{uid:12,title:"Спорт-Отдых"},{uid:10,title:"Детям"},{uid:11,title:"Разное"},{uid:2,title:"Стройматериалы"},{uid:8,title:"Пиломатериалы"},{uid:5,title:"Животные"}]},
 GN={
 311:{week:1,pub:"2012-01-13",txt:"пт. 13 января 2012"},

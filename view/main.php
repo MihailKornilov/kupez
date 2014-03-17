@@ -188,7 +188,7 @@ function GvaluesCreate() {// составление файла G_values.js
 		"\n".'INVOICE_SPISOK='.query_selJson("SELECT `id`,`name` FROM `gazeta_invoice` ORDER BY `id`").','.
 		"\n".'EXPENSE_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_expense` ORDER BY `sort`').','.
 		"\n".'EXPENSE_WORKER='.query_ptpJson("SELECT `id`,`show_worker` FROM `setup_expense` WHERE `show_worker`").','.
-/*		"\n".'COUNTRY_SPISOK=['.
+		"\n".'COUNTRY_SPISOK=['.
 			'{uid:1,title:"Россия"},'.
 			'{uid:2,title:"Украина"},'.
 			'{uid:3,title:"Беларусь"},'.
@@ -205,7 +205,7 @@ function GvaluesCreate() {// составление файла G_values.js
 			'{uid:16,title:"Таджикистан"},'.
 			'{uid:17,title:"Туркмения"},'.
 			'{uid:18,title:"Узбекистан"}],'.
-*/
+
 		'';
 
 	$sql = "SELECT * FROM `setup_rubric_sub` ORDER BY `rubric_id`,`sort`";
@@ -246,8 +246,8 @@ function GvaluesCreate() {// составление файла G_values.js
 function ob() {//Главная страница с объявлениями
 	$data = ob_spisok();
 	$country =
-		"SELECT DISTINCT
- 			`country_id`,
+		"SELECT
+			`country_id`,
 			`country_name`
  		FROM `vk_ob`
 		WHERE !`deleted`
@@ -255,18 +255,31 @@ function ob() {//Главная страница с объявлениями
 		  AND `country_name`!=''
 		  AND `status`=1
 		  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
+		GROUP BY `country_id`
 		ORDER BY `country_name`";
 
-	$city = "SELECT DISTINCT
+	$sql = "SELECT
  				`city_id`,
-				`city_name`
+				`city_name`,
+				`country_id`
  			FROM `vk_ob`
 			WHERE !`deleted`
 			  AND `city_id`
 			  AND `city_name`!=''
 			  AND `status`=1
 			  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
+			GROUP BY `city_id`
 			ORDER BY `city_name`";
+	$q = query($sql);
+	$sub = array();
+	while($r = mysql_fetch_assoc($q)) {
+		if(!isset($sub[$r['country_id']]))
+			$sub[$r['country_id']] = array();
+		$sub[$r['country_id']][] = '{uid:'.$r['city_id'].',title:"'.$r['city_name'].'"}';
+	}
+	$city = array();
+	foreach($sub as $n => $sp)
+		$city[] = $n.':['.implode(',', $sp).']';
 
 	$rubric = array(0 => 'Все объявления') + _rubric();
 	//Количество объявлений для каждой рубрики
@@ -282,8 +295,8 @@ function ob() {//Главная страница с объявлениями
 		$rubric[$r['rubric_id']] .= '<b>'.$r['count'].'</b>';
 	return
 	'<script type="text/javascript">'.
-		'var COUNTRIES='.query_selJson($country).';'.
-		'var CITIES='.query_selJson($city).';'.
+		'var COUNTRIES='.query_selJson($country).','.
+			'CITIES={'.implode(',', $city).'};'.
 	'</script>'.
 	'<div class="ob-spisok">'.
 		'<table class="tfind">'.
@@ -405,6 +418,59 @@ function ob_spisok($v=array()) {
 
 	return $send;
 }//ob_spisok()
+
+
+function ob_create() {
+	$dop = array(
+		0 => 'Не выделять',
+		1 => 'Обвести в рамку',
+		2 => 'Выделить жирным шрифтом',
+		3 => 'На чёрном фоне'
+	);
+	return
+	'<div id="ob-create">'.
+		'<div class="headName">Создание нового объявления</div>'.
+        '<div class="_info">'.
+            '<p>Пожалуйста, заполните все необходимые поля. После размещения объявление сразу становится доступно для других пользователей ВКонтакте.'.
+            '<p>Сотрудники приложения Купецъ оставляют за собой право изменять или запретить к показу объявление, если оно нарушает <a>правила</a>.'.
+            '<p>Объявление будет размещено сроком на 1 месяц, в дальнейшем Вы сможете продлить этот срок.'.
+        '</div>'.
+		'<table class="tab">'.
+	        '<tr><td class="label">Рубрика:'.
+				'<td><input type="hidden" id="rubric_id" />'.
+					'<input type="hidden" id="rubric_sub_id" />'.
+	        '<tr><td class="label" valign=top>Текст:<td><textarea id="txt"></textarea>'.
+	        '<tr><td class="label">Контактные телефоны:<td><input type="text" id="telefon" maxlength="200" />'.
+	        //'<tr><td class="label"><input type="hidden" id="images"><td id="upload">'.
+	        '<tr><td class="label">Регион:'.
+				'<td><input type="hidden" id="country_id" value="" />'.
+					'<input type="hidden" id="city_id" value="0" />'.
+	        '<tr><td class="label">Показывать имя из VK:<td>'._check('viewer_id_show').
+			'<tr><td class="label">Платные сервисы:<td>'._check('pay_service').
+		'</table>'.
+
+		'<table class="tab pay">'.
+			'<tr><td class="label"><td>'._radio('dop', $dop, 0, 1).
+			'<tr><td class="label">Поднять объявление:<td>'._check('to_top').
+		'</table>'.
+
+		'<table class="tab">'.
+			'<tr><td class="label">'.
+				'<td><div class="vkButton"><button>Разместить объявление<span></span></button></div>'.
+					'<div class="vkCancel"><button>Отмена</button></div>'.
+		'</table>'.
+
+		'<div class="headName">Предосмотр объявления</div>'.
+        '<div id="preview"></div>'.
+	'</div>';
+}//ob_create()
+
+
+
+function ob_my() {
+	return 'my';
+}//ob_my()
+
 
 /*
 // Проверка пользователя на наличие в базе. Также обновление при первом входе в Контакт
