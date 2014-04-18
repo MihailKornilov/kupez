@@ -5,7 +5,7 @@ _hashRead();
 _header();
 
 if(empty($_GET['p'])) {
-	$_GET['p'] = 'gazeta';
+	$_GET['p'] = GAZETA_WORKER ? 'gazeta' : 'ob';
 }
 
 

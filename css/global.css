@@ -117,9 +117,6 @@
 
 
 
-/* создание нового объявления */
-#vk-create-rules UL { margin:10px 0 20px 25px; }
-#vk-create-rules LI { margin-bottom:5px; }
 
 #vk-create .foto_create_button { padding:8px 15px; display:inline-block; }
 #vk-create #payContent { display:none; position:relative; top:-8px; }

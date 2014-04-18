@@ -43,16 +43,26 @@
 
 
 /* Создание нового объявления */
-#ob-create{background-color:#f7f7f7;padding-bottom:60px}
+#ob-create{background-color:#f7f7f7;padding-bottom:80px}
 #ob-create .headName{margin:0 30px;padding:15px 0 2px 0}
 #ob-create ._info{margin:15px 30px}
 #ob-create .tab{border-spacing:10px;margin-left:20px}
 #ob-create .label{width:140px;text-align:right}
 #ob-create #rubric_id_select{margin-right:5px}
-#ob-create #txt{width:317px;height:50px;font-size:12px}
-#ob-create #telefon{width:317px}
+#ob-create #txt{width:327px;height:50px;font-size:12px}
+#ob-create #telefon{width:327px}
+#ob-create #city_id_select{margin-top:5px}
 #ob-create .pay{margin-top:-10px}
 #ob-create .vkButton{margin-right:5px}
+#ob-create .ob-unit{
+	width:458px;
+	padding:8px 10px;
+	border:#ddd solid 1px;
+	background-color:#fff;
+	margin:15px 0 0 60px
+}
+#ob-create-rules ul{margin:10px 0 20px 25px}
+#ob-create-rules li{margin-bottom:5px}
 
 /*
 #obSpisok .unit .ramka { border:#333 solid 2px; padding:3px 5px; background-color:#F7F7F7; }

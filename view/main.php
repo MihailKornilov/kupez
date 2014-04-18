@@ -120,15 +120,15 @@ function _footer() {
 		$d = empty($_GET['d']) ? '' :'&pre_d='.$_GET['d'];
 		$d1 = empty($_GET['d1']) ? '' :'&pre_d1='.$_GET['d1'];
 		$id = empty($_GET['id']) ? '' :'&pre_id='.$_GET['id'];
-		$html .= '<div id="admin">'.
-			//  ($_GET['p'] != 'sa' && !SA_VIEWER_ID ? '<a href="'.URL.'&p=sa&pre_p='.$_GET['p'].$d.$d1.$id.'">Admin</a> :: ' : '').
-			'<a class="debug_toggle'.(DEBUG ? ' on' : '').'">В'.(DEBUG ? 'ы' : '').'ключить Debug</a> :: '.
-			'<a id="cache_clear">Очисить кэш ('.VERSION.')</a> :: '.
-			'sql <b>'.$sqlCount.'</b> ('.round($sqlTime, 3).') :: '.
-			'php '.round(microtime(true) - TIME, 3).' :: '.
-			'js <EM></EM>'.
-			'</div>'
-			.(DEBUG ? $sqlQuery : '');
+		$html .=
+			'<div id="admin">'.
+				//  ($_GET['p'] != 'sa' && !SA_VIEWER_ID ? '<a href="'.URL.'&p=sa&pre_p='.$_GET['p'].$d.$d1.$id.'">Admin</a> :: ' : '').
+				'<a class="debug_toggle'.(DEBUG ? ' on' : '').'">В'.(DEBUG ? 'ы' : '').'ключить Debug</a> :: '.
+				'<a id="cache_clear">Очисить кэш ('.VERSION.')</a> :: '.
+				'sql <b>'.$sqlCount.'</b> ('.round($sqlTime, 3).') :: '.
+				'php '.round(microtime(true) - TIME, 3).' :: '.
+				'js <em></em>'.
+			'</div>';
 	}
 	$getArr = array(
 		'start' => 1,
@@ -158,7 +158,9 @@ function _footer() {
 		$gValues[] = '"'.$k.'":"'.$val.'"';
 	}
 	$html .= '<script type="text/javascript">hashSet({'.implode(',', $gValues).'})</script>'.
-		'</div></body></html>';
+		(SA && DEBUG ? $sqlQuery : '').
+		'</div>'.
+		'</body></html>';
 }//_footer()
 
 function GvaluesCreate() {// составление файла G_values.js
@@ -166,15 +168,16 @@ function GvaluesCreate() {// составление файла G_values.js
 	$g = mysql_fetch_assoc(query($sql));
 
 	$save = //'function _toSpisok(s){var a=[];for(k in s)a.push({uid:k,title:s[k]});return a}'.
-		//'function _toAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a}'.
+		'function _toAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a}'.
 
-		'var WORKER_SPISOK='.query_selJson("SELECT `viewer_id`,CONCAT(`first_name`,' ',`last_name`) FROM `vk_user`
+	"\n".'var WORKER_SPISOK='.query_selJson("SELECT `viewer_id`,CONCAT(`first_name`,' ',`last_name`) FROM `vk_user`
 											 WHERE `gazeta_worker`=1
 											   AND `viewer_id`!=982006
 											 ORDER BY `dtime_add`").','.
 		"\n".'CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],'.
 		"\n".'PERSON_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`").','.
 		"\n".'RUBRIC_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_rubric` ORDER BY `sort`").','.
+		"\n".'RUBRIC_ASS=_toAss(RUBRIC_SPISOK),'.
 		"\n".'INCOME_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_income` ORDER BY `sort`").','.
 		"\n".'SKIDKA_SPISOK='.query_selJson("SELECT `razmer`,CONCAT(`razmer`,'%') FROM `setup_skidka` ORDER BY `razmer`").','.
 		"\n".'TXT_LEN_FIRST='.$g['txt_len_first'].','.
@@ -205,7 +208,7 @@ function GvaluesCreate() {// составление файла G_values.js
 			'{uid:16,title:"Таджикистан"},'.
 			'{uid:17,title:"Туркмения"},'.
 			'{uid:18,title:"Узбекистан"}],'.
-
+		"\n".'COUNTRY_ASS=_toAss(COUNTRY_SPISOK),'.
 		'';
 
 	$sql = "SELECT * FROM `setup_rubric_sub` ORDER BY `rubric_id`,`sort`";
@@ -219,7 +222,9 @@ function GvaluesCreate() {// составление файла G_values.js
 	$v = array();
 	foreach($sub as $n => $sp)
 		$v[] = $n.':['.implode(',', $sp).']';
-	$save .= "\n".'RUBRIC_SUB_SPISOK={'.implode(',', $v).'},';
+	$save .= "\n".'RUBRIC_SUB_SPISOK={'.implode(',', $v).'},'.
+			 "\n".'RUBRIC_SUB_ASS={0:""};'.
+			 "\n".'for(k in RUBRIC_SUB_SPISOK){for(n=0;n<RUBRIC_SUB_SPISOK[k].length;n++){var sp=RUBRIC_SUB_SPISOK[k][n];RUBRIC_SUB_ASS[sp.uid]=sp.title;}}';
 
 
 	$sql = "SELECT * FROM `gazeta_nomer` ORDER BY `general_nomer`";
@@ -253,7 +258,6 @@ function ob() {//Главная страница с объявлениями
 		WHERE !`deleted`
 		  AND `country_id`
 		  AND `country_name`!=''
-		  AND `status`=1
 		  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
 		GROUP BY `country_id`
 		ORDER BY `country_name`";
@@ -266,7 +270,6 @@ function ob() {//Главная страница с объявлениями
 			WHERE !`deleted`
 			  AND `city_id`
 			  AND `city_name`!=''
-			  AND `status`=1
 			  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
 			GROUP BY `city_id`
 			ORDER BY `city_name`";
@@ -377,21 +380,28 @@ function ob_spisok($v=array()) {
 			LIMIT ".$start.",".$limit;
 	$q = query($sql);
 	$ob = array();
+	$owner = array();
 	while($r = mysql_fetch_assoc($q)) {
 		if($filter['find']) {
 			if(preg_match($reg, $r['txt']))
 				$r['txt'] = preg_replace($reg, '<em>\\1</em>', $r['txt'], 1);
 		}
 		$ob[$r['id']] = $r;
+		$owner[] = "'ob".$r['id']."'";
+	}
+
+	$sql = "SELECT * FROM `images` WHERE !`deleted` AND `sort`=0 AND `owner` IN (".implode(',', $owner).")";
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q)) {
+		$ex = explode('ob', $r['owner']);
+		$ob[$ex[1]]['img'] = array(
+			'id' => $r['id'],
+			'link' => $r['path'].$r['small_name']
+		);
 	}
 
 	$send['spisok'] = '';
 	foreach($ob as $r) {
-		$foto = '';
-		if($r['file']) {
-			$ex = explode('_', $r['file']);
-			$foto = $ex[0].'s.jpg';
-		}
 		$send['spisok'] .=
 		'<div class="ob-unit">'.
 			'<table class="utab">'.
@@ -400,7 +410,7 @@ function ob_spisok($v=array()) {
 						($r['rubric_sub_id'] ? '<a class="rubsub" val="'.$r['rubric_id'].'_'.$r['rubric_sub_id'].'">'._rubricsub($r['rubric_sub_id']).'</a><u>»</u>' : '').
 						$r['txt'].
 						($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
-		   ($foto ? '<td class="foto"><img src="'.$foto.'" />' : '').
+						(isset($r['img']) ? '<td class="foto"><img src="'.$r['img']['link'].'" class="_iview" val="'.$r['img']['id'].'" />' : '').
 				'<tr><td class="adres" colspan="2">'.
 					($r['city_name'] ? $r['country_name'].', '.$r['city_name']  : '').
 					($r['viewer_id_show'] ? _viewer($r['viewer_id_add'], 'link')  : '').
@@ -419,8 +429,8 @@ function ob_spisok($v=array()) {
 	return $send;
 }//ob_spisok()
 
-
 function ob_create() {
+	query("UPDATE `images` SET `deleted`=1 WHERE `owner`='".VIEWER_ID."'");
 	$dop = array(
 		0 => 'Не выделять',
 		1 => 'Обвести в рамку',
@@ -428,6 +438,7 @@ function ob_create() {
 		3 => 'На чёрном фоне'
 	);
 	return
+	'<script type="text/javascript">var VIEWER_LINK="'.addslashes(_viewer(VIEWER_ID, 'link')).'";</script>'.
 	'<div id="ob-create">'.
 		'<div class="headName">Создание нового объявления</div>'.
         '<div class="_info">'.
@@ -439,19 +450,19 @@ function ob_create() {
 	        '<tr><td class="label">Рубрика:'.
 				'<td><input type="hidden" id="rubric_id" />'.
 					'<input type="hidden" id="rubric_sub_id" />'.
-	        '<tr><td class="label" valign=top>Текст:<td><textarea id="txt"></textarea>'.
+	        '<tr><td class="label top">Текст:<td><textarea id="txt"></textarea>'.
 	        '<tr><td class="label">Контактные телефоны:<td><input type="text" id="telefon" maxlength="200" />'.
-	        //'<tr><td class="label"><input type="hidden" id="images"><td id="upload">'.
-	        '<tr><td class="label">Регион:'.
-				'<td><input type="hidden" id="country_id" value="" />'.
-					'<input type="hidden" id="city_id" value="0" />'.
+	        '<tr><td><td>'._imageAdd(array('owner'=>VIEWER_ID)).
+	        '<tr><td class="label topi">Регион:'.
+				'<td><input type="hidden" id="country_id" value="'._viewer(VIEWER_ID, 'country_id').'" />'.
+					'<input type="hidden" id="city_id" />'.
 	        '<tr><td class="label">Показывать имя из VK:<td>'._check('viewer_id_show').
 			'<tr><td class="label">Платные сервисы:<td>'._check('pay_service').
 		'</table>'.
 
-		'<table class="tab pay">'.
+		'<table class="tab pay dn">'.
 			'<tr><td class="label"><td>'._radio('dop', $dop, 0, 1).
-			'<tr><td class="label">Поднять объявление:<td>'._check('to_top').
+			//'<tr><td class="label">Поднять объявление:<td>'._check('to_top').
 		'</table>'.
 
 		'<table class="tab">'.
@@ -464,8 +475,6 @@ function ob_create() {
         '<div id="preview"></div>'.
 	'</div>';
 }//ob_create()
-
-
 
 function ob_my() {
 	return 'my';

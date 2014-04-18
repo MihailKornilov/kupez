@@ -1,7 +1,9 @@
+function _toAss(s){var a=[];for(var n=0;n<s.length;a[s[n].uid]=s[n].title,n++);return a}
 var WORKER_SPISOK=[{uid:8513964,title:"Юрий Точенов"},{uid:103928103,title:"Марина Торхова"},{uid:16668390,title:"Аля Разина"}],
 CATEGORY_SPISOK=[{uid:1,title:"Объявление"},{uid:2,title:"Реклама"},{uid:3,title:"Поздравление"},{uid:4,title:"Статья"}],
 PERSON_SPISOK=[{uid:1,title:"Частное лицо"},{uid:12,title:"ИП"},{uid:13,title:"ООО"}],
 RUBRIC_SPISOK=[{uid:1,title:"Продам"},{uid:11,title:"Куплю"},{uid:3,title:"Меняю"},{uid:7,title:"Сниму"},{uid:6,title:"Сдам"},{uid:8,title:"Услуги"},{uid:10,title:"Требуется"},{uid:9,title:"Разное"}],
+RUBRIC_ASS=_toAss(RUBRIC_SPISOK),
 INCOME_SPISOK=[{uid:1,title:"Наличный"},{uid:2,title:"Безналичный"},{uid:3,title:"Взаимозачёт"},{uid:4,title:"На телефон Юре"},{uid:5,title:"На телефон Маше"}],
 SKIDKA_SPISOK=[{uid:5,title:"5%"},{uid:10,title:"10%"},{uid:15,title:"15%"},{uid:20,title:"20%"},{uid:30,title:"30%"}],
 TXT_LEN_FIRST=30,
@@ -16,7 +18,10 @@ INVOICE_SPISOK=[{uid:1,title:"Редакция"},{uid:2,title:"Банк"}],
 EXPENSE_SPISOK=[{uid:3,title:"Зарплата работникам"},{uid:7,title:"Отправка документов почтой"},{uid:5,title:"Канц. товары"},{uid:1,title:"Электричество"},{uid:4,title:"Ростелеком"},{uid:6,title:"Т/В программа"},{uid:8,title:"Хоз. товары"},{uid:9,title:"Интернет"}],
 EXPENSE_WORKER={3:1},
 COUNTRY_SPISOK=[{uid:1,title:"Россия"},{uid:2,title:"Украина"},{uid:3,title:"Беларусь"},{uid:4,title:"Казахстан"},{uid:5,title:"Азербайджан"},{uid:6,title:"Армения"},{uid:7,title:"Грузия"},{uid:8,title:"Израиль"},{uid:11,title:"Кыргызстан"},{uid:12,title:"Латвия"},{uid:13,title:"Литва"},{uid:14,title:"Эстония"},{uid:15,title:"Молдова"},{uid:16,title:"Таджикистан"},{uid:17,title:"Туркмения"},{uid:18,title:"Узбекистан"}],
+COUNTRY_ASS=_toAss(COUNTRY_SPISOK),
 RUBRIC_SUB_SPISOK={1:[{uid:4,title:"Техника"},{uid:1,title:"Недвижимость"},{uid:9,title:"Земля"},{uid:3,title:"Бытовая и оргтехника"},{uid:6,title:"Мебель"},{uid:7,title:"Одежда"},{uid:12,title:"Спорт-Отдых"},{uid:10,title:"Детям"},{uid:11,title:"Разное"},{uid:2,title:"Стройматериалы"},{uid:8,title:"Пиломатериалы"},{uid:5,title:"Животные"}]},
+RUBRIC_SUB_ASS={0:""};
+for(k in RUBRIC_SUB_SPISOK){for(n=0;n<RUBRIC_SUB_SPISOK[k].length;n++){var sp=RUBRIC_SUB_SPISOK[k][n];RUBRIC_SUB_ASS[sp.uid]=sp.title;}}
 GN={
 311:{week:1,pub:"2012-01-13",txt:"пт. 13 января 2012"},
 312:{week:2,pub:"2012-01-20",txt:"пт. 20 января 2012"},
