@@ -82,14 +82,124 @@ switch(@$_POST['op']) {
 		$insert_id = mysql_insert_id();
 
 		//сохранение изображений
-		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='".VIEWER_ID."'";
+		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='".VIEWER_ID."' ORDER BY `sort`";
 		$q = query($sql);
-		if(mysql_num_rows($q))
+		if(mysql_num_rows($q)) {
 			query("UPDATE `images` SET `owner`='ob".$insert_id."' WHERE !`deleted` AND `owner`='".VIEWER_ID."'");
-		//while($r = mysql_fetch_assoc($q)) {}
+			$image_id = 0;
+			$image_link = '';
+			$n = 0;
+			while($r = mysql_fetch_assoc($q)) {
+				$small_name = str_replace(VIEWER_ID.'-', 'ob'.$insert_id.'-', $r['small_name']);
+				$big_name = str_replace(VIEWER_ID.'-', 'ob'.$insert_id.'-', $r['big_name']);
+				rename(PATH.'files/images/'.$r['small_name'], PATH.'files/images/'.$small_name);
+				rename(PATH.'files/images/'.$r['big_name'], PATH.'files/images/'.$big_name);
+				query("UPDATE `images` SET `small_name`='".$small_name."',`big_name`='".$big_name."' WHERE `id`=".$r['id']);
+				if(!$n) {
+					$image_id = $r['id'];
+					$image_link = $r['path'].$small_name;
+				}
+				$n++;
+			}
+			query("UPDATE `vk_ob` SET `image_id`=".$image_id.",`image_link`='".$image_link."' WHERE `id`=".$insert_id);
+		}
 
 		jsonSuccess();
 		break;
-}
+	case 'ob_load':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']) || !$_POST['id'])
+			jsonError();
+		$id = intval($_POST['id']);
+		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `viewer_id_add`=".VIEWER_ID." AND `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+		$send = array(
+			'rubric_id' => $r['rubric_id'],
+			'rubric_sub_id' => $r['rubric_sub_id'],
+			'txt' => utf8($r['txt']),
+			'telefon' => utf8($r['telefon']),
+			'images' => utf8(_imageAdd(array('owner'=>'ob'.$r['id']))),
+			'country_id' => $r['country_id'],
+			'city_id' => $r['city_id'],
+			'city_name' => utf8($r['city_name']),
+			'viewer_id_show' => $r['viewer_id_show']
+		);
+		jsonSuccess($send);
+		break;
+	case 'ob_edit':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']) || !$_POST['id'])
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_id']) || !$_POST['rubric_id'])
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_sub_id']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['country_id']))
+			jsonError();
+		if(!preg_match(REGEXP_NUMERIC, $_POST['city_id']))
+			jsonError();
+		if(!preg_match(REGEXP_BOOL, $_POST['viewer_id_show']))
+			jsonError();
 
+		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `viewer_id_add`=".VIEWER_ID." AND `id`=".intval($_POST['id']);
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		$r['rubric_id'] = intval($_POST['rubric_id']);
+		$r['rubric_sub_id'] = intval($_POST['rubric_sub_id']);
+		$r['txt'] = win1251(htmlspecialchars(trim($_POST['txt'])));
+		$r['telefon'] = win1251(htmlspecialchars(trim($_POST['telefon'])));
+		$r['country_id'] = intval($_POST['country_id']);
+		$r['country_name'] = win1251(htmlspecialchars(trim($_POST['country_name'])));
+		$r['city_id'] = intval($_POST['city_id']);
+		$r['city_name'] = win1251(htmlspecialchars(trim($_POST['city_name'])));
+		$r['viewer_id_show'] = intval($_POST['viewer_id_show']);
+
+		$sql = "UPDATE `vk_ob`
+		        SET `rubric_id`=".$r['rubric_id'].",
+					`rubric_sub_id`=".$r['rubric_sub_id'].",
+					`txt`='".addslashes($r['txt'])."',
+					`telefon`='".addslashes($r['telefon'])."',
+					`country_id`=".$r['country_id'].",
+					`country_name`='".addslashes($r['country_name'])."',
+					`city_id`=".$r['city_id'].",
+					`city_name`='".addslashes($r['city_name'])."',
+					`viewer_id_show`=".$r['viewer_id_show']."
+				WHERE `id`=".$r['id'];
+		query($sql);
+
+		$r['image_id'] = 0;
+		$r['image_link'] = '';
+		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='ob".$r['id']."' ORDER BY `sort`";
+		$q = query($sql);
+		$n = 0;
+		while($i = mysql_fetch_assoc($q)) {
+			if(!$n) {
+				$r['image_id'] = $i['id'];
+				$r['image_link'] = $i['path'].$i['small_name'];
+			}
+			$n++;
+		}
+		query("UPDATE `vk_ob` SET `image_id`=".$r['image_id'].",`image_link`='".$r['image_link']."' WHERE `id`=".$r['id']);
+
+		$r['edited'] = 1;
+		$send['html'] = utf8(ob_my_unit($r));
+		jsonSuccess($send);
+		break;
+	case 'ob_del':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']) || !$_POST['id'])
+			jsonError();
+		$id = intval($_POST['id']);
+		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `viewer_id_add`=".VIEWER_ID." AND `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+		query("UPDATE `vk_ob` SET `deleted`=1 WHERE`id`=".$id);
+		jsonSuccess();
+		break;
+	case 'ob_my_spisok':
+		$data = ob_my_spisok($_POST);
+		$send['result'] = utf8($data['result']);
+		$send['spisok'] = utf8($data['spisok']);
+		jsonSuccess($send);
+		break;
+}
 jsonError();

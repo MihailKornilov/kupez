@@ -27,6 +27,7 @@ var hashLoc,
 		if(s)
 			VK.callMethod('setLocation', hashLoc);
 	},
+
 	obFilter = function() {
 		return {
 			op:'ob_spisok',
@@ -72,21 +73,51 @@ var hashLoc,
 				'</div>';
 		$('#preview').html(html);
 	},
-	cityGet = function(val) {
+
+	obMyFilter = function() {
+		return {
+			op:'ob_my_spisok',
+			menu:$('#menu').val()
+		};
+	},
+	obMySpisok = function() {
+		if($('.result').hasClass('_busy'))
+			return;
+		var send = obMyFilter();
+		$('.result').addClass('_busy');
+		$.post(AJAX_MAIN, send, function (res) {
+			$('.result').removeClass('_busy');
+			if(res.success) {
+				$('.result').html(res.result);
+				$('.left').html(res.spisok);
+			}
+		}, 'json');
+	},
+
+	cityGet = function(val, city_id, city_name) {
 		if($('#country_id').val() == 0)
 			return;
 		if(!val)
 			val = '';
+		if(city_id == undefined || city_id == '0')
+			city_id = 0;
 		$('#city_id')._select('process');
 		VK.api('places.getCities',{country:$('#country_id').val(), q:val}, function(data) {
+			var insert = 1; // Вставка города при редактировании, если отсутствует в списке
 			for(var n = 0; n < data.response.length; n++) {
 				var sp = data.response[n];
 				sp.uid = sp.cid;
 				sp.content = sp.title + (sp.area ? '<span>' + sp.area + '</span>' : '');
+				if(city_id == sp.uid)
+					insert = 0;
 			}
+			if(city_id && insert)
+				data.response.unshift({uid:city_id,title:city_name});
 			if(val.length == 0)
 				data.response[0].content = '<B>' + data.response[0].title + '</B>';
 			$('#city_id')._select(data.response);
+			if(city_id)
+				$('#city_id')._select(city_id);
 		});
 	},
 	cityShow = function() {
@@ -144,6 +175,171 @@ $(document)
 			else
 				next.removeClass('busy');
 		}, 'json');
+	})
+	.on('click', '#ob-my ._next', function() {
+		var next = $(this),
+			send = obMyFilter();
+		send.page = next.attr('val');
+		if(next.hasClass('busy'))
+			return;
+		next.addClass('busy');
+		$.post(AJAX_MAIN, send, function(res) {
+			if(res.success)
+				next.after(res.spisok).remove();
+			else
+				next.removeClass('busy');
+		}, 'json');
+	})
+	.on('click', '#ob-my .img_edit', function() {
+		var t = $(this);
+		while(!t.hasClass('ob-unit'))
+			t = t.parent();
+		var dialog = _dialog({
+			top:20,
+			width:550,
+			head:'Редактирование объявления',
+			load:1,
+			butSubmit:'Сохранить',
+			submit:submit
+		});
+		var send = {
+			op:'ob_load',
+			id:t.attr('val')
+		};
+		$.post(AJAX_MAIN, send, function(res) {
+			if(res.success) {
+				var html =
+					'<table class="ob-edit-tab">' +
+						'<tr><td class="label">Рубрика:' +
+							'<td><input type="hidden" id="rubric_id" value="' + res.rubric_id + '" />' +
+								'<input type="hidden" id="rubric_sub_id" value="' + res.rubric_sub_id + '" />' +
+						'<tr><td class="label topi">Текст:<td><textarea id="txt">' + res.txt + '</textarea>' +
+						'<tr><td class="label">Контактные телефоны:' +
+							'<td><input type="text" id="telefon" maxlength="200" value="' + res.telefon + '" />' +
+						'<tr><td><td>' + res.images +
+						'<tr><td class="label topi">Регион:' +
+							'<td><input type="hidden" id="country_id" value="' + res.country_id + '" />' +
+								'<input type="hidden" id="city_id" value="' + res.city_id + '" />' +
+						'<tr><td class="label">Показывать имя из VK:' +
+							'<td><input type="hidden" id="viewer_id_show" value="' + res.viewer_id_show + '" />' +
+				'</table>';
+				dialog.content.html(html);
+				$('#rubric_id')._select({
+					width:130,
+					spisok:RUBRIC_SPISOK,
+					func:rubricSub
+				});
+				rubricSub(res.rubric_id, res.rubric_sub_id * 1);
+				$('#txt').autosize();
+				imageSortable();
+				cityShow();
+				cityGet('', res.city_id, res.city_name);
+				$('#country_id')._select({
+					width:180,
+					title0:'Страна не указана',
+					spisok:COUNTRY_SPISOK,
+					func:function(id) {
+						cityShow();
+						if(id) {
+							$('#city_id')._select(0)._select('process');
+							VK.api('places.getCities',{country:id}, function (data) {
+								var d = data.response;
+								for(n = 0; n < d.length; n++)
+									d[n].uid = d[n].cid;
+								d[0].content = '<b>' + d[0].title + '</b>';
+								$('#city_id')._select(d);
+							});
+						}
+					}
+				});
+				$('#viewer_id_show')._check();
+			} else
+				dialog.loadError();
+		}, 'json');
+		function rubricSub(id, sub_id) {
+			$('#rubric_sub_id').val(typeof sub_id == 'number' ? sub_id : 0);
+			if(RUBRIC_SUB_SPISOK[id])
+				$('#rubric_sub_id')._select({
+					width:200,
+					title0:'Подрубрика не указана',
+					spisok:RUBRIC_SUB_SPISOK[id]
+				});
+			else
+				$('#rubric_sub_id')._select('remove');
+		}
+		function submit() {
+			var send = {
+					op:'ob_edit',
+					id:t.attr('val'),
+					rubric_id:$('#rubric_id').val(),
+					rubric_sub_id:$('#rubric_sub_id').val(),
+					txt:$.trim($('#txt').val()),
+					telefon:$('#telefon').val(),
+					country_id:$('#country_id').val(),
+					country_name:$('#country_id')._select('title'),
+					city_id:$('#city_id').val(),
+					city_name:$('#city_id')._select('title'),
+					viewer_id_show:$('#viewer_id_show').val()
+				};
+			if(!send.txt) { err('Введите текст объявления'); $('#txt').focus(); }
+			else {
+				dialog.process();
+				$.post(AJAX_MAIN, send, function(res) {
+					if(res.success) {
+						t.after(res.html).remove();
+						dialog.close();
+						_msg('Объявление изменено');
+					} else
+						dialog.abort();
+				}, 'json');
+			}
+		}
+		function err(msg) {
+			dialog.bottom.vkHint({
+				msg:'<span class="red">' + msg + '</span>',
+				top:-48,
+				left:177,
+				indent:50,
+				show:1,
+				remove:1
+			});
+		}
+	})
+	.on('mouseenter', '.ob-unit.edited', function() {
+		$(this).removeClass('edited');
+	})
+	.on('click', '#ob-my .img_del', function() {
+		var t = $(this);
+		while(!t.hasClass('ob-unit'))
+			t = t.parent();
+		var dialog = _dialog({
+			top:90,
+			width:260,
+			head:'Удаление объявления',
+			content:'<center>' +
+						'После удаления<br />' +
+						'объявление восстановить<br />' +
+						'будет невозможно.<br /><br />' +
+						'<b>Подтвердите удаление.</b>' +
+					'</center>',
+			butSubmit:'Удалить',
+			submit:submit
+		});
+		function submit() {
+			var send = {
+				op:'ob_del',
+				id:t.attr('val')
+			};
+			dialog.process();
+			$.post(AJAX_MAIN, send, function(res) {
+				if(res.success) {
+					dialog.close();
+					_msg('Объявление удалено');
+					t.remove();
+				} else
+					dialog.abort();
+			}, 'json');
+		}
 	});
 
 $(document)
@@ -192,8 +388,8 @@ $(document)
 					'<div id="ob-create-rules">' +
 						'<div class="headName">Рекомендации при создании объявления:</div>' +
 						'<ul><li>более подробно описывайте свой товар;' +
-							'<li>по возможности прилагайте фотографию, таким образом пользователям будет визуально удобней определять то, что Вы предлагаете;' +
-							//' Приложение позволяет загрузить до 4-х изображений на одно объявление;' +
+							'<li>по возможности прилагайте фотографии, таким образом пользователям будет визуально удобней определять то, что Вы предлагаете; ' +
+								'Приложение позволяет загрузить до <u>8-и изображений</u> на одно объявление;' +
 							'<li>обязательно указывайте реальную цену;' +
 							'<li>не подавайте одно и то же объявление повторно, для этого есть специальные недорогие платные сервисы. ' +
 								'Повторные объявления будут удаляться;' +
@@ -274,7 +470,7 @@ $(document)
 			});
 			$('#dop').html(obPreview);
 			$('.vkCancel').click(function() {
-				location.href = URL + '&p=ob';
+				location.href = URL + '&p=ob' + $(this).attr('val');
 			});
 			$('.vkButton').click(function() {
 				var t = $(this),
@@ -284,7 +480,6 @@ $(document)
 						rubric_sub_id:$('#rubric_sub_id').val(),
 						txt:$.trim($('#txt').val()),
 						telefon:$('#telefon').val(),
-						//file:$("#images").val(),
 						country_id:$('#country_id').val(),
 						country_name:$('#country_id')._select('title'),
 						city_id:$('#city_id').val(),
@@ -318,5 +513,8 @@ $(document)
 					});
 				}
 			});
+		}
+		if($('#ob-my').length) {
+			$('#menu').rightLink(obMySpisok);
 		}
 	});

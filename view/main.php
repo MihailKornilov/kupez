@@ -92,9 +92,9 @@ function _header() {
 			(LOCAL ? 'for(var i in VK)if(typeof VK[i]=="function")VK[i]=function(){return false};' : '').
 			'var DOMAIN="'.DOMAIN.'",'.
 				'VALUES="'.VALUES.'",'.
-				'VIEWER_ID='.VIEWER_ID.','.
-				'GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.','.
-				'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.';'.
+				($_GET['p'] == 'gazeta' ? 'GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.',' : '').
+				($_GET['p'] == 'gazeta' ? 'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.',' : '').
+				'VIEWER_ID='.VIEWER_ID.';'.
 		'</script>'.
 
 		//Подключение api VK. Стили VK должны стоять до основных стилей сайта
@@ -314,7 +314,7 @@ function ob() {//Главная страница с объявлениями
 					'<input type="hidden" id="countries" />'.
 					'<div class="city-sel dn"><input type="hidden" id="cities"></div>'.
 					'<div class="findHead">Рубрики</div>'.
-					_rightLink('rub', $rubric, 0).
+					_rightLink('rub', $rubric).
 					'<input type="hidden" id="rubsub" value="0" />'.
 					'<div class="findHead">Дополнительно</div>'.
 					_check('withfoto', 'Только с фото').
@@ -332,7 +332,7 @@ function obFilter($v=array()) {
 		'rubric_sub_id' => !empty($v['rubric_sub_id']) && preg_match(REGEXP_NUMERIC, $v['rubric_sub_id']) ? intval($v['rubric_sub_id']) : 0,
 		'withfoto' => isset($v['withfoto']) && preg_match(REGEXP_BOOL, $v['withfoto']) ? intval($v['withfoto']) : 0
 	);
-}//obSpisokFilter()
+}//obFilter()
 function ob_spisok($v=array()) {
 	$filter = obFilter($v);
 
@@ -354,7 +354,7 @@ function ob_spisok($v=array()) {
 	if($filter['rubric_sub_id'])
 		$cond .= " AND `rubric_sub_id`=".$filter['rubric_sub_id'];
 	if($filter['withfoto'])
-		$cond .= " AND length(file)>0";
+		$cond .= " AND `image_id`";
 
 	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `vk_ob` WHERE ".$cond);
 
@@ -380,24 +380,12 @@ function ob_spisok($v=array()) {
 			LIMIT ".$start.",".$limit;
 	$q = query($sql);
 	$ob = array();
-	$owner = array();
 	while($r = mysql_fetch_assoc($q)) {
 		if($filter['find']) {
 			if(preg_match($reg, $r['txt']))
 				$r['txt'] = preg_replace($reg, '<em>\\1</em>', $r['txt'], 1);
 		}
 		$ob[$r['id']] = $r;
-		$owner[] = "'ob".$r['id']."'";
-	}
-
-	$sql = "SELECT * FROM `images` WHERE !`deleted` AND `sort`=0 AND `owner` IN (".implode(',', $owner).")";
-	$q = query($sql);
-	while($r = mysql_fetch_assoc($q)) {
-		$ex = explode('ob', $r['owner']);
-		$ob[$ex[1]]['img'] = array(
-			'id' => $r['id'],
-			'link' => $r['path'].$r['small_name']
-		);
 	}
 
 	$send['spisok'] = '';
@@ -408,9 +396,9 @@ function ob_spisok($v=array()) {
 				'<tr><td class="txt">'.
 						'<a class="rub" val="'.$r['rubric_id'].'">'._rubric($r['rubric_id']).'</a><u>»</u>'.
 						($r['rubric_sub_id'] ? '<a class="rubsub" val="'.$r['rubric_id'].'_'.$r['rubric_sub_id'].'">'._rubricsub($r['rubric_sub_id']).'</a><u>»</u>' : '').
-						$r['txt'].
+						nl2br($r['txt']).
 						($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
-						(isset($r['img']) ? '<td class="foto"><img src="'.$r['img']['link'].'" class="_iview" val="'.$r['img']['id'].'" />' : '').
+  ($r['image_id'] ? '<td class="foto"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
 				'<tr><td class="adres" colspan="2">'.
 					($r['city_name'] ? $r['country_name'].', '.$r['city_name']  : '').
 					($r['viewer_id_show'] ? _viewer($r['viewer_id_add'], 'link')  : '').
@@ -422,7 +410,7 @@ function ob_spisok($v=array()) {
 		$c = $c > $limit ? $limit : $c;
 		$send['spisok'] .=
 			'<div class="_next ob_next" val="'.($page + 1).'">'.
-				'<span>Показать ещё '.$c.' объявлен'._end($all, 'ие', 'ия', 'ий').'</span>'.
+				'<span>Показать ещё '.$c.' объявлен'._end($c, 'ие', 'ия', 'ий').'</span>'.
 			'</div>';
 	}
 
@@ -430,6 +418,7 @@ function ob_spisok($v=array()) {
 }//ob_spisok()
 
 function ob_create() {
+	//to_new_images();
 	query("UPDATE `images` SET `deleted`=1 WHERE `owner`='".VIEWER_ID."'");
 	$dop = array(
 		0 => 'Не выделять',
@@ -437,6 +426,10 @@ function ob_create() {
 		2 => 'Выделить жирным шрифтом',
 		3 => 'На чёрном фоне'
 	);
+	switch(@$_GET['back']) {
+		case 'my': $back = '&d=my'; break;
+		default: $back = '';
+	}
 	return
 	'<script type="text/javascript">var VIEWER_LINK="'.addslashes(_viewer(VIEWER_ID, 'link')).'";</script>'.
 	'<div id="ob-create">'.
@@ -468,7 +461,7 @@ function ob_create() {
 		'<table class="tab">'.
 			'<tr><td class="label">'.
 				'<td><div class="vkButton"><button>Разместить объявление<span></span></button></div>'.
-					'<div class="vkCancel"><button>Отмена</button></div>'.
+					'<div class="vkCancel" val="'.$back.'"><button>Отмена</button></div>'.
 		'</table>'.
 
 		'<div class="headName">Предосмотр объявления</div>'.
@@ -477,10 +470,179 @@ function ob_create() {
 }//ob_create()
 
 function ob_my() {
-	return 'my';
+	$data = ob_my_spisok();
+	$menu = array(
+		0 => 'Все объявления',
+		1 => 'Активные',
+		2 => 'Архив',
+	);
+	return
+	'<div id="ob-my">'.
+		'<div class="path"><a href="'.URL.'&p=ob">КупецЪ</a> » Мои объявления</div>'.
+		'<div class="result">'.$data['result'].'</div>'.
+		'<table class="tabLR">'.
+			'<tr><td class="left">'.$data['spisok'].
+				'<td class="right">'.
+					'<div id="buttonCreate"><a href="'.URL.'&p=ob&d=create&back=my">Новое объявление</a></div>'.
+					_rightLink('menu', $menu).
+        '</table>'.
+	'</div>';
 }//ob_my()
+function obMyFilter($v=array()) {
+	return array(
+		'page' => !empty($v['page']) && preg_match(REGEXP_NUMERIC, $v['page']) ? intval($v['page']) : 1,
+		'limit' => !empty($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) ? intval($v['limit']) : 20,
+		'menu' => isset($v['menu']) && preg_match(REGEXP_NUMERIC, $v['menu']) ? intval($v['menu']) : 0
+	);
+}//obMyFilter()
+function ob_my_spisok($v=array()) {
+	$filter = obMyFilter($v);
+
+	$limit = $filter['limit'];
+	$page = $filter['page'];
+
+	$cond = "!`deleted` AND `viewer_id_add`=".VIEWER_ID;
+
+	switch($filter['menu']) {
+		case 1: $cond .= " AND `day_active`>=DATE_FORMAT(NOW(),'%Y-%m-%d')"; break;
+		case 2: $cond .= " AND `day_active`<DATE_FORMAT(NOW(),'%Y-%m-%d')"; break;
+	}
+
+	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `vk_ob` WHERE ".$cond);
+
+	if(!$all)
+		return array(
+			'all' => 0,
+			'result' => 'Объявлений не найдено.',
+			'spisok' => '<div class="_empty">Объявлений не найдено.</div>',
+			'filter' => $filter
+		);
+
+	$send['all'] = $all;
+	$send['result'] = 'Показан'._end($all, '', 'о').' '.$all.' объявлен'._end($all, 'ие', 'ия', 'ий');
+	$send['filter'] = $filter;
+	$send['spisok'] = '';
+
+	$start = ($page - 1) * $limit;
+	$sql = "SELECT *
+			FROM `vk_ob`
+			WHERE ".$cond."
+			ORDER BY `id` DESC
+			LIMIT ".$start.",".$limit;
+	$q = query($sql);
+	$ob = array();
+	while($r = mysql_fetch_assoc($q))
+		$send['spisok'] .= ob_my_unit($r);
+
+	if($start + $limit < $all) {
+		$c = $all - $start - $limit;
+		$c = $c > $limit ? $limit : $c;
+		$send['spisok'] .=
+			'<div class="_next" val="'.($page + 1).'">'.
+			'<span>Показать ещё '.$c.' объявлен'._end($c, 'ие', 'ия', 'ий').'</span>'.
+			'</div>';
+	}
+
+	return $send;
+}//ob_my_spisok()
+function ob_my_unit($r) {
+	$dayTime = strtotime($r['day_active']) - time() + 86400;
+	$dayLast = $dayTime > 0 ? floor($dayTime / 86400) : 0;
+	return
+	'<div class="ob-unit'.($dayLast ? '' : ' arc').(isset($r['edited']) ? ' edited' : '').'" val="'.$r['id'].'">'.
+		'<div class="edit">'.
+			FullData($r['dtime_add'], 0, 1).
+			'<span class="last">'.
+				($dayLast ? 'Остал'._end($dayLast, 'ся ', 'ось ').$dayLast._end($dayLast, ' день', ' дня', ' дней') : 'в архиве').
+			'</span>'.
+			'<div class="icon">'.
+				'<div class="img_edit'._tooltip('Редактировать', -50).'</div>'.
+				'<div class="img_del'._tooltip('Удалить', -29).'</div>'.
+			'</div>'.
+		'</div>'.
+		'<table class="utab">'.
+			'<tr><td class="txt">'.
+					'<span class="rub">'._rubric($r['rubric_id']).'</span><u>»</u>'.
+					($r['rubric_sub_id'] ? '<span class="rubsub">'._rubricsub($r['rubric_sub_id']).'</span><u>»</u>' : '').
+					nl2br($r['txt']).
+					($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
+					($r['image_id'] ? '<td class="foto"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
+			'<tr><td class="adres" colspan="2">'.
+				($r['city_name'] ? $r['country_name'].', '.$r['city_name']  : '').
+				($r['viewer_id_show'] ? _viewer($r['viewer_id_add'], 'link')  : '').
+		'</table>'.
+	'</div>';
+}//ob_my_unit()
 
 
+
+
+function to_new_images() {//Перенос картинок в новый формат
+	define('IMLINK', 'http://'.DOMAIN.'/files/images/');
+	define('IMPATH', PATH.'files/images/');
+	$sql = "SELECT * FROM `vk_ob` WHERE LENGTH(file) LIMIT 300";
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q)) {
+		$sort = 0;
+		$image_id = 0;
+		$image_link = '';
+		foreach(explode('_', $r['file']) as $i) {
+			$name = str_replace('http://kupez.nyandoma.ru/files/images/', '', $i);
+
+			$name_small = IMPATH.$name.'s.jpg';
+			$im = imagecreatefromjpeg($name_small);
+			$x_small = imagesx($im);
+			$y_small = imagesy($im);
+			$name_small_new = 'ob'.$r['id'].'-'.$name.($name[strlen($name) - 1] != '-' ? '-' : '').'s.jpg';
+			rename($name_small, IMPATH.$name_small_new);
+
+			$name_big = IMPATH.$name.'b.jpg';
+			$im = imagecreatefromjpeg(PATH.'files/images/'.$name.'b.jpg');
+			$x_big = imagesx($im);
+			$y_big = imagesy($im);
+			$name_big_new = 'ob'.$r['id'].'-'.$name.($name[strlen($name) - 1] != '-' ? '-' : '').'b.jpg';
+			rename($name_big, IMPATH.$name_big_new);
+
+			echo $name_small_new.' = '.$x_small.'x'.$y_small.'<br />';
+			$sql = "INSERT INTO `images` (
+					  `path`,
+					  `small_name`,
+					  `small_x`,
+					  `small_y`,
+					  `big_name`,
+					  `big_x`,
+					  `big_y`,
+					  `owner`,
+					  `sort`,
+					  `viewer_id_add`,
+					  `dtime_add`
+				  ) VALUES (
+					  '".addslashes(IMLINK)."',
+					  '".$name_small_new."',
+					  ".$x_small.",
+					  ".$y_small.",
+					  '".$name_big_new."',
+					  ".$x_big.",
+					  ".$y_big.",
+					  'ob".$r['id']."',
+					  ".$sort.",
+					  ".$r['viewer_id_add'].",
+					  '".$r['dtime_add']."'
+				  )";
+			query($sql);
+			if(!$sort) {
+				$image_id = mysql_insert_id();
+				$image_link = IMLINK.$name_small_new;
+			}
+			$sort++;
+		}
+		query("UPDATE `vk_ob`
+			   SET `file`='',
+			       `image_id`=".$image_id.",
+			       `image_link`='".$image_link."'
+			   WHERE `id`=".$r['id']);
+	}
+}
 /*
 // Проверка пользователя на наличие в базе. Также обновление при первом входе в Контакт
 function vkUserCheck($vku, $update = false)

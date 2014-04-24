@@ -1,7 +1,6 @@
 <?php
 // Размещение объявления
-function obCreate()
-{
+function obCreate() {
     global $vku;
 ?>
 <DIV id=vk-create>
@@ -23,20 +22,3 @@ create = {
 <?php
 } // end of obCreate()
 
-function obMySpisok() {
-?>
-<div id=myOb>
-    <DIV class=path><A href="<?=URL.'&p=ob'?>">КупецЪ</A> » Мои объявления</DIV>
-
-    <DIV id=findResult>&nbsp;</DIV>
-
-    <TABLE cellpadding=0 cellspacing=0 class=MainSpisok>
-        <TR><TD class=left id=obSpisok>&nbsp;
-            <TD class=right><DIV id=links></DIV>
-    </TABLE>
-</div>
-<SCRIPT type="text/javascript" src="/view/ob/my/ob_edit.js?<?=JS_VERSION?>"></SCRIPT>
-<SCRIPT type="text/javascript" src="/view/ob/my/myOb.js?<?=JS_VERSION?>"></SCRIPT>
-<?php
-} // end of obCreate()
-?>

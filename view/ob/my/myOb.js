@@ -1,13 +1,3 @@
-$("#links").infoLink({
-  spisok:[
-    {uid:0,title:'Все объявления'},
-    {uid:1,title:'Активные'},
-    {uid:2,title:'Архив'}],
-   func:function (uid) { G.spisok.print({menu:uid}); }
-});
-
-
-
 G.spisok.create({
     //a:1,
     view:$("#obSpisok"),
