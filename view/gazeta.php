@@ -21,6 +21,11 @@ function _mainLinks() {
 			'name' => 'Настройки',
 			'page' => 'setup',
 			'show' => 1
+		),
+		array(
+			'name' => 'Выход',
+			'page' => 'ob',
+			'show' => 1
 		)
 	);
 
@@ -305,7 +310,7 @@ function clientFilter($v=array()) {
 	return $filter;
 }//clientFilter()
 function client_data($page=1, $filter=array()) {
-	$cond = "`deleted`=0";
+	$cond = "!`deleted`";
 	$reg = '';
 	$regEngRus = '';
 	if(!empty($filter['fast'])) {
@@ -499,14 +504,33 @@ function _clientLink($arr, $fio=0) {//Добавление имени и ссылки клиента в массив
 	}
 	return $arr;
 }//_clientLink()
-function clientBalansUpdate($client_id) {// установка баланса клиента
-	$rashod = query_value("SELECT SUM(`summa`) FROM `gazeta_zayav` WHERE !`deleted` AND `client_id`=".$client_id);
+function clientBalansUpdate($client_id, $ret='balans') {// установка баланса клиента
+	$expense = query_value("SELECT SUM(`summa`) FROM `gazeta_zayav` WHERE !`deleted` AND `client_id`=".$client_id);
 	$prihod = query_value("SELECT SUM(`sum`) FROM `gazeta_money` WHERE !`deleted` AND `client_id`=".$client_id);
-	$balans = $prihod - $rashod;
-	$sql = "UPDATE `gazeta_client` SET `balans`=".$balans." WHERE `id`=".$client_id;
+	$balans = $prihod - $expense;
+
+	//Определение последней даты активности клиента по выходу заявок
+	$sql = "SELECT MAX(`gn`.`day_public`)
+			FROM `gazeta_zayav` `z`
+				LEFT JOIN `gazeta_nomer_pub` `pub`
+				ON `z`.`id`=`pub`.`zayav_id`
+				LEFT JOIN `gazeta_nomer` `gn`
+				ON `gn`.`general_nomer`=`pub`.`general_nomer`
+			WHERE `z`.`client_id`=".$client_id."
+			GROUP BY `z`.`id`
+			ORDER BY `gn`.`day_public` DESC
+			LIMIT 1";
+	$activity = query_value($sql);
+
+	$sql = "UPDATE `gazeta_client`
+			SET `balans`=".$balans.",
+				`activity`='".($activity ? $activity : '0000-00-00')."'
+			WHERE `id`=".$client_id;
 	query($sql);
+	if($ret == 'activity')
+		return $activity;
 	return $balans;
-}
+}//clientBalansUpdate()
 function clientInfoGet($client) {
 	$name = $client['person'] == 1 ? $client['fio'] : _person($client['person']).' '.$client['org_name'];
 	if(empty($name))
@@ -527,7 +551,7 @@ function clientInfoGet($client) {
 		._viewer($client['viewer_id_add'], 'name').' '.
 		FullData($client['dtime_add'], 1).
 	'</div>';
-}
+}//clientInfoGet()
 function client_info($client_id) {
 	$sql = "SELECT * FROM `gazeta_client` WHERE `deleted`=0 AND `id`=".$client_id;
 	if(!$client = mysql_fetch_assoc(query($sql)))
@@ -684,6 +708,7 @@ function gns_control($post, $category, $zayav_id='{zayav_id}') {//проверка прави
 	return $send;
 }
 function zayav_add() {
+	query("UPDATE `images` SET `deleted`=1 WHERE `owner`='".VIEWER_ID."'");
 	$client_id = empty($_GET['client_id']) || !preg_match(REGEXP_NUMERIC, $_GET['client_id']) ? 0 : $_GET['client_id'];
 	$back = $client_id ? 'client&d1=info&id='.$client_id : 'zayav';
 	return
@@ -708,6 +733,7 @@ function zayav_add() {
 					'<input type="text" id="kv_sm" readonly> см<sup>2</sup>'.
 		'</table>'.
 		'<table class="zatab">'.
+			'<tr><td><td>'._imageAdd(array('owner'=>VIEWER_ID,'max'=>4)).
 			'<tr><td class="label top">Номера выпуска:<td id="gn_spisok">'.
 		'</table>'.
 		'<table class="zatab skd dn">'.
@@ -842,25 +868,29 @@ function zayav_data($v=array()) {
 			'<div class="zayav_unit">'.
 				'<div class="dtime">'.FullDataTime($r['dtime_add']).'</div>'.
 				'<a href="'.URL.'&p=gazeta&d=zayav&d1=info&id='.$id.'" class="name">'._category($r['category']).' №'.(isset($r['find_id']) ? '<em>'.$id.'</em>' : $id).'</a>'.
-				'<table class="values">'.
-					($r['client_id'] && !$filter['client_id'] ? '<tr><td class="label">Клиент:<td>'.$r['client_link'] : '').
-					($r['category'] == 1 ?
-						'<tr><td class="label">Рубрика:<td>'._rubric($r['rubric_id']).
-							($r['rubric_sub_id'] ? '<span class="ug">»</span>'._rubricsub($r['rubric_sub_id']) : '').
-						'<tr><td class="label top">Текст:<td><div class="txt">'.$r['txt'].'</div>'
-					: '').
-					($r['category'] == 2 ?
-						'<tr><td class="label">Размер:<td>'.
-							round($r['size_x'], 1).
-							' x '.
-							round($r['size_y'], 1).
-							' = '.
-							'<b>'.round($r['size_x']*$r['size_y']).'</b> см&sup2;'
-					: '').
-					(isset($r['telefon_find']) ? '<tr><td class="label">Телефон:<td>'.$r['telefon_find'] : '').
-					(isset($r['adres_find']) ? '<tr><td class="label">Адрес:<td>'.$r['adres_find'] : '').
-					'<tr><td class="label">Стоимость:<td><b>'.round($r['summa'], 2).'</b> руб.'.
-						($r['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
+				'<table class="tab"><tr>'.
+					'<td class="td-values">'.
+						'<table class="values">'.
+							($r['client_id'] && !$filter['client_id'] ? '<tr><td class="label">Клиент:<td>'.$r['client_link'] : '').
+							($r['category'] == 1 ?
+								'<tr><td class="label">Рубрика:<td>'._rubric($r['rubric_id']).
+									($r['rubric_sub_id'] ? '<span class="ug">»</span>'._rubricsub($r['rubric_sub_id']) : '').
+								'<tr><td class="label top">Текст:<td><div class="txt">'.$r['txt'].'</div>'
+							: '').
+							($r['category'] == 2 ?
+								'<tr><td class="label">Размер:<td>'.
+									round($r['size_x'], 1).
+									' x '.
+									round($r['size_y'], 1).
+									' = '.
+									'<b>'.round($r['size_x']*$r['size_y']).'</b> см&sup2;'
+							: '').
+							(isset($r['telefon_find']) ? '<tr><td class="label">Телефон:<td>'.$r['telefon_find'] : '').
+							(isset($r['adres_find']) ? '<tr><td class="label">Адрес:<td>'.$r['adres_find'] : '').
+							'<tr><td class="label">Стоимость:<td><b>'.round($r['summa'], 2).'</b> руб.'.
+								($r['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
+						'</table>'.
+ ($r['image_id'] ? '<td class="image"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
 				'</table>'.
 			'</div>';
 	}
@@ -1048,6 +1078,7 @@ function zayav_edit($zayav_id) {
 					' = '.
 					'<input type="text" id="kv_sm" readonly value="'.round($z['size_x'] * $z['size_y']).'" /> см<sup>2</sup>'
 	: '').
+			'<tr><td><td>'._imageAdd(array('owner'=>'zayav'.$zayav_id,'max'=>4)).
 			'<tr><td class="label top">Номера выпуска:<td id="gn_spisok">'.
 	 (REK ? '<tr><td class="label">Скидка:<td><input type="hidden" id="skidka" value="'.$z['skidka'].'" />' : '').
 (OB || REK ? '<tr><td class="label">Указать стоимость вручную:<td>'._check('summa_manual', '', $z['summa_manual']) : '').

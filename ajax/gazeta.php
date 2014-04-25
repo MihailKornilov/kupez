@@ -178,7 +178,7 @@ switch(@$_POST['op']) {
 		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
 			jsonError();
 		$client_id = intval($_POST['id']);
-		if(!query_value("SELECT COUNT(`id`) FROM `gazeta_client` WHERE `deleted`=0 AND `id`=".$client_id))
+		if(!query_value("SELECT COUNT(`id`) FROM `gazeta_client` WHERE !`deleted` AND `id`=".$client_id))
 			jsonError();
 		query("UPDATE `gazeta_client` SET `deleted`=1 WHERE `id`=".$client_id);
 		//query("UPDATE `zayav` SET `deleted`=1 WHERE `client_id`=".$client_id);
@@ -248,7 +248,7 @@ switch(@$_POST['op']) {
 			jsonError();
 		if(!$gns = gns_control($_POST['gns'], $category))
 			jsonError();
-		$skidka_sum = $category == 2 && $skidka ? round($gns['summa']/(100 - $skidka) * 100 - $gns['summa'], 2) : 0;
+		$skidka_sum = $category == 2 && $skidka ? round($gns['summa'] / (100 - $skidka) * 100 - $gns['summa'], 2) : 0;
 
 		$sql = "INSERT INTO `gazeta_zayav` (
 				    `client_id`,
@@ -300,6 +300,75 @@ switch(@$_POST['op']) {
 					`dop`,
 					`cena`
 			   ) VALUES ".str_replace('{zayav_id}', $send['id'], $gns['insert']));
+
+
+		//сохранение изображений
+		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='".VIEWER_ID."' ORDER BY `sort`";
+		$q = query($sql);
+		$image_id = 0;
+		$image_link = '';
+		if(mysql_num_rows($q)) {
+			query("UPDATE `images` SET `owner`='zayav".$send['id']."' WHERE !`deleted` AND `owner`='".VIEWER_ID."'");
+			$n = 0;
+			while($r = mysql_fetch_assoc($q)) {
+				$small_name = str_replace(VIEWER_ID.'-', 'zayav'.$send['id'].'-', $r['small_name']);
+				$big_name = str_replace(VIEWER_ID.'-', 'zayav'.$send['id'].'-', $r['big_name']);
+				rename(PATH.'files/images/'.$r['small_name'], PATH.'files/images/'.$small_name);
+				rename(PATH.'files/images/'.$r['big_name'], PATH.'files/images/'.$big_name);
+				query("UPDATE `images` SET `small_name`='".$small_name."',`big_name`='".$big_name."' WHERE `id`=".$r['id']);
+				if(!$n) {
+					$image_id = $r['id'];
+					$image_link = $r['path'].$small_name;
+				}
+				$n++;
+			}
+			query("UPDATE `gazeta_zayav` SET `image_id`=".$image_id.",`image_link`='".$image_link."' WHERE `id`=".$send['id']);
+		}
+
+		clientBalansUpdate($client_id, 'activity');
+
+		//Внесение объявления в список для общего доступа
+		if($category == 1) {
+			$sql = "SELECT IFNULL(MAX(`general_nomer`),0)
+					FROM `gazeta_nomer_pub`
+					WHERE `zayav_id`=".$send['id'];
+			if($max = query_value($sql)) {
+				$sql = "INSERT INTO `vk_ob` (
+						`rubric_id`,
+						`rubric_sub_id`,
+						`txt`,
+						`telefon`,
+
+						`country_id`,
+						`country_name`,
+						`city_id`,
+						`city_name`,
+
+						`image_id`,
+						`image_link`,
+
+						`day_active`,
+						`gazeta_id`
+					) VALUES (
+						".$rubric_id.",
+						".$rubric_sub_id.",
+						'".addslashes($txt)."',
+						'".addslashes(trim($telefon.($adres ? ' Адрес: '.$adres : '')))."',
+
+						1,
+						'Россия',
+						3644,
+						'Няндома',
+
+						".$image_id.",
+						'".addslashes($image_link)."',
+
+						DATE_ADD('"._gn($max, 'day_public')."',INTERVAL 30 DAY),
+						".$send['id']."
+					)";
+				query($sql);
+			}
+		}
 
 		history_insert(array(
 			'type' => 11,
@@ -401,6 +470,15 @@ switch(@$_POST['op']) {
 				FROM `gazeta_nomer_pub`
 				WHERE `zayav_id`=".$zayav_id);
 
+		//Обновление главного изображения
+		$image_id = 0;
+		$image_link = '';
+		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='zayav".$zayav_id."' ORDER BY `sort` LIMIT 1";
+		if($i = mysql_fetch_assoc(query($sql))) {
+			$image_id = $i['id'];
+			$image_link = $i['path'].$i['small_name'];
+		}
+
 		$sql = "UPDATE `gazeta_zayav`
 		        SET `client_id`=".$client_id.",
 
@@ -418,9 +496,13 @@ switch(@$_POST['op']) {
 				    `skidka`=".$skidka.",
 				    `skidka_sum`=".$skidka_sum.",
 
-				    `gn_count`=".$pub['count']."
+				    `gn_count`=".$pub['count'].",
+				    `image_id`=".$image_id.",
+				    `image_link`='".$image_link."'
 				WHERE `id`=".$zayav_id;
 		query($sql);
+
+		clientBalansUpdate($client_id);
 
 		$changes = '';
 		if($z['client_id'] != $client_id)

@@ -222,6 +222,8 @@ $(document)
 								'<input type="hidden" id="city_id" value="' + res.city_id + '" />' +
 						'<tr><td class="label">Показывать имя из VK:' +
 							'<td><input type="hidden" id="viewer_id_show" value="' + res.viewer_id_show + '" />' +
+						'<tr><td class="label topi">Активность:' +
+							'<td><input type="hidden" id="active" value="' + res.active + '" />' +
 				'</table>';
 				dialog.content.html(html);
 				$('#rubric_id')._select({
@@ -253,6 +255,13 @@ $(document)
 					}
 				});
 				$('#viewer_id_show')._check();
+				$('#active')._radio({
+					spisok:[
+						{uid:1,title:'Объявление видно всем'},
+						{uid:0,title:'В архиве'}
+					],
+					light:1
+				});
 			} else
 				dialog.loadError();
 		}, 'json');
@@ -279,7 +288,8 @@ $(document)
 					country_name:$('#country_id')._select('title'),
 					city_id:$('#city_id').val(),
 					city_name:$('#city_id')._select('title'),
-					viewer_id_show:$('#viewer_id_show').val()
+					viewer_id_show:$('#viewer_id_show').val(),
+					active:$('#active').val()
 				};
 			if(!send.txt) { err('Введите текст объявления'); $('#txt').focus(); }
 			else {

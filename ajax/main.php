@@ -122,7 +122,8 @@ switch(@$_POST['op']) {
 			'country_id' => $r['country_id'],
 			'city_id' => $r['city_id'],
 			'city_name' => utf8($r['city_name']),
-			'viewer_id_show' => $r['viewer_id_show']
+			'viewer_id_show' => $r['viewer_id_show'],
+			'active' => strtotime($r['day_active']) - time() + 86400 < 0 ? 0 : 1
 		);
 		jsonSuccess($send);
 		break;
@@ -139,6 +140,8 @@ switch(@$_POST['op']) {
 			jsonError();
 		if(!preg_match(REGEXP_BOOL, $_POST['viewer_id_show']))
 			jsonError();
+		if(!preg_match(REGEXP_BOOL, $_POST['active']))
+			jsonError();
 
 		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `viewer_id_add`=".VIEWER_ID." AND `id`=".intval($_POST['id']);
 		if(!$r = mysql_fetch_assoc(query($sql)))
@@ -153,6 +156,21 @@ switch(@$_POST['op']) {
 		$r['city_id'] = intval($_POST['city_id']);
 		$r['city_name'] = win1251(htmlspecialchars(trim($_POST['city_name'])));
 		$r['viewer_id_show'] = intval($_POST['viewer_id_show']);
+		$active = intval($_POST['active']);
+
+		if($active && $r['day_active'] == '0000-00-00')
+			$r['day_active'] = strftime('%Y-%m-%d', time() + 86400 * 30);
+
+		if(!$active && $r['day_active'] != '0000-00-00')
+			$r['day_active'] = '0000-00-00';
+
+		$r['image_id'] = 0;
+		$r['image_link'] = '';
+		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='ob".$r['id']."' ORDER BY `sort` LIMIT 1";
+		if($i = mysql_fetch_assoc(query($sql))) {
+			$r['image_id'] = $i['id'];
+			$r['image_link'] = $i['path'].$i['small_name'];
+		}
 
 		$sql = "UPDATE `vk_ob`
 		        SET `rubric_id`=".$r['rubric_id'].",
@@ -163,23 +181,12 @@ switch(@$_POST['op']) {
 					`country_name`='".addslashes($r['country_name'])."',
 					`city_id`=".$r['city_id'].",
 					`city_name`='".addslashes($r['city_name'])."',
-					`viewer_id_show`=".$r['viewer_id_show']."
+					`viewer_id_show`=".$r['viewer_id_show'].",
+					`day_active`='".$r['day_active']."',
+					`image_id`=".$r['image_id'].",
+					`image_link`='".$r['image_link']."'
 				WHERE `id`=".$r['id'];
 		query($sql);
-
-		$r['image_id'] = 0;
-		$r['image_link'] = '';
-		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='ob".$r['id']."' ORDER BY `sort`";
-		$q = query($sql);
-		$n = 0;
-		while($i = mysql_fetch_assoc($q)) {
-			if(!$n) {
-				$r['image_id'] = $i['id'];
-				$r['image_link'] = $i['path'].$i['small_name'];
-			}
-			$n++;
-		}
-		query("UPDATE `vk_ob` SET `image_id`=".$r['image_id'].",`image_link`='".$r['image_link']."' WHERE `id`=".$r['id']);
 
 		$r['edited'] = 1;
 		$send['html'] = utf8(ob_my_unit($r));

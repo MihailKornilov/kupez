@@ -8,15 +8,18 @@ define('DOMAIN', $_SERVER["SERVER_NAME"]);
 define('LOCAL', DOMAIN == 'kupez');
 define('VIEWER_ID', $_GET['viewer_id']);
 define('VALUES', 'viewer_id='.VIEWER_ID.
-	'&api_id='.@$_GET['api_id'].
-	'&auth_key='.@$_GET['auth_key'].
-	'&sid='.@$_GET['sid']);
+				'&api_id='.@$_GET['api_id'].
+				'&auth_key='.@$_GET['auth_key'].
+				'&sid='.@$_GET['sid']);
 define('SITE', 'http://'.DOMAIN);
 define('URL', SITE.'/index.php?'.VALUES);
 
 $SA[982006] = 1; // Корнилов Михаил
 define('SA', isset($SA[VIEWER_ID]));
 if(SA) { ini_set('display_errors',1); error_reporting(E_ALL); }
+
+setlocale(LC_ALL, 'ru_RU.CP1251');
+setlocale(LC_NUMERIC, 'en_US');
 
 require_once(DOCUMENT_ROOT.'/syncro.php');
 require_once(VKPATH.'/vk.php');

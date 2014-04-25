@@ -53,6 +53,7 @@ switch(@$_GET['p']) {
 				break;
 			case 'report': $html .= report(); break;
 			case 'setup': $html .= setup(); break;
+			case 'ob': header('Location:'.URL.'&p=ob'); break;
 		}
 		break;
 }
