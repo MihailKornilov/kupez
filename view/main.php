@@ -94,6 +94,7 @@ function _header() {
 				'VALUES="'.VALUES.'",'.
 				($_GET['p'] == 'gazeta' ? 'GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.',' : '').
 				($_GET['p'] == 'gazeta' ? 'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.',' : '').
+				($_GET['p'] == 'gazeta' ? 'ADMIN='.VIEWER_ADMIN.',' : '').
 				'VIEWER_ID='.VIEWER_ID.';'.
 		'</script>'.
 

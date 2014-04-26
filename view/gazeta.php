@@ -536,6 +536,7 @@ function clientInfoGet($client) {
 	if(empty($name))
 		$name = $client['org_name'];
 	return
+	($client['deleted'] ? '<div class="_info">Клиент удалён</div>' : '').
 	'<div class="cname">'.$name.'</div>'.
 	'<table class="cinf">'.
 		($client['person'] != 1 ? '<tr><td class="label">Контактное лицо:<td>'.$client['fio'] : '').
@@ -547,15 +548,24 @@ function clientInfoGet($client) {
 		($client['skidka'] ?  '<tr><td class="label">Скидка: <td>'.$client['skidka'].'%' : '').
 		'<tr><td class="label">Баланс: <td><b class="'.($client['balans'] < 0 ? 'minus' : 'plus').'">'.round($client['balans'], 2).'</b>'.
 	'</table>'.
-	'<div class="dtime_add">Клиента вн'.(_viewer($client['viewer_id_add'], 'sex') == 1 ? 'есла' : 'ёс').' '
-		._viewer($client['viewer_id_add'], 'name').' '.
+	'<div class="dtime_add">'.
+		'Клиента вн'.(_viewer($client['viewer_id_add'], 'sex') == 1 ? 'есла' : 'ёс').' '.
+		_viewer($client['viewer_id_add'], 'name').' '.
 		FullData($client['dtime_add'], 1).
+	($client['deleted'] ?
+		'<br />Удалил'.(_viewer($client['viewer_id_del'], 'sex') == 1 ? 'а' : '').' '.
+		_viewer($client['viewer_id_del'], 'name').' '.
+		FullData($client['dtime_del'], 1)
+	: '').
 	'</div>';
 }//clientInfoGet()
 function client_info($client_id) {
-	$sql = "SELECT * FROM `gazeta_client` WHERE `deleted`=0 AND `id`=".$client_id;
+	$sql = "SELECT * FROM `gazeta_client` WHERE `id`=".$client_id;
 	if(!$client = mysql_fetch_assoc(query($sql)))
 		return _noauth('Клиента не существует');
+
+	if(!VIEWER_ADMIN && $client['deleted'])
+		return _noauth('Клиент удалён');
 
 	$commCount = query_value("SELECT COUNT(`id`)
 							  FROM `vk_comment`
@@ -593,10 +603,11 @@ function client_info($client_id) {
 					'<td class="right">'.
 						'<div class="rightLink">'.
 							'<a class="sel">Информация</a>'.
-							'<a class="cedit">Редактировать</a>'.
+	  (!$client['deleted'] ? '<a class="cedit">Редактировать</a>'.
 							'<a href="'.URL.'&p=gazeta&d=zayav&d1=add&client_id='.$client_id.'"><b>Новая заявка</b></a>'.
-							'<a>Внести платёж</a>'.
-							'<a class="cdel">Удалить клиента</a>'.
+							//'<a>Внести платёж</a>'.
+							'<a class="'.($zayav['all'] ? 'off' : 'cdel').'">Удалить клиента</a>'
+	  : '').
 						'</div>'.
 			'</table>'.
 
@@ -936,7 +947,8 @@ function zayav_info($zayav_id) {
 	$sql = "SELECT * FROM `gazeta_zayav` WHERE `id`=".$zayav_id;
 	if(!$z = mysql_fetch_assoc(query($sql)))
 		return _noauth('Заявки не существует');
-	if($z['deleted'])
+
+	if(!VIEWER_ADMIN && $z['deleted'])
 		return _noauth('Заявка удалена');
 
 	define('OB', $z['category'] == 1);
@@ -946,9 +958,9 @@ function zayav_info($zayav_id) {
 	$sql = "SELECT * FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav_id." ORDER BY `general_nomer`";
 	$q = query($sql);
 	$public = '';
+	$public_lost = 0;
 	if(mysql_num_rows($q)) {
 		$tr = '';
-		$lost = 0;
 		while($r = mysql_fetch_assoc($q)) {
 			$tr .=
 			'<tr'.($r['general_nomer'] < GN_FIRST_ACTIVE ? ' class="lost"' : '').'>'.
@@ -957,7 +969,7 @@ function zayav_info($zayav_id) {
 				'<td class="cena">'.round($r['cena'], 2).
 				(OB || REK ? '<td class="dop">'.(OB ? _obDop($r['dop']) : _polosa($r['dop'])) : '');
 			if($r['general_nomer'] < GN_FIRST_ACTIVE)
-				$lost++;
+				$public_lost++;
 		}
 		$public =
 			'<table class="_spisok gn">'.
@@ -966,7 +978,7 @@ function zayav_info($zayav_id) {
 					'<th>Цена'.
 			  (OB ? '<th>Дополнительно' : '').
 			 (REK ? '<th>Полоса' : '').
-				($lost ? '<tr id="lost-count"><td colspan="4">Показать прошедшие выходы ('.$lost.')' : '').
+($public_lost ? '<tr id="lost-count"><td colspan="4">Показать прошедшие выходы ('.$public_lost.')' : '').
 				$tr.
 			'</table>';
 	}
@@ -987,10 +999,16 @@ function zayav_info($zayav_id) {
 	'<div id="zayav-info">'.
 		'<div id="dopLinks">'.
 			'<a class="link zinfo sel">Просмотр</a>'.
+		(!$z['deleted'] ?
 			'<a class="link" href="'.URL.'&p=gazeta&d=zayav&d1=edit&id='.$zayav_id.'">Редактирование</a>'.
-			'<a class="link income-add">Внести платёж</a>'.
+			'<a class="link income-add">Внести платёж</a>'
+		: '').
 			'<a class="link hist">История</a>'.
+		(!$public_lost && !$z['deleted'] ?
+			($income['all'] && !$z['client_id']? '<span class="off">Удалить заявку</span>' : '<a class="zdel">Удалить заявку</a>')
+		: '').
 		'</div>'.
+		($z['deleted'] ? '<div class="_info">Заявка удалёна</div>' : '').
 		'<div class="headName">'._category($z['category']).' №'.$zayav_id.'</div>'.
 		'<div class="content">'.
 			'<table class="ztab">'.
@@ -1010,6 +1028,7 @@ function zayav_info($zayav_id) {
 						   round($z['size_y'], 1).' = '.
 						   '<b>'.round($z['size_x'] * $z['size_y']).'</b> см&sup2;'
 		: '').
+				zayav_images($zayav_id).
 				'<tr><td class="label">Общая стоимость:'.
 					'<td><b>'.round($z['summa'], 2).'</b> руб.'.
 						 ((OB || REK) && $z['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
@@ -1017,7 +1036,14 @@ function zayav_info($zayav_id) {
 				(!$z['client_id'] ? '<tr><td class="label">Оплачено:<td>'.round(query_value("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `zayav_id`=".$zayav_id), 2).' руб.' : '').
 				($public ? '<tr><td class="label top">Номера выпуска:<td>'.$public : '').
 			'</table>'.
-			'<div class="added">Заявку '.viewerAdded($z['viewer_id_add']).' '.FullDataTime($z['dtime_add']).'</div>'.
+			'<div class="added">'.
+				'Заявку '.viewerAdded($z['viewer_id_add']).' '.FullDataTime($z['dtime_add']).
+				($z['deleted'] ?
+					'<br />Удалил'.(_viewer($z['viewer_id_del'], 'sex') == 1 ? 'а' : '').' '.
+					_viewer($z['viewer_id_del'], 'name').' '.
+					FullDataTime($z['dtime_del'])
+				: '').
+			'</div>'.
 			'<div class="headBlue">Платежи<a class="add income-add">Внести платёж</a></div>'.
 			'<div id="income_spisok">'.($income['all'] ? $income['spisok'] : '').'</div>'.
 			_vkComment('zayav', $zayav_id).
@@ -1091,7 +1117,17 @@ function zayav_edit($zayav_id) {
 	'</table>'.
 	'</div>';
 }//zayav_edit()
-
+function zayav_images($zayav_id) {
+	$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='zayav".$zayav_id."' ORDER BY `sort`";
+	$q = query($sql);
+	if(!mysql_num_rows($q))
+		return '';
+	$images = '<table class="images"><tr>';
+	while($r = mysql_fetch_assoc($q))
+		$images .= '<td><img src="'.$r['path'].$r['small_name'].'" class="_iview" val="'.$r['id'].'" />';
+	$images .= '</table>';
+	return '<tr><td class="label top">Изображения:<td>'.$images;
+}//zayav_images()
 
 
 // ---===! report !===--- Секция отчётов
@@ -1224,6 +1260,8 @@ function history_types($v) {
 		case 52: return 'Изменение данных клиента '.$v['client_link'].':<div class="changes">'.$v['value'].'</div>';
 		case 53: return 'Удаление клиента '.$v['client_link'].'.';
 
+		case 61: return 'Удаление заявки '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>.';
+
 		case 81: return 'Внесение расхода: '.
 			($v['value1'] ? '<span class="oplata">'._expense($v['value1']).'</span> ' : '').
 			($v['value2'] ? '<em>('.$v['value2'].')</em> ' : '').
@@ -1336,7 +1374,7 @@ function history_spisok($page=1, $filter=array()) {
 		   $viewer_id != $history[$key]['viewer_id_add']) {
 			$send .=
 				'<div class="history_unit">'.
-					'<div class="head">'.FullDataTime($r['dtime_add']).$r['viewer_link'].'</div>'.
+					'<div class="head"><span>'.FullDataTime($r['dtime_add']).'</span>'.$r['viewer_name'].'</div>'.
 					'<ul>'.$txt.'</ul>'.
 				'</div>';
 			$txt = '';
@@ -1626,6 +1664,7 @@ function incomeFilter($v) {
 		'worker_id' => !empty($v['worker_id']) && preg_match(REGEXP_NUMERIC, $v['worker_id']) ? $v['worker_id'] : 0,
 		'client_id' => !empty($v['client_id']) && preg_match(REGEXP_NUMERIC, $v['client_id']) ? intval($v['client_id']) : 0,
 		'zayav_id' => !empty($v['zayav_id']) && preg_match(REGEXP_NUMERIC, $v['zayav_id']) ? intval($v['zayav_id']) : 0,
+		'deleted' => isset($v['deleted']) && preg_match(REGEXP_BOOL, $v['deleted']) ? $v['deleted'] : 0,
 		'day' => '',
 		'from' => '',
 		'to' => ''
@@ -1637,7 +1676,7 @@ function income_spisok($v=array()) {
 
 	$page = $filter['page'];
 
-	$cond = '`deleted`=0 AND `sum`>0';
+	$cond = '!`deleted` AND `sum`>0';
 
 	if($filter['worker_id'])
 		$cond .= " AND `viewer_id_add`=".$filter['worker_id'];
@@ -1662,12 +1701,14 @@ function income_spisok($v=array()) {
 	if(!$send['all'])
 		return array(
 			'all' => 0,
-			'spisok' => '<div class="_empty">Платежей нет.</div>'
+			'spisok' => '<div class="_empty">Платежей нет.</div>',
+			'filter' => $filter
 		);
 
 	$start = ($page - 1) * $filter['limit'];
 	$sql = "SELECT *
 			FROM `gazeta_money`
+			USE INDEX (`i_dtime_add`)
 			WHERE ".$cond."
 			ORDER BY `id` ASC
 			LIMIT ".$start.",".$filter['limit'];
@@ -1679,11 +1720,15 @@ function income_spisok($v=array()) {
 	$money = _zayavLink($money);
 
 	$send['spisok'] = '';
+	$send['filter'] = $filter;
 	if($page == 1)
 		$send['spisok'] =
 			'<input type="hidden" id="money_limit" value="'.$filter['limit'].'" />'.
 			'<input type="hidden" id="money_client_id" value="'.$filter['client_id'].'" />'.
 			'<input type="hidden" id="money_zayav_id" value="'.$filter['zayav_id'].'" />'.
+			'<input type="hidden" id="money_deleted" value="'.$filter['deleted'].'" />'.
+			'<input type="hidden" id="money_income_id" value="'.$filter['income_id'].'" />'.
+			'<input type="hidden" id="money_worker_id" value="'.$filter['worker_id'].'" />'.
 			(!$filter['zayav_id'] ?
 				'<div class="_moneysum">'.
 					'Показан'._end($send['all'], '', 'о').
@@ -1703,7 +1748,7 @@ function income_spisok($v=array()) {
 		$c = $send['all'] - $start - $filter['limit'];
 		$c = $c > $filter['limit'] ? $filter['limit'] : $c;
 		$send['spisok'] .=
-			'<tr class="_next" val="'.($page + 1).'" id="money_next"><td colspan="4">'.
+			'<tr class="_next" val="'.($page + 1).'" id="income_next"><td colspan="4">'.
 				'<span>Показать ещё '.$c.' платеж'._end($c, '', 'а', 'ей').'</span>';
 	}
 	$send['spisok'] .= '</table>';
@@ -1905,10 +1950,13 @@ function invoice_spisok() {
 	foreach($invoice as $r)
 		$send .= '<tr>'.
 			'<td class="name"><b>'.$r['name'].'</b><pre>'.$r['about'].'</pre>'.
-			'<td class="balans">'.
-			($r['start'] != -1 ? '<b>'._sumSpace(_invoiceBalans($r['id'])).'</b> руб.' : (GAZETA_ADMIN ? '' : '<a class="invoice_set" val="'.$r['id'].'">Установить текущую сумму</a>')).
-			'<td><div val="'.$r['id'].'" class="img_note'._tooltip('Посмотреть историю операций', -95).'</div>'.
-			(GAZETA_ADMIN ? '<td><a class="invoice_set" val="'.$r['id'].'">Установить текущую сумму</a>' : '');
+			($r['start'] != -1 ?
+				'<td class="balans"><b>'._sumSpace(_invoiceBalans($r['id'])).'</b> руб.'.
+				'<td><div val="'.$r['id'].'" class="img_note'._tooltip('Посмотреть историю операций', -95).'</div>'
+			: '').
+			(GAZETA_ADMIN || $r['start'] != -1 ?
+				'<td><a class="invoice_set" val="'.$r['id'].'">Установить<br />текущую сумму</a>'
+			: '');
 	$send .= '</table>';
 	return $send;
 }//invoice_spisok()
@@ -2110,6 +2158,7 @@ function invoice_history_insert($v) {
 		'worker_id' => empty($v['worker_id']) ? 0 : $v['worker_id'],
 		'invoice_id' => empty($v['invoice_id']) ? 0 : $v['invoice_id']
 	);
+
 	if($v['table']) {
 		$r = query_assoc("SELECT * FROM `".$v['table']."` WHERE `id`=".$v['id']);
 		$v['sum'] = abs($r['sum']);
@@ -2157,6 +2206,8 @@ function invoice_history_insert($v) {
 	invoice_history_insert_sql($v['invoice_id'], $v);
 }//invoice_history_insert()
 function invoice_history_insert_sql($invoice_id, $v) {
+	if(_invoice($invoice_id, 'start') == -1)
+		return;
 	$sql = "INSERT INTO `gazeta_invoice_history` (
 				`action`,
 				`table`,

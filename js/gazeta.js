@@ -753,7 +753,10 @@ $(document)
 								$('#income_spisok').html(res.html);
 								$('.left:first').html(res.balans);
 								break;
-							case 'zayav': $('#income_spisok').html(res.html); break;
+							case 'zayav':
+								$('#income_spisok').html(res.html);
+								$('.zdel').remove();
+								break;
 							case 'income': incomeSpisok(); break;
 							default: break;
 						}
@@ -799,6 +802,29 @@ $(document)
 					dialog.abort();
 			}, 'json');
 		}
+	})
+	.on('click', '#income_next', function() {
+		var next = $(this),
+			send = {
+				op:'income_spisok',
+				page:$(this).attr('val'),
+				limit:$('#money_limit').val(),
+				client_id:$('#money_client_id').val(),
+				zayav_id:$('#money_zayav_id').val(),
+				deleted:$('#money_deleted').val(),
+				income_id:$('#money_income_id').val(),
+				worker_id:$('#money_worker_id').val(),
+				day:$('.selected').val() || ''
+			};
+		if(next.hasClass('busy'))
+			return;
+		next.addClass('busy');
+		$.post(AJAX_GAZ, send, function(res) {
+			if(res.success)
+				next.after(res.html).remove();
+			else
+				next.removeClass('busy');
+		}, 'json');
 	})
 
 	.on('click', '.expense #monthList div', expenseSpisok)
@@ -988,7 +1014,7 @@ $(document)
 			$('.cedit').click(function() {
 				var html = '<table class="client-add">' +
 						'<tr><td class="label">Категория:<td><input type="hidden" id="cperson" value="' + CLIENT.person + '" />' +
-							'<a href="' + URL + '&p=gazeta&d=setup&d1=person" class="img_edit"></a>' +
+							'<a href="' + URL + '&p=gazeta&d=setup&d1=person" class="img_edit' + _tooltip('Настройка категорий клиентов', -95) + '</a>' +
 						'<tr><td class="label">Контактное лицо (фио):<td><input type="text" id="fio" maxlength="200" value="' + CLIENT.fio + '" />' +
 						'<tr><td class="label">Название организации:<td><input type="text" id="org_name" maxlength="200" value="' + CLIENT.org_name + '" />' +
 						'<tr><td class="label">Телефоны:<td><input type="text" id="telefon" maxlength="300" value="' + CLIENT.telefon + '" />' +
@@ -1008,12 +1034,6 @@ $(document)
 				$('#cperson')._select({
 					width:180,
 					spisok:PERSON_SPISOK
-				});
-				$('.client-add .img_edit:first').vkHint({
-					msg:"Перейти к настройкам заявителей",
-					indent:110,
-					top:-76,
-					left:75
 				});
 				$('#cskidka')._select({
 					width:60,
@@ -1062,12 +1082,20 @@ $(document)
 					});
 				}
 			});
+			$('.rightLink .off').vkHint({
+				width:130,
+				msg:'Клиента можно удалить, если у него нет ни одной заявки',
+				ugol:'right',
+				delayShow:700,
+				top:-17,
+				left:-164
+			});
 			$('.cdel').click(function() {
 				var dialog = _dialog({
 					top:90,
 					width:300,
 					head:'Удаление клиента',
-					content:'<center>Внимание!<br />Будут удалены все данные о клиенте,<br />его заявки, и платежи.<br /><b>Подтвердите удаление.</b></center>',
+					content:'<center>Внимание!<br />Будут удалены все данные о клиенте,<br />его платежи и заметки.<br /><b>Подтвердите удаление.</b></center>',
 					butSubmit:'Удалить',
 					submit:submit
 				});
@@ -1081,7 +1109,10 @@ $(document)
 						if(res.success) {
 							dialog.close();
 							_msg('Клиент удален.');
-							location.href = URL + '&p=gazeta&d=client';
+							if(ADMIN)
+								location.reload();
+							else
+								location.href = URL + '&p=gazeta&d=client';
 						} else
 							dialog.abort();
 					}, 'json');
@@ -1305,6 +1336,45 @@ $(document)
 			});
 		}
 		if($('#zayav-info').length) {
+			$('.off').vkHint({
+				msg:'Чтобы удалить эту заявку<br>' +
+					'привяжите её к клиенту.<br>' +
+					'Таким образом все платежи<br>' +
+					'этой заявки вернутся клиенту<br>' +
+					'на баланс после удаления.',
+				ugol:'top',
+				indent:120,
+				top:17,
+				left:426
+			});
+			$('.zdel').click(function() {
+				var dialog = _dialog({
+					top:90,
+					width:260,
+					head:'Удаление заявки',
+					content:'<center><b>Подтвердите удаление заявки</b></center>',
+					butSubmit:'Удалить',
+					submit:submit
+				});
+				function submit() {
+					var send = {
+						op:'zayav_del',
+						id:OPL.zayav_id
+					};
+					dialog.process();
+					$.post(AJAX_GAZ, send, function(res) {
+						if(res.success) {
+							dialog.close();
+							_msg('Заявка удален.');
+							if(ADMIN)
+								location.reload();
+							else
+								location.href = URL + '&p=gazeta&d=client';
+						} else
+							dialog.abort();
+					}, 'json');
+				}
+			});
 			$('#lost-count').click(function() {
 				$(this).parent().find('.lost').show()
 				$(this).remove();

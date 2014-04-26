@@ -29,6 +29,7 @@
 
 /* Информация о клиенте */
 #clientInfo .left{padding-bottom:10px}
+#clientInfo ._info{margin:10px;font-weight:bold;text-align:center;background-color:#fee;color:red}
 #clientInfo .cname{color:#31618C;font-size:12px;font-weight:bold;margin:15px 5px 5px 20px}
 #clientInfo .cinf{border-spacing:4px;margin:0 10px 0 28px}
 #clientInfo .label{width:95px}
@@ -177,7 +178,10 @@
 
 
 /* Информация о заявке */
+#zayav-info ._info{margin:10px;font-weight:bold;text-align:center;background-color:#fee;color:red}
 #zayav-info .headName{margin:10px 15px 5px}
+#zayav-info .zdel{color:red;float:right;margin-top:3px}
+#zayav-info .off{color:#888;float:right;margin-top:3px;cursor:default}
 #zayav-info:not(.h) .histories,#zayav-info.h .content{display:none}
 #zayav-info .ztab{border-spacing:6px;margin-left:15px}
 #zayav-info .label{width:100px}
@@ -189,6 +193,8 @@
 	padding:4px 6px;
 }
 #zayav-info .tel{font:bold 14px Times New Roman;color:#555;display:block;margin-top:3px}
+#zayav-info .images td{vertical-align:top}
+#zayav-info .images img{margin-right:4px;cursor:pointer}
 #zayav-info .manual{font-size:10px;margin-left:10px;color:#888}
 #zayav-info .skidka{font-size:10px;color:#999;margin-left:10px}
 #zayav-info .gn tr{background-color:#DFD}
@@ -237,8 +243,8 @@
 #report.history .left{padding:10px}
 #report .history_unit{width:445px;overflow:hidden}
 .history_unit{margin-bottom:12px;padding-bottom:8px;border-bottom:#dae1e8 solid 1px}
-.history_unit .head{font-size:10px;color:#777}
-.history_unit .head a{font-size:10px;margin-left:10px}
+.history_unit .head{font-size:10px}
+.history_unit .head span{color:#777;font-size:10px;margin-right:10px}
 .history_unit ul{margin:5px 0 7px 25px}
 .history_unit li{margin:0 0 8px}
 .history_unit .li{margin-left:-4px}
@@ -260,6 +266,7 @@
 .income #spisok{margin:15px 10px}
 .income ._empty{margin:0}
 .income_data{margin:15px 0 3px;text-align:center}
+._money a.deleted{color:#a66}
 .expense#report .headName{margin:10px}
 .expense #spisok{margin:15px 10px}
 .expense .years{margin-top:20px}

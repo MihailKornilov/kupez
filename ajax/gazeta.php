@@ -180,9 +180,21 @@ switch(@$_POST['op']) {
 		$client_id = intval($_POST['id']);
 		if(!query_value("SELECT COUNT(`id`) FROM `gazeta_client` WHERE !`deleted` AND `id`=".$client_id))
 			jsonError();
-		query("UPDATE `gazeta_client` SET `deleted`=1 WHERE `id`=".$client_id);
-		//query("UPDATE `zayav` SET `deleted`=1 WHERE `client_id`=".$client_id);
-		//query("UPDATE `money` SET `deleted`=1 WHERE `client_id`=".$client_id);
+		if(query_value("SELECT COUNT(`id`) FROM `gazeta_zayav` WHERE !`deleted` AND `client_id`=".$client_id))
+			jsonError();
+
+		query("UPDATE `gazeta_client`
+		       SET `deleted`=1,
+		           `dtime_del`=CURRENT_TIMESTAMP,
+			       `viewer_id_del`=".VIEWER_ID."
+		       WHERE `id`=".$client_id);
+		query("UPDATE `gazeta_money`
+			   SET `deleted`=1,
+			       `dtime_del`=CURRENT_TIMESTAMP,
+			       `viewer_id_del`=".VIEWER_ID."
+			   WHERE !`deleted`
+				 AND `client_id`=".$client_id);
+		clientBalansUpdate($client_id);
 		history_insert(array(
 			'type' => 53,
 			'client_id' => $client_id
@@ -406,6 +418,12 @@ switch(@$_POST['op']) {
 			$client_id = intval($_POST['client_id']);
 		}
 
+		//≈сли за€вке прив€зываетс€ клиент, к нему прив€зываютс€ платежи и истори€
+		if(!$z['client_id'] && $client_id) {
+			query("UPDATE `gazeta_money` SET `client_id`=".$client_id." WHERE `zayav_id`=".$zayav_id);
+			query("UPDATE `gazeta_history` SET `client_id`=".$client_id." WHERE `zayav_id`=".$zayav_id);
+		}
+
 		if(!$gns = gns_control($_POST['gns'], $z['category'], $zayav_id))
 			jsonError();
 
@@ -582,10 +600,46 @@ switch(@$_POST['op']) {
 			));
 		jsonSuccess();
 		break;
+	case 'zayav_del':
+		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+			jsonError();
+		$zayav_id = intval($_POST['id']);
+		$sql = "SELECT * FROM `gazeta_zayav` WHERE !`deleted` AND `id`=".$zayav_id;
+		if(!$z = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		//ѕроверка на выходившие номера
+		$sql = "SELECT COUNT(`id`)
+				FROM `gazeta_nomer_pub`
+				WHERE `zayav_id`=".$zayav_id."
+				  AND `general_nomer`<".GN_FIRST_ACTIVE;
+		if(query_value($sql))
+			jsonError();
+
+		query("UPDATE `gazeta_zayav`
+		       SET `deleted`=1,
+				   `summa`=0,
+		           `dtime_del`=CURRENT_TIMESTAMP,
+			       `viewer_id_del`=".VIEWER_ID."
+		       WHERE `id`=".$zayav_id);
+
+		//”даление номеров выпуска
+		query("DELETE FROM `gazeta_nomer_pub` WHERE `zayav_id`=".$zayav_id);
+
+		clientBalansUpdate($z['client_id']);
+
+		history_insert(array(
+			'type' => 61,
+			'client_id' => $z['client_id'],
+			'zayav_id' => $zayav_id
+		));
+		jsonSuccess();
+		break;
 
 	case 'income_spisok':
 		$data = income_spisok($_POST);
-		$send['path'] = utf8(income_path($_POST['day']));
+		if($data['filter']['page'] == 1)
+			$send['path'] = utf8(income_path($_POST['day']));
 		$send['html'] = utf8($data['spisok']);
 		jsonSuccess($send);
 		break;
