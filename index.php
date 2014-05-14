@@ -25,7 +25,7 @@ switch(@$_GET['p']) {
 			break;
 		}
 		if(empty($_GET['d']))
-			$_GET['d'] = 'client';
+			$_GET['d'] = 'zayav';
 		_mainLinks();
 		switch(@$_GET['d']) {
 			default:

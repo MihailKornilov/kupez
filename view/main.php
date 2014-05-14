@@ -92,9 +92,11 @@ function _header() {
 			(LOCAL ? 'for(var i in VK)if(typeof VK[i]=="function")VK[i]=function(){return false};' : '').
 			'var DOMAIN="'.DOMAIN.'",'.
 				'VALUES="'.VALUES.'",'.
-				($_GET['p'] == 'gazeta' ? 'GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.',' : '').
-				($_GET['p'] == 'gazeta' ? 'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.',' : '').
-				($_GET['p'] == 'gazeta' ? 'ADMIN='.VIEWER_ADMIN.',' : '').
+			($_GET['p'] == 'gazeta' ?
+				'GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.','.
+				'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.','.
+				'ADMIN='.VIEWER_ADMIN.','
+			: '').
 				'VIEWER_ID='.VIEWER_ID.';'.
 		'</script>'.
 
@@ -104,65 +106,17 @@ function _header() {
 
 		'<script type="text/javascript" src="'.SITE.'/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
 
-		'<link href="'.SITE.'/css/main.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
-		'<script type="text/javascript" src="'.SITE.'/js/main.js?'.VERSION.'"></script>'.
+		'<link href="'.SITE.'/css/main'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
+		'<script type="text/javascript" src="'.SITE.'/js/main'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
-		($_GET['p'] == 'gazeta' ? '<link href="'.SITE.'/css/gazeta.css?'.VERSION.'" rel="stylesheet" type="text/css" />' : '').
-		($_GET['p'] == 'gazeta' ? '<script type="text/javascript" src="'.SITE.'/js/gazeta.js?'.VERSION.'"></script>' : '').
+		($_GET['p'] == 'gazeta' ? '<link href="'.SITE.'/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />' : '').
+		($_GET['p'] == 'gazeta' ? '<script type="text/javascript" src="'.SITE.'/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
 
 		'</head>'.
 		'<body>'.
 			'<div id="frameBody">'.
 				'<iframe id="frameHidden" name="frameHidden"></iframe>';
 }//_header()
-function _footer() {
-	global $html, $sqlQuery, $sqlCount, $sqlTime;
-	if(SA) {
-		$d = empty($_GET['d']) ? '' :'&pre_d='.$_GET['d'];
-		$d1 = empty($_GET['d1']) ? '' :'&pre_d1='.$_GET['d1'];
-		$id = empty($_GET['id']) ? '' :'&pre_id='.$_GET['id'];
-		$html .=
-			'<div id="admin">'.
-				//  ($_GET['p'] != 'sa' && !SA_VIEWER_ID ? '<a href="'.URL.'&p=sa&pre_p='.$_GET['p'].$d.$d1.$id.'">Admin</a> :: ' : '').
-				'<a class="debug_toggle'.(DEBUG ? ' on' : '').'">В'.(DEBUG ? 'ы' : '').'ключить Debug</a> :: '.
-				'<a id="cache_clear">Очисить кэш ('.VERSION.')</a> :: '.
-				'sql <b>'.$sqlCount.'</b> ('.round($sqlTime, 3).') :: '.
-				'php '.round(microtime(true) - TIME, 3).' :: '.
-				'js <em></em>'.
-			'</div>';
-	}
-	$getArr = array(
-		'start' => 1,
-		'api_url' => 1,
-		'api_id' => 1,
-		'api_settings' => 1,
-		'viewer_id' => 1,
-		'viewer_type' => 1,
-		'sid' => 1,
-		'secret' => 1,
-		'access_token' => 1,
-		'user_id' => 1,
-		'group_id' => 1,
-		'is_app_user' => 1,
-		'auth_key' => 1,
-		'language' => 1,
-		'parent_language' => 1,
-		'ad_info' => 1,
-		'is_secure' => 1,
-		'referrer' => 1,
-		'lc_name' => 1,
-		'hash' => 1
-	);
-	$gValues = array();
-	foreach($_GET as $k => $val) {
-		if(isset($getArr[$k]) || empty($_GET[$k])) continue;
-		$gValues[] = '"'.$k.'":"'.$val.'"';
-	}
-	$html .= '<script type="text/javascript">hashSet({'.implode(',', $gValues).'})</script>'.
-		(SA && DEBUG ? $sqlQuery : '').
-		'</div>'.
-		'</body></html>';
-}//_footer()
 
 function GvaluesCreate() {// составление файла G_values.js
 	$sql = "SELECT * FROM `setup_global` LIMIT 1";
@@ -255,7 +209,7 @@ function ob() {//Главная страница с объявлениями
 		"SELECT
 			`country_id`,
 			`country_name`
- 		FROM `vk_ob`
+		FROM `vk_ob`
 		WHERE !`deleted`
 		  AND `country_id`
 		  AND `country_name`!=''
@@ -264,10 +218,10 @@ function ob() {//Главная страница с объявлениями
 		ORDER BY `country_name`";
 
 	$sql = "SELECT
- 				`city_id`,
+				`city_id`,
 				`city_name`,
 				`country_id`
- 			FROM `vk_ob`
+			FROM `vk_ob`
 			WHERE !`deleted`
 			  AND `city_id`
 			  AND `city_name`!=''
@@ -288,7 +242,7 @@ function ob() {//Главная страница с объявлениями
 	$rubric = array(0 => 'Все объявления') + _rubric();
 	//Количество объявлений для каждой рубрики
 	$sql = "SELECT
-	            `rubric_id`,
+				`rubric_id`,
 				COUNT(`id`) AS `count`
 			FROM `vk_ob`
 			WHERE !`deleted`
@@ -397,7 +351,7 @@ function ob_spisok($v=array()) {
 				'<tr><td class="txt">'.
 						'<a class="rub" val="'.$r['rubric_id'].'">'._rubric($r['rubric_id']).'</a><u>»</u>'.
 						($r['rubric_sub_id'] ? '<a class="rubsub" val="'.$r['rubric_id'].'_'.$r['rubric_sub_id'].'">'._rubricsub($r['rubric_sub_id']).'</a><u>»</u>' : '').
-						nl2br($r['txt']).
+						$r['txt'].
 						($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
   ($r['image_id'] ? '<td class="foto"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
 				'<tr><td class="adres" colspan="2">'.
@@ -419,7 +373,6 @@ function ob_spisok($v=array()) {
 }//ob_spisok()
 
 function ob_create() {
-	//to_new_images();
 	query("UPDATE `images` SET `deleted`=1 WHERE `owner`='".VIEWER_ID."'");
 	$dop = array(
 		0 => 'Не выделять',
@@ -435,22 +388,22 @@ function ob_create() {
 	'<script type="text/javascript">var VIEWER_LINK="'.addslashes(_viewer(VIEWER_ID, 'link')).'";</script>'.
 	'<div id="ob-create">'.
 		'<div class="headName">Создание нового объявления</div>'.
-        '<div class="_info">'.
-            '<p>Пожалуйста, заполните все необходимые поля. После размещения объявление сразу становится доступно для других пользователей ВКонтакте.'.
-            '<p>Сотрудники приложения Купецъ оставляют за собой право изменять или запретить к показу объявление, если оно нарушает <a>правила</a>.'.
-            '<p>Объявление будет размещено сроком на 1 месяц, в дальнейшем Вы сможете продлить этот срок.'.
-        '</div>'.
+		'<div class="_info">'.
+			'<p>Пожалуйста, заполните все необходимые поля. После размещения объявление сразу становится доступно для других пользователей ВКонтакте.'.
+			'<p>Сотрудники приложения Купецъ оставляют за собой право изменять или запретить к показу объявление, если оно нарушает <a>правила</a>.'.
+			'<p>Объявление будет размещено сроком на 1 месяц, в дальнейшем Вы сможете продлить этот срок.'.
+		'</div>'.
 		'<table class="tab">'.
-	        '<tr><td class="label">Рубрика:'.
+			'<tr><td class="label">Рубрика:'.
 				'<td><input type="hidden" id="rubric_id" />'.
 					'<input type="hidden" id="rubric_sub_id" />'.
-	        '<tr><td class="label top">Текст:<td><textarea id="txt"></textarea>'.
-	        '<tr><td class="label">Контактные телефоны:<td><input type="text" id="telefon" maxlength="200" />'.
-	        '<tr><td><td>'._imageAdd(array('owner'=>VIEWER_ID)).
-	        '<tr><td class="label topi">Регион:'.
+			'<tr><td class="label top">Текст:<td><textarea id="txt"></textarea>'.
+			'<tr><td class="label">Контактные телефоны:<td><input type="text" id="telefon" maxlength="200" />'.
+			'<tr><td><td>'._imageAdd(array('owner'=>VIEWER_ID)).
+			'<tr><td class="label topi">Регион:'.
 				'<td><input type="hidden" id="country_id" value="'._viewer(VIEWER_ID, 'country_id').'" />'.
 					'<input type="hidden" id="city_id" />'.
-	        '<tr><td class="label">Показывать имя из VK:<td>'._check('viewer_id_show').
+			'<tr><td class="label">Показывать имя из VK:<td>'._check('viewer_id_show').
 			'<tr><td class="label">Платные сервисы:<td>'._check('pay_service').
 		'</table>'.
 
@@ -466,7 +419,7 @@ function ob_create() {
 		'</table>'.
 
 		'<div class="headName">Предосмотр объявления</div>'.
-        '<div id="preview"></div>'.
+		'<div id="preview"></div>'.
 	'</div>';
 }//ob_create()
 
@@ -486,7 +439,7 @@ function ob_my() {
 				'<td class="right">'.
 					'<div id="buttonCreate"><a href="'.URL.'&p=ob&d=create&back=my">Новое объявление</a></div>'.
 					_rightLink('menu', $menu).
-        '</table>'.
+		'</table>'.
 	'</div>';
 }//ob_my()
 function obMyFilter($v=array()) {
@@ -577,7 +530,7 @@ function ob_my_unit($r) {
 
 
 
-
+/*
 function to_new_images() {//Перенос картинок в новый формат
 	define('IMLINK', 'http://'.DOMAIN.'/files/images/');
 	define('IMPATH', PATH.'files/images/');
@@ -639,83 +592,83 @@ function to_new_images() {//Перенос картинок в новый формат
 		}
 		query("UPDATE `vk_ob`
 			   SET `file`='',
-			       `image_id`=".$image_id.",
-			       `image_link`='".$image_link."'
+				   `image_id`=".$image_id.",
+				   `image_link`='".$image_link."'
 			   WHERE `id`=".$r['id']);
 	}
 }
-/*
+
 // Проверка пользователя на наличие в базе. Также обновление при первом входе в Контакт
 function vkUserCheck($vku, $update = false)
 {
-    if ($update or !isset($vku['viewer_id'])) {
-        require_once('include/vkapi.class.php');
-        $VKAPI = new vkapi(API_ID, API_SECRET);
-        $res = $VKAPI->api('users.get',array('uids' => VIEWER_ID, 'fields' => 'photo,sex,country,city'));
-        $vku['viewer_id'] = VIEWER_ID;
-        $vku['first_name'] = win1251($res['response'][0]['first_name']);
-        $vku['last_name'] = win1251($res['response'][0]['last_name']);
-        $vku['sex'] = $res['response'][0]['sex'];
-        $vku['photo'] = $res['response'][0]['photo'];
-        $vku['country_id'] = isset($res['response'][0]['country']) ? $res['response'][0]['country'] : 0;
-        $vku['city_id'] = isset($res['response'][0]['city']) ? $res['response'][0]['city'] : 0;
-        $vku['menu_left_set'] = 0;
-        $vku['enter_last'] = curTime();
+	if ($update or !isset($vku['viewer_id'])) {
+		require_once('include/vkapi.class.php');
+		$VKAPI = new vkapi(API_ID, API_SECRET);
+		$res = $VKAPI->api('users.get',array('uids' => VIEWER_ID, 'fields' => 'photo,sex,country,city'));
+		$vku['viewer_id'] = VIEWER_ID;
+		$vku['first_name'] = win1251($res['response'][0]['first_name']);
+		$vku['last_name'] = win1251($res['response'][0]['last_name']);
+		$vku['sex'] = $res['response'][0]['sex'];
+		$vku['photo'] = $res['response'][0]['photo'];
+		$vku['country_id'] = isset($res['response'][0]['country']) ? $res['response'][0]['country'] : 0;
+		$vku['city_id'] = isset($res['response'][0]['city']) ? $res['response'][0]['city'] : 0;
+		$vku['menu_left_set'] = 0;
+		$vku['enter_last'] = curTime();
 
-        // установил ли приложение
-        $app = $VKAPI->api('isAppUser',array('uid'=>VIEWER_ID));
-        $vku['app_setup'] = $app['response'];
-        // поместил ли в левое меню
-        $mls = $VKAPI->api('getUserSettings',array('uid'=>VIEWER_ID));
-        $vku['menu_left_set'] = ($mls['response']&256) > 0 ? 1 : 0;
-        global $VK;
-        $VK->Query('INSERT INTO `vk_user` (
-                    `viewer_id`,
-                    `first_name`,
-                    `last_name`,
-                    `sex`,
-                    `photo`,
-                    `app_setup`,
-                    `menu_left_set`,
-                    `country_id`,
-                    `city_id`,
-                    `enter_last`
-                    ) values (
-                    '.VIEWER_ID.',
-                    "'.$vku['first_name'].'",
-                    "'.$vku['last_name'].'",
-                    '.$vku['sex'].',
-                    "'.$vku['photo'].'",
-                    '.$vku['app_setup'].',
-                    '.$vku['menu_left_set'].',
-                    '.$vku['country_id'].',
-                    '.$vku['city_id'].',
-                    current_timestamp)
-                    ON DUPLICATE KEY UPDATE
-                    `first_name`="'.$vku['first_name'].'",
-                    `last_name`="'.$vku['last_name'].'",
-                    `sex`='.$vku['sex'].',
-                    `photo`="'.$vku['photo'].'",
-                    `app_setup`='.$vku['app_setup'].',
-                    `menu_left_set`='.$vku['menu_left_set'].',
-                    `country_id`='.$vku['country_id'].',
-                    `city_id`='.$vku['city_id'].',
-                    `enter_last`=current_timestamp
-                    ');
+		// установил ли приложение
+		$app = $VKAPI->api('isAppUser',array('uid'=>VIEWER_ID));
+		$vku['app_setup'] = $app['response'];
+		// поместил ли в левое меню
+		$mls = $VKAPI->api('getUserSettings',array('uid'=>VIEWER_ID));
+		$vku['menu_left_set'] = ($mls['response']&256) > 0 ? 1 : 0;
+		global $VK;
+		$VK->Query('INSERT INTO `vk_user` (
+					`viewer_id`,
+					`first_name`,
+					`last_name`,
+					`sex`,
+					`photo`,
+					`app_setup`,
+					`menu_left_set`,
+					`country_id`,
+					`city_id`,
+					`enter_last`
+					) values (
+					'.VIEWER_ID.',
+					"'.$vku['first_name'].'",
+					"'.$vku['last_name'].'",
+					'.$vku['sex'].',
+					"'.$vku['photo'].'",
+					'.$vku['app_setup'].',
+					'.$vku['menu_left_set'].',
+					'.$vku['country_id'].',
+					'.$vku['city_id'].',
+					current_timestamp)
+					ON DUPLICATE KEY UPDATE
+					`first_name`="'.$vku['first_name'].'",
+					`last_name`="'.$vku['last_name'].'",
+					`sex`='.$vku['sex'].',
+					`photo`="'.$vku['photo'].'",
+					`app_setup`='.$vku['app_setup'].',
+					`menu_left_set`='.$vku['menu_left_set'].',
+					`country_id`='.$vku['country_id'].',
+					`city_id`='.$vku['city_id'].',
+					`enter_last`=current_timestamp
+					');
 
-        // сброс счётчика объявлений
-        if($vku['menu_left_set'] == 1) {
-            $VKAPI->api('secure.setCounter', array('counter'=>0, 'uid'=>VIEWER_ID, 'timestamp'=>time(), 'random'=>rand(1,1000)));
-        }
-        // счётчик посетителей
-        $id = $VK->QRow('SELECT `id` FROM `vk_visit` WHERE `viewer_id`='.VIEWER_ID.' AND `dtime_add`>="'.strftime("%Y-%m-%d").' 00:00:00" LIMIT 1');
-        $VK->Query('INSERT INTO `vk_visit` (`id`,`viewer_id`)
-                                 VALUES ('.($id ? $id : 0).','.VIEWER_ID.')
-                                 ON DUPLICATE KEY UPDATE `count_day`=`count_day`+1,`dtime_add`=current_timestamp');
-        $VK->Query('UPDATE `vk_user` SET
-                           `count_day`='.($id ? '`count_day`+1' : 1).',
-                           `enter_last`=current_timestamp where viewer_id='.VIEWER_ID);
-    }
-    return $vku;
+		// сброс счётчика объявлений
+		if($vku['menu_left_set'] == 1) {
+			$VKAPI->api('secure.setCounter', array('counter'=>0, 'uid'=>VIEWER_ID, 'timestamp'=>time(), 'random'=>rand(1,1000)));
+		}
+		// счётчик посетителей
+		$id = $VK->QRow('SELECT `id` FROM `vk_visit` WHERE `viewer_id`='.VIEWER_ID.' AND `dtime_add`>="'.strftime("%Y-%m-%d").' 00:00:00" LIMIT 1');
+		$VK->Query('INSERT INTO `vk_visit` (`id`,`viewer_id`)
+								 VALUES ('.($id ? $id : 0).','.VIEWER_ID.')
+								 ON DUPLICATE KEY UPDATE `count_day`=`count_day`+1,`dtime_add`=current_timestamp');
+		$VK->Query('UPDATE `vk_user` SET
+						   `count_day`='.($id ? '`count_day`+1' : 1).',
+						   `enter_last`=current_timestamp where viewer_id='.VIEWER_ID);
+	}
+	return $vku;
 }
 */

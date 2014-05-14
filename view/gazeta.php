@@ -2285,7 +2285,7 @@ function setup() {
 		foreach($pages as $p => $name)
 			$links .= '<a href="'.URL.'&p=gazeta&d=setup&d1='.$p.'"'.($d1 == $p ? ' class="sel"' : '').'>'.$name.'</a>';
 	return
-	'<script type="text/javascript" src="'.SITE.'/js/setup.js?'.VERSION.'"></script>'.
+	'<script type="text/javascript" src="'.SITE.'/js/setup'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 	'<div id="setup">'.
 		'<table class="tabLR">'.
 			'<tr><td class="left">'.$left.

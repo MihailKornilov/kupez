@@ -7,8 +7,9 @@ $mysql = array(
 	'names' => 'cp1251'
 );
 
-define('VKPATH', 'c:/www/nyandoma/vk/');
+define('API_ID', 2881875);
 define('PATH', 'c:/www/kupez/');
+define('VKPATH', 'c:/www/nyandoma/vk/');
 define('CACHE_PREFIX', 'kupez_');
 
 $_GET['viewer_id'] = 982006;

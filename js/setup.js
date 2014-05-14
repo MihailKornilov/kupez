@@ -359,6 +359,7 @@ $(document)
 		}
 	})
 
+
 	.on('click', '#setup_person .add', function() {
 		var t = $(this),
 			html = '<table class="setup-tab">' +

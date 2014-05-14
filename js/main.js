@@ -528,3 +528,4 @@ $(document)
 			$('#menu').rightLink(obMySpisok);
 		}
 	});
+
