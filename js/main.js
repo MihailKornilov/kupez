@@ -36,7 +36,8 @@ var hashLoc,
 			city_id:$('#cities').val(),
 			rubric_id:$('#rub').val(),
 			rubric_sub_id:$('#rubsub').val(),
-			withfoto:$('#withfoto').val()
+			withfoto:$('#withfoto').val(),
+			nokupez:$('#nokupez').length ? $('#nokupez').val() : 0
 		};
 	},
 	obSpisok = function() {
@@ -190,7 +191,7 @@ $(document)
 				next.removeClass('busy');
 		}, 'json');
 	})
-	.on('click', '#ob-my .img_edit', function() {
+	.on('click', '#ob-my .img_edit,.ob-spisok .img_edit', function() {
 		var t = $(this);
 		while(!t.hasClass('ob-unit'))
 			t = t.parent();
@@ -375,9 +376,10 @@ $(document)
 					obSpisok();
 				}
 			});
+			var v = $('#countries').val();
 			$('#cities')._select({
 				title0:'Город не выбран',
-				spisok:[],
+				spisok:v ? CITIES[v] : [],
 				func:obSpisok
 			});
 			$('#cities_select').vkHint({
@@ -391,6 +393,7 @@ $(document)
 				obSpisok();
 			});
 			$('#withfoto')._check(obSpisok);
+			$('#nokupez')._check(obSpisok);
 		}
 		if($('#ob-create').length) {
 			$('._info a').click(function () {

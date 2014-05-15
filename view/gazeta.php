@@ -679,8 +679,8 @@ function _zayavLink($arr) {//Добавление в массив информации о заявках
 	$q = query($sql);
 	while($r = mysql_fetch_assoc($q))
 		foreach($arrIds[$r['id']] as $id) {
-			$arr[$id]['zayav_link'] = '<a'.($r['deleted'] ? ' class="deleted" title="Заявка удалена"' : '').'
-											href="'.URL.'&p=gazeta&d=zayav&d1=info&id='.$r['id'].'">'.
+			$arr[$id]['zayav_link'] = '<a'.($r['deleted'] ? ' class="deleted" title="Заявка удалена"' : '').
+											'href="'.URL.'&p=gazeta&d=zayav&d1=info&id='.$r['id'].'">'.
 										'№'.$r['id'].
 									  '</a>';
 			$arr[$id]['zayav_type'] = _category($r['category']);

@@ -1029,6 +1029,7 @@ $(document)
 						width:440,
 						head:'Редактирование данных клиента',
 						content:html,
+						butSubmit:'Сохранить',
 						submit:submit
 					});
 				$('#cperson')._select({

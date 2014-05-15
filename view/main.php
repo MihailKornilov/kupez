@@ -205,7 +205,7 @@ function GvaluesCreate() {// составление файла G_values.js
 
 function ob() {//Главная страница с объявлениями
 	$data = ob_spisok();
-	$country =
+	$sql =
 		"SELECT
 			`country_id`,
 			`country_name`
@@ -216,6 +216,7 @@ function ob() {//Главная страница с объявлениями
 		  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
 		GROUP BY `country_id`
 		ORDER BY `country_name`";
+	$country = query_ass($sql);
 
 	$sql = "SELECT
 				`city_id`,
@@ -251,9 +252,30 @@ function ob() {//Главная страница с объявлениями
 	$q = query($sql);
 	while($r = mysql_fetch_assoc($q))
 		$rubric[$r['rubric_id']] .= '<b>'.$r['count'].'</b>';
+
+	$counts = '';
+	if(SA) {
+		$countDay =    query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last` LIKE '".strftime('%Y-%m-%d')."%'");
+		$count24 =     query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last`>DATE_SUB(NOW(), INTERVAL 1 DAY)");
+		$countMon =    query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last` LIKE '".strftime('%Y-%m-')."%'");
+		$count30days = query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last`>DATE_SUB(NOW(), INTERVAL 30 DAY)");
+
+		$obDay =    query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`deleted` AND !`gazeta_id` AND `dtime_add` LIKE '".strftime('%Y-%m-%d')."%'");
+		$ob24 =     query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`deleted` AND !`gazeta_id` AND `dtime_add`>DATE_SUB(NOW(), INTERVAL 1 DAY)");
+		$obMon =    query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`deleted` AND !`gazeta_id` AND `dtime_add` LIKE '".strftime('%Y-%m-')."%'");
+		$ob30days = query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`deleted` AND !`gazeta_id` AND `dtime_add`>DATE_SUB(NOW(), INTERVAL 30 DAY)");
+
+		$counts =
+			'<table class="stat">'.
+				'<tr><td class="label r">Сегодня:<td><a>'.$countDay.'</a><td>'.($obDay ? $obDay : '').
+				'<tr><td class="label r">24 часа:<td>'.$count24.'<td>'.($ob24 ? $ob24 : '').
+				'<tr><td class="label r">'._monthDef(strftime('%m')).':<td>'.$countMon.'<td>'.($obMon ? $obMon : '').
+				'<tr><td class="label r">30 дней:<td>'.$count30days.'<td>'.($ob30days ? $ob30days : '').
+			'</table>';
+	}
 	return
 	'<script type="text/javascript">'.
-		'var COUNTRIES='.query_selJson($country).','.
+		'var COUNTRIES='._selJson($country).','.
 			'CITIES={'.implode(',', $city).'};'.
 	'</script>'.
 	'<div class="ob-spisok">'.
@@ -266,13 +288,15 @@ function ob() {//Главная страница с объявлениями
 			'<tr><td class="left">'.$data['spisok'].
 				'<td class="right">'.
 					'<div class="findHead region">Регион</div>'.
-					'<input type="hidden" id="countries" />'.
-					'<div class="city-sel dn"><input type="hidden" id="cities"></div>'.
+					'<input type="hidden" id="countries"'.(count($country) == 1 ? ' value="'.key($country).'"' : '').' />'.
+					'<div class="city-sel'.(count($country) == 1 ? '' : ' dn').'"><input type="hidden" id="cities"></div>'.
 					'<div class="findHead">Рубрики</div>'.
 					_rightLink('rub', $rubric).
 					'<input type="hidden" id="rubsub" value="0" />'.
 					'<div class="findHead">Дополнительно</div>'.
 					_check('withfoto', 'Только с фото').
+			  (SA ? _check('nokupez', 'Не КупецЪ') : '').
+					$counts.
 		'</table>'.
 	'</div>';
 }//ob()
@@ -285,7 +309,8 @@ function obFilter($v=array()) {
 		'city_id' => !empty($v['city_id']) && preg_match(REGEXP_NUMERIC, $v['city_id']) ? intval($v['city_id']) : 0,
 		'rubric_id' => !empty($v['rubric_id']) && preg_match(REGEXP_NUMERIC, $v['rubric_id']) ? intval($v['rubric_id']) : 0,
 		'rubric_sub_id' => !empty($v['rubric_sub_id']) && preg_match(REGEXP_NUMERIC, $v['rubric_sub_id']) ? intval($v['rubric_sub_id']) : 0,
-		'withfoto' => isset($v['withfoto']) && preg_match(REGEXP_BOOL, $v['withfoto']) ? intval($v['withfoto']) : 0
+		'withfoto' => isset($v['withfoto']) && preg_match(REGEXP_BOOL, $v['withfoto']) ? intval($v['withfoto']) : 0,
+		'nokupez' => SA && isset($v['nokupez']) && preg_match(REGEXP_BOOL, $v['nokupez']) ? intval($v['nokupez']) : 0
 	);
 }//obFilter()
 function ob_spisok($v=array()) {
@@ -310,6 +335,8 @@ function ob_spisok($v=array()) {
 		$cond .= " AND `rubric_sub_id`=".$filter['rubric_sub_id'];
 	if($filter['withfoto'])
 		$cond .= " AND `image_id`";
+	if(SA && $filter['nokupez'])
+		$cond .= " AND !`gazeta_id`";
 
 	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `vk_ob` WHERE ".$cond);
 
@@ -324,7 +351,7 @@ function ob_spisok($v=array()) {
 		);
 
 	$send['all'] = $all;
-	$send['result'] = 'Показан'._end($all, '', 'о').' '.$all.' объявлен'._end($all, 'ие', 'ия', 'ий').$links;
+	$send['result'] = 'Показано '.$all.' объявлен'._end($all, 'ие', 'ия', 'ий').$links;
 	$send['filter'] = $filter;
 
 	$start = ($page - 1) * $limit;
@@ -346,7 +373,18 @@ function ob_spisok($v=array()) {
 	$send['spisok'] = '';
 	foreach($ob as $r) {
 		$send['spisok'] .=
-		'<div class="ob-unit">'.
+		'<div class="ob-unit"'.(SA ? ' val="'.$r['id'].'"' : '').'>'.
+		(SA ?
+			'<div class="sa-edit">'.
+				'<span class="dt">'.FullDataTime($r['dtime_add']).'</span>'.
+				($r['viewer_id_add'] ? _viewer($r['viewer_id_add'], 'link') : '').
+				($r['gazeta_id'] ? 'КупецЪ' : '').
+				'<div class="ed">'.
+					'<a>в архив</a>'.
+					'<div class="img_edit"></div>'.
+				'</div>'.
+			'</div>'
+		: '').
 			'<table class="utab">'.
 				'<tr><td class="txt">'.
 						'<a class="rub" val="'.$r['rubric_id'].'">'._rubric($r['rubric_id']).'</a><u>»</u>'.
@@ -484,7 +522,6 @@ function ob_my_spisok($v=array()) {
 			ORDER BY `id` DESC
 			LIMIT ".$start.",".$limit;
 	$q = query($sql);
-	$ob = array();
 	while($r = mysql_fetch_assoc($q))
 		$send['spisok'] .= ob_my_unit($r);
 
@@ -597,6 +634,17 @@ function to_new_images() {//Перенос картинок в новый формат
 			   WHERE `id`=".$r['id']);
 	}
 }
+
+
+		//присвоение gazeta_id заявкам
+		$sql = "SELECT * FROM `vk_ob` WHERE !`viewer_id_add` AND !`gazeta_id` limit 1000";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q))
+			query("UPDATE `vk_ob` SET gazeta_id=IFNULL((
+				SELECT id FROM `gazeta_zayav` WHERE category=1 AND `dtime_add`='".$r['dtime_add']."' LIMIT 1
+			),0) WHERE `id`=".$r['id']);
+
+
 
 // Проверка пользователя на наличие в базе. Также обновление при первом входе в Контакт
 function vkUserCheck($vku, $update = false)

@@ -107,10 +107,9 @@ switch(@$_POST['op']) {
 		jsonSuccess();
 		break;
 	case 'ob_load':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['id']) || !$_POST['id'])
+		if(!$id = _isnum($_POST['id']))
 			jsonError();
-		$id = intval($_POST['id']);
-		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `viewer_id_add`=".VIEWER_ID." AND `id`=".$id;
+		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` ".(SA ? '' : "AND `viewer_id_add`=".VIEWER_ID)." AND `id`=".$id;
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 		$send = array(
@@ -128,7 +127,7 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'ob_edit':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['id']) || !$_POST['id'])
+		if(!$id = _isnum($_POST['id']))
 			jsonError();
 		if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_id']) || !$_POST['rubric_id'])
 			jsonError();
@@ -143,7 +142,7 @@ switch(@$_POST['op']) {
 		if(!preg_match(REGEXP_BOOL, $_POST['active']))
 			jsonError();
 
-		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `viewer_id_add`=".VIEWER_ID." AND `id`=".intval($_POST['id']);
+		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` ".(SA ? '' : "AND `viewer_id_add`=".VIEWER_ID)." AND `id`=".$id;
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
@@ -185,7 +184,7 @@ switch(@$_POST['op']) {
 					`day_active`='".$r['day_active']."',
 					`image_id`=".$r['image_id'].",
 					`image_link`='".$r['image_link']."'
-				WHERE `id`=".$r['id'];
+				WHERE `id`=".$id;
 		query($sql);
 
 		$r['edited'] = 1;

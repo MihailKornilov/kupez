@@ -98,16 +98,14 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'client_edit':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['id']) || !$_POST['id'])
+		if(!$client_id = _isnum($_POST['id']))
 			jsonError();
 		if(!preg_match(REGEXP_NUMERIC, $_POST['person']) || !$_POST['person'])
 			jsonError();
 		if(!preg_match(REGEXP_NUMERIC, $_POST['skidka']))
 			jsonError();
 
-		$client_id = intval($_POST['id']);
-
-		$sql = "SELECT * FROM `gazeta_client` WHERE `id`=".$client_id." LIMIT 1";
+		$sql = "SELECT * FROM `gazeta_client` WHERE !`deleted` AND `id`=".$client_id;
 		if(!$client = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
@@ -124,7 +122,8 @@ switch(@$_POST['op']) {
 			'skidka' => intval($_POST['skidka']),
 			'balans' => clientBalansUpdate($client_id),
 			'viewer_id_add' => $client['viewer_id_add'],
-			'dtime_add' => $client['dtime_add']
+			'dtime_add' => $client['dtime_add'],
+			'deleted' => 0
 		);
 
 		if(empty($send['fio']) && empty($send['org_name']))

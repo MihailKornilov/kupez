@@ -13,8 +13,12 @@
 .ob-spisok .rightLink b{float:right;color:#999}
 .ob-spisok .rightLink .sel b{color:#ccc}
 .ob-spisok #withfoto_check{margin-top:4px}
+.ob-spisok #nokupez_check{margin-top:15px}
 .ob-spisok ._next{margin:0 10px 10px}
 .ob-spisok .ob-unit{overflow:hidden}
+.ob-spisok .stat{margin-top:40px;border-collapse:collapse}
+.ob-spisok .stat td{border:#ddd solid 1px;padding:1px 5px}
+.ob-spisok .stat td:not(.label){text-align:center}
 .ob-unit{
 	width:438px;
 	margin:10px 10px 5px;
@@ -63,7 +67,19 @@
 	border:#ddd solid 1px
 }
 .ob-unit.edited{background-color:#ffffe2}
-
+.ob-unit:not(:hover) .sa-edit{display:none}
+.ob-unit .sa-edit{
+	position:absolute;
+	width:426px;
+	border:#ccc solid 1px;
+	padding:3px 5px;
+	background-color:#def;
+	box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+.ob-unit .sa-edit .dt{font-size:10px;color:#777;margin-right:15px}
+.ob-unit .sa-edit .ed{float:right}
+.ob-unit .sa-edit .ed a{position:relative;top:-1px;left:-10px;color:#888}
+.ob-unit .sa-edit .img_edit{margin-bottom:-2px}
 
 /* Создание нового объявления */
 #ob-create{background-color:#f7f7f7;padding-bottom:80px}
