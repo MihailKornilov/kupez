@@ -1,0 +1,51 @@
+var AJAX_ADMIN = SITE + '/ajax/admin.php?' + VALUES,
+	userFilter = function() {
+		return {
+			op:'user_spisok',
+			find:$('#find')._search('val'),
+			ob_write:$('#ob_write').val()
+		};
+	},
+	userSpisok = function() {
+		if($('.result').hasClass('_busy'))
+			return;
+		$('.result').addClass('_busy');
+		$.post(AJAX_ADMIN, userFilter(), function (res) {
+			$('.result').removeClass('_busy');
+			if(res.success) {
+				$('.result').html(res.result);
+				$('.left').html(res.spisok);
+			}
+		}, 'json');
+	};
+
+$(document)
+	.on('click', '.admin-user ._next', function() {
+		var next = $(this),
+			send = userFilter();
+		send.page = next.attr('val');
+		if(next.hasClass('busy'))
+			return;
+		next.addClass('busy');
+		$.post(AJAX_ADMIN, send, function(res) {
+			if(res.success)
+				next.after(res.spisok).remove();
+			else
+				next.removeClass('busy');
+		}, 'json');
+	});
+
+$(document)
+	.ready(function() {
+		if($('.admin-user').length) {
+			$('#find')._search({
+				width:138,
+				focus:1,
+				enter:1,
+				txt:'Быстрый поиск',
+				func:userSpisok
+			});
+			$('#ob_write')._radio(userSpisok);
+		}
+	});
+

@@ -43,14 +43,12 @@ var hashLoc,
 	obSpisok = function() {
 		if($('.region').hasClass('_busy'))
 			return;
-		var send = obFilter();
 		$('.region').addClass('_busy');
-		$.post(AJAX_MAIN, send, function (res) {
+		$.post(AJAX_MAIN, obFilter(), function (res) {
 			$('.region').removeClass('_busy');
 			if(res.success) {
 				$('.result').html(res.result);
 				$('.left').html(res.spisok);
-				//$('#_debug .cookie').html('<br /><br /><br /><br />' + VK_SCROLL);
 				if(VK_SCROLL > 145)
 					VK.callMethod('scrollWindow', 42);
 			}

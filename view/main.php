@@ -297,10 +297,11 @@ function ob() {//Главная страница с объявлениями
 
 	$counts = '';
 	if(SA) {
-		$countDay =    query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last` LIKE '".strftime('%Y-%m-%d')."%'");
-		$count24 =     query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last`>DATE_SUB(NOW(), INTERVAL 1 DAY)");
-		$countMon =    query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last` LIKE '".strftime('%Y-%m-')."%'");
-		$count30days = query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last`>DATE_SUB(NOW(), INTERVAL 30 DAY)");
+		$userDay =    query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last` LIKE '".strftime('%Y-%m-%d')."%'");
+		$userNew =    query_value("SELECT COUNT(*) FROM `vk_user` WHERE `dtime_add` LIKE '".strftime('%Y-%m-%d')."%'");
+		$user24 =     query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last`>DATE_SUB(NOW(), INTERVAL 1 DAY)");
+		$userMon =    query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last` LIKE '".strftime('%Y-%m-')."%'");
+		$user30days = query_value("SELECT COUNT(*) FROM `vk_user` WHERE `enter_last`>DATE_SUB(NOW(), INTERVAL 30 DAY)");
 
 		$obDay =    query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`deleted` AND !`gazeta_id` AND `dtime_add` LIKE '".strftime('%Y-%m-%d')."%'");
 		$ob24 =     query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`deleted` AND !`gazeta_id` AND `dtime_add`>DATE_SUB(NOW(), INTERVAL 1 DAY)");
@@ -309,10 +310,12 @@ function ob() {//Главная страница с объявлениями
 
 		$counts =
 			'<table class="stat">'.
-				'<tr><td class="label r">Сегодня:<td><a href="'.URL.'&p=admin">'.$countDay.'</a><td>'.($obDay ? $obDay : '').
-				'<tr><td class="label r">24 часа:<td>'.$count24.'<td>'.($ob24 ? $ob24 : '').
-				'<tr><td class="label r">'._monthDef(strftime('%m')).':<td>'.$countMon.'<td>'.($obMon ? $obMon : '').
-				'<tr><td class="label r">30 дней:<td>'.$count30days.'<td>'.($ob30days ? $ob30days : '').
+				'<tr><td class="label r">Сегодня:'.
+					'<td><a href="'.URL.'&p=admin"><b>'.$userDay.'</b></a>'.($userNew ? ' <span class="new">+'.$userNew.'</span>' : '').
+					'<td>'.($obDay ? $obDay : '').
+				'<tr><td class="label r">24 часа:<td>'.$user24.'<td>'.($ob24 ? $ob24 : '').
+				'<tr><td class="label r">'._monthDef(strftime('%m')).':<td>'.$userMon.'<td>'.($obMon ? $obMon : '').
+				'<tr><td class="label r">30 дней:<td>'.$user30days.'<td>'.($ob30days ? $ob30days : '').
 			'</table>';
 	}
 
