@@ -50,6 +50,9 @@ var hashLoc,
 			if(res.success) {
 				$('.result').html(res.result);
 				$('.left').html(res.spisok);
+				//$('#_debug .cookie').html('<br /><br /><br /><br />' + VK_SCROLL);
+				if(VK_SCROLL > 145)
+					VK.callMethod('scrollWindow', 42);
 			}
 		}, 'json');
 	},
@@ -152,6 +155,23 @@ var hashLoc,
 	};
 
 $(document)
+	.on('click', '.ob-spisok .to-arch', function() {
+		var t = $(this),
+			ob = t;
+		while(!ob.hasClass('ob-unit'))
+			ob = ob.parent();
+		var send = {
+			op:'ob_archive',
+			id:ob.attr('val')
+		};
+		t.hide();
+		$.post(AJAX_MAIN, send, function(res) {
+			if(res.success)
+				ob.remove();
+			else
+				t.fadeIn(700);
+		}, 'json');
+	})
 	.on('click', 'a.rub', function() {
 		$('#rub').rightLink($(this).attr('val'));
 		$('#rubsub').val(0);
@@ -221,8 +241,10 @@ $(document)
 						'<tr><td class="label topi">Регион:' +
 							'<td><input type="hidden" id="country_id" value="' + res.country_id + '" />' +
 								'<input type="hidden" id="city_id" value="' + res.city_id + '" />' +
-						'<tr><td class="label">Показывать имя из VK:' +
-							'<td><input type="hidden" id="viewer_id_show" value="' + res.viewer_id_show + '" />' +
+					(res.viewer_id_add ?
+						'<tr><td class="label">Показывать имя из VK:<td>'
+					: '') +
+							'<input type="hidden" id="viewer_id_show" value="' + res.viewer_id_show + '" />' +
 						'<tr><td class="label topi">Активность:' +
 							'<td><input type="hidden" id="active" value="' + res.active + '" />' +
 				'</table>';
@@ -232,7 +254,7 @@ $(document)
 					spisok:RUBRIC_SPISOK,
 					func:rubricSub
 				});
-				rubricSub(res.rubric_id, res.rubric_sub_id * 1);
+				rubricSub(res.rubric_id, res.rubric_sub_id);
 				$('#txt').autosize();
 				imageSortable();
 				cityShow();
@@ -255,7 +277,8 @@ $(document)
 						}
 					}
 				});
-				$('#viewer_id_show')._check();
+				if(res.viewer_id_add)
+					$('#viewer_id_show')._check();
 				$('#active')._radio({
 					spisok:[
 						{uid:1,title:'Объявление видно всем'},
@@ -280,6 +303,7 @@ $(document)
 		function submit() {
 			var send = {
 					op:'ob_edit',
+					my:$('#ob-my').length,
 					id:t.attr('val'),
 					rubric_id:$('#rubric_id').val(),
 					rubric_sub_id:$('#rubric_sub_id').val(),
@@ -288,7 +312,7 @@ $(document)
 					country_id:$('#country_id').val(),
 					country_name:$('#country_id')._select('title'),
 					city_id:$('#city_id').val(),
-					city_name:$('#city_id')._select('title'),
+					city_name:$('#city_id')._select('title') || '',
 					viewer_id_show:$('#viewer_id_show').val(),
 					active:$('#active').val()
 				};
@@ -367,6 +391,7 @@ $(document)
 				document.location.href = URL + '&p=ob&d=create';
 			});
 			$('#countries')._select({
+				width:140,
 				title0:'Страна не выбрана',
 				spisok:COUNTRIES,
 				func:function(id) {
@@ -378,15 +403,17 @@ $(document)
 			});
 			var v = $('#countries').val();
 			$('#cities')._select({
+				width:140,
 				title0:'Город не выбран',
 				spisok:v ? CITIES[v] : [],
 				func:obSpisok
 			});
 			$('#cities_select').vkHint({
+				width:145,
 				msg:'Показываются города,<br />для которых есть<br />активные объявления.',
 				ugol:'right',
 				top:-16,
-				left:-175
+				left:-178
 			});
 			$('#rub').rightLink(function() {
 				$('#rubsub').val(0);
@@ -394,6 +421,9 @@ $(document)
 			});
 			$('#withfoto')._check(obSpisok);
 			$('#nokupez')._check(obSpisok);
+			window._onScroll.push(function(top) {
+				$('#filter').css('top', (top <= 148 ? 0 : top - 148) + 'px');
+			});
 		}
 		if($('#ob-create').length) {
 			$('._info a').click(function () {

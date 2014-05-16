@@ -69,46 +69,6 @@ function _person($person_id=false) {//Список изделий для заявок
 	}
 	return $person_id !== false ? constant('PERSON_'.$person_id) : $arr;
 }//_person()
-function _rubric($rubric_id=false) {//Список изделий для заявок
-	if(!defined('RUBRIC_LOADED') || $rubric_id === false) {
-		$key = CACHE_PREFIX.'rubric';
-		$arr = xcache_get($key);
-		if(empty($arr)) {
-			$sql = "SELECT `id`,`name` FROM `setup_rubric` ORDER BY `sort`";
-			$q = query($sql);
-			while($r = mysql_fetch_assoc($q))
-				$arr[$r['id']] = $r['name'];
-			xcache_set($key, $arr, 86400);
-		}
-		if(!defined('RUBRIC_LOADED')) {
-			foreach($arr as $id => $name)
-				define('RUBRIC_'.$id, $name);
-			define('RUBRIC_0', '');
-			define('RUBRIC_LOADED', true);
-		}
-	}
-	return $rubric_id !== false ? constant('RUBRIC_'.$rubric_id) : $arr;
-}//_rubric()
-function _rubricsub($item_id=false) {//Список изделий для заявок
-	if(!defined('RUBRICSUB_LOADED') || $item_id === false) {
-		$key = CACHE_PREFIX.'rubric_sub';
-		$arr = xcache_get($key);
-		if(empty($arr)) {
-			$sql = "SELECT `id`,`name` FROM `setup_rubric_sub` ORDER BY `sort`";
-			$q = query($sql);
-			while($r = mysql_fetch_assoc($q))
-				$arr[$r['id']] = $r['name'];
-			xcache_set($key, $arr, 86400);
-		}
-		if(!defined('RUBRICSUB_LOADED')) {
-			foreach($arr as $id => $name)
-				define('RUBRICSUB_'.$id, $name);
-			define('RUBRICSUB_0', '');
-			define('RUBRICSUB_LOADED', true);
-		}
-	}
-	return $item_id !== false ? constant('RUBRICSUB_'.$item_id) : $arr;
-}//_rubricsub()
 function _gn($nomer=false, $i='') {//Получение информации о всех номерах газеты из кеша
 	if(!defined('GN_LOADED') || $nomer === false) {
 		$key = CACHE_PREFIX.'gn';

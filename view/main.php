@@ -1,6 +1,6 @@
 <?php
 function _hashRead() {
-	$_GET['p'] = isset($_GET['p']) ? $_GET['p'] : 'gazeta';
+	$_GET['p'] = empty($_GET['p']) ? (GAZETA_WORKER ? 'gazeta' : 'ob') : $_GET['p'];
 	if(empty($_GET['hash'])) {
 		define('HASH_VALUES', false);
 		if(isset($_GET['start'])) {// восстановление последней посещённой страницы
@@ -112,6 +112,9 @@ function _header() {
 		($_GET['p'] == 'gazeta' ? '<link href="'.SITE.'/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />' : '').
 		($_GET['p'] == 'gazeta' ? '<script type="text/javascript" src="'.SITE.'/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
 
+		($_GET['p'] == 'admin' ? '<link href="'.SITE.'/css/admin'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />' : '').
+		($_GET['p'] == 'admin' ? '<script type="text/javascript" src="'.SITE.'/js/admin'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
+
 		'</head>'.
 		'<body>'.
 			'<div id="frameBody">'.
@@ -200,11 +203,50 @@ function GvaluesCreate() {// составление файла G_values.js
 	query("UPDATE `setup_global` SET `g_values`=`g_values`+1");
 	xcache_unset(CACHE_PREFIX.'setup_global');
 } // end of GvaluesCreate()
+function _rubric($rubric_id=false) {//Список изделий для заявок
+	if(!defined('RUBRIC_LOADED') || $rubric_id === false) {
+		$key = CACHE_PREFIX.'rubric';
+		$arr = xcache_get($key);
+		if(empty($arr)) {
+			$sql = "SELECT `id`,`name` FROM `setup_rubric` ORDER BY `sort`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$arr[$r['id']] = $r['name'];
+			xcache_set($key, $arr, 86400);
+		}
+		if(!defined('RUBRIC_LOADED')) {
+			foreach($arr as $id => $name)
+				define('RUBRIC_'.$id, $name);
+			define('RUBRIC_0', '');
+			define('RUBRIC_LOADED', true);
+		}
+	}
+	return $rubric_id !== false ? constant('RUBRIC_'.$rubric_id) : $arr;
+}//_rubric()
+function _rubricsub($item_id=false) {//Список изделий для заявок
+	if(!defined('RUBRICSUB_LOADED') || $item_id === false) {
+		$key = CACHE_PREFIX.'rubric_sub';
+		$arr = xcache_get($key);
+		if(empty($arr)) {
+			$sql = "SELECT `id`,`name` FROM `setup_rubric_sub` ORDER BY `sort`";
+			$q = query($sql);
+			while($r = mysql_fetch_assoc($q))
+				$arr[$r['id']] = $r['name'];
+			xcache_set($key, $arr, 86400);
+		}
+		if(!defined('RUBRICSUB_LOADED')) {
+			foreach($arr as $id => $name)
+				define('RUBRICSUB_'.$id, $name);
+			define('RUBRICSUB_0', '');
+			define('RUBRICSUB_LOADED', true);
+		}
+	}
+	return $item_id !== false ? constant('RUBRICSUB_'.$item_id) : $arr;
+}//_rubricsub()
 
 
 
 function ob() {//Главная страница с объявлениями
-	$data = ob_spisok();
 	$sql =
 		"SELECT
 			`country_id`,
@@ -267,12 +309,17 @@ function ob() {//Главная страница с объявлениями
 
 		$counts =
 			'<table class="stat">'.
-				'<tr><td class="label r">Сегодня:<td><a>'.$countDay.'</a><td>'.($obDay ? $obDay : '').
+				'<tr><td class="label r">Сегодня:<td><a href="'.URL.'&p=admin">'.$countDay.'</a><td>'.($obDay ? $obDay : '').
 				'<tr><td class="label r">24 часа:<td>'.$count24.'<td>'.($ob24 ? $ob24 : '').
 				'<tr><td class="label r">'._monthDef(strftime('%m')).':<td>'.$countMon.'<td>'.($obMon ? $obMon : '').
 				'<tr><td class="label r">30 дней:<td>'.$count30days.'<td>'.($ob30days ? $ob30days : '').
 			'</table>';
 	}
+
+	$data = ob_spisok(array(
+		'country_id' => count($country) == 1 ? key($country) : 0
+	));
+
 	return
 	'<script type="text/javascript">'.
 		'var COUNTRIES='._selJson($country).','.
@@ -287,16 +334,20 @@ function ob() {//Главная страница с объявлениями
 		'<table class="tabLR">'.
 			'<tr><td class="left">'.$data['spisok'].
 				'<td class="right">'.
-					'<div class="findHead region">Регион</div>'.
-					'<input type="hidden" id="countries"'.(count($country) == 1 ? ' value="'.key($country).'"' : '').' />'.
-					'<div class="city-sel'.(count($country) == 1 ? '' : ' dn').'"><input type="hidden" id="cities"></div>'.
-					'<div class="findHead">Рубрики</div>'.
-					_rightLink('rub', $rubric).
-					'<input type="hidden" id="rubsub" value="0" />'.
-					'<div class="findHead">Дополнительно</div>'.
-					_check('withfoto', 'Только с фото').
-			  (SA ? _check('nokupez', 'Не КупецЪ') : '').
-					$counts.
+					'<div id="filter_pre">'.
+						'<div id="filter">'.
+							'<div class="findHead region">Регион</div>'.
+							'<input type="hidden" id="countries"'.(count($country) == 1 ? ' value="'.key($country).'"' : '').' />'.
+							'<div class="city-sel'.(count($country) == 1 ? '' : ' dn').'"><input type="hidden" id="cities"></div>'.
+							'<div class="findHead">Рубрики</div>'.
+							_rightLink('rub', $rubric).
+							'<input type="hidden" id="rubsub" value="0" />'.
+							'<div class="findHead">Дополнительно</div>'.
+							_check('withfoto', 'Только с фото').
+					  (SA ? _check('nokupez', 'Не КупецЪ') : '').
+							$counts.
+						'</div>'.
+					'</div>'.
 		'</table>'.
 	'</div>';
 }//ob()
@@ -371,44 +422,49 @@ function ob_spisok($v=array()) {
 	}
 
 	$send['spisok'] = '';
-	foreach($ob as $r) {
-		$send['spisok'] .=
-		'<div class="ob-unit"'.(SA ? ' val="'.$r['id'].'"' : '').'>'.
-		(SA ?
-			'<div class="sa-edit">'.
-				'<span class="dt">'.FullDataTime($r['dtime_add']).'</span>'.
-				($r['viewer_id_add'] ? _viewer($r['viewer_id_add'], 'link') : '').
-				($r['gazeta_id'] ? 'КупецЪ' : '').
-				'<div class="ed">'.
-					'<a>в архив</a>'.
-					'<div class="img_edit"></div>'.
-				'</div>'.
-			'</div>'
-		: '').
-			'<table class="utab">'.
-				'<tr><td class="txt">'.
-						'<a class="rub" val="'.$r['rubric_id'].'">'._rubric($r['rubric_id']).'</a><u>»</u>'.
-						($r['rubric_sub_id'] ? '<a class="rubsub" val="'.$r['rubric_id'].'_'.$r['rubric_sub_id'].'">'._rubricsub($r['rubric_sub_id']).'</a><u>»</u>' : '').
-						$r['txt'].
-						($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
-  ($r['image_id'] ? '<td class="foto"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
-				'<tr><td class="adres" colspan="2">'.
-					($r['city_name'] ? $r['country_name'].', '.$r['city_name']  : '').
-					($r['viewer_id_show'] ? _viewer($r['viewer_id_add'], 'link')  : '').
-			'</table>'.
-		'</div>';
-	}
+	foreach($ob as $r)
+		$send['spisok'] .= ob_unit($r);
+
 	if($start + $limit < $all) {
 		$c = $all - $start - $limit;
 		$c = $c > $limit ? $limit : $c;
 		$send['spisok'] .=
 			'<div class="_next ob_next" val="'.($page + 1).'">'.
-				'<span>Показать ещё '.$c.' объявлен'._end($c, 'ие', 'ия', 'ий').'</span>'.
+			'<span>Показать ещё '.$c.' объявлен'._end($c, 'ие', 'ия', 'ий').'</span>'.
 			'</div>';
 	}
 
 	return $send;
 }//ob_spisok()
+function ob_unit($r) {
+	return
+	'<div class="ob-unit'.(isset($r['edited']) ? ' edited' : '').'"'.(SA ? ' val="'.$r['id'].'"' : '').'>'.
+	(SA ?
+		'<div class="sa-edit">'.
+			'<span class="dt">'.FullDataTime($r['dtime_add']).'</span>'.
+			($r['viewer_id_add'] ? _viewer($r['viewer_id_add'], 'link') : '').
+			($r['gazeta_id'] ? 'КупецЪ' : '').
+			'<div class="ed">'.
+				'<a class="to-arch">в архив</a>'.
+				'<div class="img_edit"></div>'.
+			'</div>'.
+		'</div>'
+	: '').
+		'<table class="utab">'.
+			'<tr><td class="txt">'.
+					'<a class="rub" val="'.$r['rubric_id'].'">'._rubric($r['rubric_id']).'</a><u>»</u>'.
+					($r['rubric_sub_id'] ? '<a class="rubsub" val="'.$r['rubric_id'].'_'.$r['rubric_sub_id'].'">'._rubricsub($r['rubric_sub_id']).'</a><u>»</u>' : '').
+					$r['txt'].
+					($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
+		($r['image_id'] ?
+				'<td class="foto"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />'
+		: '').
+			'<tr><td class="adres" colspan="2">'.
+				($r['city_name'] ? $r['country_name'].', '.$r['city_name']  : '').
+				($r['viewer_id_show'] ? _viewer($r['viewer_id_add'], 'link')  : '').
+		'</table>'.
+	'</div>';
+}//ob_unit()
 
 function ob_create() {
 	query("UPDATE `images` SET `deleted`=1 WHERE `owner`='".VIEWER_ID."'");

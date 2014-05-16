@@ -4,12 +4,7 @@ require_once('config.php');
 _hashRead();
 _header();
 
-if(empty($_GET['p'])) {
-	$_GET['p'] = GAZETA_WORKER ? 'gazeta' : 'ob';
-}
-
-
-switch(@$_GET['p']) {
+switch($_GET['p']) {
 	default:
 	case 'ob':
 		switch(@$_GET['d']) {
@@ -19,15 +14,33 @@ switch(@$_GET['p']) {
 			case 'my': $html .= ob_my(); break;
 		}
 		break;
+	case 'admin':
+		if(!SA) {
+			$html .= _noauth();
+			break;
+		}
+		require_once(DOCUMENT_ROOT.'/view/admin.php');
+		if(empty($_GET['d']))
+			$_GET['d'] = 'user';
+		$html .= adminMainLinks();
+		switch($_GET['d']) {
+			default:
+			case 'user':
+				$html .= admin_user();
+				break;
+			case 'exit': header('Location:'.URL.'&p=ob'); break;
+		}
+		break;
 	case 'gazeta':
 		if(!GAZETA_WORKER) {
 			$html .= _noauth();
 			break;
 		}
+		require_once(DOCUMENT_ROOT.'/view/gazeta.php');
 		if(empty($_GET['d']))
 			$_GET['d'] = 'zayav';
 		_mainLinks();
-		switch(@$_GET['d']) {
+		switch($_GET['d']) {
 			default:
 			case 'client':
 				switch(@$_GET['d1']) {
@@ -61,40 +74,4 @@ switch(@$_GET['p']) {
 _footer();
 mysql_close();
 echo $html;
-
-
-
-/*
-
-if (!isset($_GET['p'])) {
-    $_GET['p'] = 'ob';
-    if ($vku['gazeta_worker'] == 1)
-        $_GET['p'] = 'gazeta';
-}
-
-
-
-if ($_GET['p'] == 'ob') {
-    include('view/ob/ob.php');
-    switch (@$_GET['d']) {
-        case 'create': obCreate(); break;
-        case 'my': obMySpisok(); break;
-        case 'spisok':
-        default: obSpisok();  break;
-    }
-}
-
-
-if ($_GET['p'] == 'admin') {
-    if (VIEWER_ID != SA) {
-        echo 'No access. <a href="'.URL.'&p=ob">Back</a>';
-    } else {
-        include('view/admin/admin.php');
-        switch (@$_GET['d']) {
-            case 'ob': adminObSpisok(); break;
-            case 'visit':
-            default: adminVisit();  break;
-        }
-    }
-}
-*/
+exit;

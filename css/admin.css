@@ -1,0 +1,15 @@
+.admin-user .left{padding:8px}
+.admin-user .un{padding-bottom:8px;margin-bottom:8px;border-bottom:#dae1e8 solid 1px}
+.admin-user .tab{width:100%}
+.admin-user .img{width:57px;vertical-align:top}
+.admin-user .inf{vertical-align:top}
+.admin-user .dlast{float:right;font-size:10px;color:#777}
+.admin-user .ob{
+	display:inline-block;
+	padding:2px 7px;
+	margin-top:5px;
+	color:#fff;
+	background-color:#8ad
+}
+.admin-user .ob:hover{text-decoration:none}
+

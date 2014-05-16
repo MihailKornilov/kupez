@@ -7,6 +7,9 @@
 .ob-spisok .tfind th{text-align:right}
 .ob-spisok .my{float:right}
 .ob-spisok .prog{float:right;color:red;margin-right:10px}
+.ob-spisok .right{height:550px}
+.ob-spisok #filter_pre{position:relative}
+.ob-spisok #filter{position:absolute;width:140px;top:0}
 .ob-spisok .region{margin-top:0}
 .ob-spisok .region._busy{background-position:right center}
 .ob-spisok #cities_select{margin-top:4px}

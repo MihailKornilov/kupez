@@ -22,6 +22,21 @@ switch(@$_POST['op']) {
 		$send['spisok'] = utf8($data['spisok']);
 		jsonSuccess($send);
 		break;
+	case 'ob_archive':
+		//отправка объявления в архив
+		if(!SA)
+			jsonError();
+		if(!$id = _isnum($_POST['id']))
+			jsonError();
+
+		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `day_active`!='0000-00-00' AND `id`=".$id;
+		if(!$r = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		query("UPDATE `vk_ob` SET `day_active`='0000-00-00' WHERE `id`=".$id);
+
+		jsonSuccess();
+		break;
 	case 'ob_create':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_id']) || !$_POST['rubric_id'])
 			jsonError();
@@ -113,15 +128,16 @@ switch(@$_POST['op']) {
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 		$send = array(
-			'rubric_id' => $r['rubric_id'],
-			'rubric_sub_id' => $r['rubric_sub_id'],
+			'rubric_id' => intval($r['rubric_id']),
+			'rubric_sub_id' => intval($r['rubric_sub_id']),
 			'txt' => utf8($r['txt']),
 			'telefon' => utf8($r['telefon']),
 			'images' => utf8(_imageAdd(array('owner'=>'ob'.$r['id']))),
-			'country_id' => $r['country_id'],
-			'city_id' => $r['city_id'],
+			'country_id' => intval($r['country_id']),
+			'city_id' => intval($r['city_id']),
 			'city_name' => utf8($r['city_name']),
-			'viewer_id_show' => $r['viewer_id_show'],
+			'viewer_id_show' => intval($r['viewer_id_show']),
+			'viewer_id_add' => intval($r['viewer_id_add']),
 			'active' => strtotime($r['day_active']) - time() + 86400 < 0 ? 0 : 1
 		);
 		jsonSuccess($send);
@@ -146,6 +162,7 @@ switch(@$_POST['op']) {
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
+		$my = _isbool($_POST['my']);
 		$r['rubric_id'] = intval($_POST['rubric_id']);
 		$r['rubric_sub_id'] = intval($_POST['rubric_sub_id']);
 		$r['txt'] = win1251(htmlspecialchars(trim($_POST['txt'])));
@@ -188,7 +205,7 @@ switch(@$_POST['op']) {
 		query($sql);
 
 		$r['edited'] = 1;
-		$send['html'] = utf8(ob_my_unit($r));
+		$send['html'] = utf8($my ? ob_my_unit($r) : ob_unit($r));
 		jsonSuccess($send);
 		break;
 	case 'ob_del':
