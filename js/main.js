@@ -55,6 +55,8 @@ var hashLoc,
 		}, 'json');
 	},
 	obPreview = function() {
+		if(!$('#ob-my').length)
+			return;
 		var txt = $('#txt').val().replace(/\n/g, '<br />'),
 			rubric_id = $('#rubric_id').val() * 1,
 			rubric_sub_id = $('#rubric_sub_id').val() * 1,
@@ -419,8 +421,12 @@ $(document)
 			});
 			$('#withfoto')._check(obSpisok);
 			$('#nokupez')._check(obSpisok);
+			var timer = 0;
 			window._onScroll.push(function(top) {
-				$('#filter').css('top', (top <= 148 ? 0 : top - 148) + 'px');
+				clearTimeout(timer);
+				timer = setTimeout(function() {
+					$('#filter').animate({top:(top <= 148 ? 0 : top - 148) + 'px'}, 500);
+				}, 3000);
 			});
 		}
 		if($('#ob-create').length) {

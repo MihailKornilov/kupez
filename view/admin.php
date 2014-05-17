@@ -123,18 +123,7 @@ function admin_user_spisok($v=array()) {
 			GROUP BY `u`.`viewer_id`
 			ORDER BY ".($filter['ob_write'] ? "COUNT(`ob`.`id`)" : '`u`.`enter_last`')." DESC
 			LIMIT ".$start.",".$limit;
-/*	$sql = "SELECT
-				*,
-				CONCAT(`first_name`,' ',`last_name`) AS `name`,
-				0 AS `ob`,
-				0 AS `act`,
-				0 AS `arc`,
-				0 AS `del`
-			FROM `vk_user`
-			WHERE ".$cond."
-			ORDER BY `enter_last` DESC
-			LIMIT ".$start.",".$limit;
-*/	$q = query($sql);
+	$q = query($sql);
 	$user = array();
 	while($r = mysql_fetch_assoc($q)) {
 		if($filter['find'] && !_isnum($filter['find'])) {
@@ -211,12 +200,12 @@ function admin_user_spisok($v=array()) {
 }//admin_user_spisok()
 function admin_user_unit($r) {
 	return
-	'<div class="un" val="'.$r['viewer_id'].'">'.
+	'<div class="user-unit" val="'.$r['viewer_id'].'">'.
 		'<table class="tab">'.
 			'<tr><td class="img"><a href="'.URL.'&p=admin&id='.$r['viewer_id'].'"><img src="'.$r['photo'].'"></a>'.
 				'<td class="inf">'.
 					'<div class="dlast">'.
-						(substr($r['enter_last'], 0, 10) == CURDAY ? substr($r['enter_last'], 11, 5) : FullDataTime($r['enter_last'])).
+						(substr($r['enter_last'], 0, 10) == CURDAY ? '<span class="today">'.substr($r['enter_last'], 11, 5).'</span>' : FullDataTime($r['enter_last'])).
 						(substr($r['dtime_add'], 0, 10) == CURDAY ? '<br /><span class="ob new">Новый</span>' : '').
 					'</div>'.
 					'<a href="'.URL.'&p=admin&id='.$r['viewer_id'].'"><b>'.$r['name'].'</b></a>'.
@@ -229,6 +218,64 @@ function admin_user_unit($r) {
 	'</div>';
 }//admin_user_unit()
 
+function admin_user_info($viewer_id) {
+	if(!$r = query_assoc("SELECT * FROM `vk_user` WHERE `viewer_id`=".$viewer_id))
+		return 'Пользователь не внесён в базу';
 
+	//все объявления
+	$ob = query_value("SELECT COUNT(`id`) FROM `vk_ob` WHERE `viewer_id_add`=".$viewer_id);
+	$act = query_value("SELECT COUNT(`id`)
+						FROM `vk_ob`
+						WHERE !`deleted`
+						  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
+						  AND`viewer_id_add`=".$viewer_id);
+	$arc = query_value("SELECT COUNT(`id`)
+						FROM `vk_ob`
+						WHERE !`deleted`
+						  AND `day_active`<DATE_FORMAT(NOW(), '%Y-%m-%d')
+						  AND`viewer_id_add`=".$viewer_id);
+	$del = query_value("SELECT COUNT(`id`) FROM `vk_ob` WHERE `deleted` AND `viewer_id_add`=".$viewer_id);
+
+	define('CURDAY', strftime('%Y-%m-%d'));
+
+	$menu = array(
+		0 => 'Информация',
+		1 => 'Объявления',
+		2 => 'История действий'
+	);
+
+	return
+	'<div id="user-info">'.
+		'<table class="tabLR">'.
+			'<tr><td class="left user-unit">'.
+
+					'<table class="tab">'.
+							'<tr><td class="img"><img src="'.$r['photo'].'">'.
+								'<td class="inf">'.
+									'<div class="dlast">'.
+										(substr($r['enter_last'], 0, 10) == CURDAY ? '<span class="today">'.substr($r['enter_last'], 11, 5).'</span>' : FullDataTime($r['enter_last'])).
+										(substr($r['dtime_add'], 0, 10) == CURDAY ? '<br /><span class="ob new">Новый</span>' : '').
+									'</div>'.
+									'<a href="http://vk.com/id'.$r['viewer_id'].'" target="_blank"><b>'.$r['first_name'].' '.$r['last_name'].'</b></a>'.
+									'<div class="city">'.$r['city_name'].($r['country_name'] ? ', '.$r['country_name'] : '').'</div>'.
+									($ob ? '<a class="ob">Объявления: <b>'.$ob.'</b></a>' : '').
+									($act ? '<span class="ob act">'.$act.'</span>' : '').
+									($arc ? '<span class="ob arc">'.$arc.'</span>' : '').
+									($del ? '<span class="ob del">'.$del.'</span>' : '').
+						'</table>'.
+
+						'<table class="itab">'.
+							'<tr><td class="label r">Регистрация:<td>'.FullDataTime($r['dtime_add']).
+							'<tr><td class="label r">Приложение<td> '.($r['app_setup'] ? '' : 'не ').'установлено'.
+							'<tr><td class="label r">В левое меню<td>'.($r['menu_left_set'] ? '' : 'не ').'добавлено'.
+						'</table>'.
+						'<div class="vkButton update" val="'.$viewer_id.'"><button>Обновить данные</button></div>'.
+					'<td class="right">'.
+						_rightLink('menu', $menu).
+		'</table>'.
+
+	'</div>';
+
+}//admin_user_info()
 
 

@@ -3,7 +3,7 @@ function _hashRead() {
 	$_GET['p'] = empty($_GET['p']) ? (GAZETA_WORKER ? 'gazeta' : 'ob') : $_GET['p'];
 	if(empty($_GET['hash'])) {
 		define('HASH_VALUES', false);
-		if(isset($_GET['start'])) {// восстановление последней посещённой страницы
+		if(APP_START) {// восстановление последней посещённой страницы
 			$_GET['p'] = isset($_COOKIE['p']) ? $_COOKIE['p'] : $_GET['p'];
 			$_GET['d'] = isset($_COOKIE['d']) ? $_COOKIE['d'] : '';
 			$_GET['d1'] = isset($_COOKIE['d1']) ? $_COOKIE['d1'] : '';
@@ -79,11 +79,11 @@ function _header() {
 		'<title>КупецЪ - Приложение '.API_ID.'</title>'.
 
 		//Отслеживание ошибок в скриптах
-		(SA ? '<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/js/errors.js?'.VERSION.'"></script>' : '').
+		(SA ? '<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/js/errors.js?'.VERSION.'"></script>' : '').
 
 		//Стороние скрипты
-		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/js/jquery-2.0.3.min.js"></script>'.
-		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/xd_connection'.(DEBUG ? '' : '.min').'.js"></script>'.
+		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/js/jquery-2.0.3.min.js"></script>'.
+		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/vk/xd_connection'.(DEBUG ? '' : '.min').'.js"></script>'.
 
 		//Установка начального значения таймера.
 		(SA ? '<script type="text/javascript">var TIME=(new Date()).getTime();</script>' : '').
@@ -102,7 +102,7 @@ function _header() {
 
 		//Подключение api VK. Стили VK должны стоять до основных стилей сайта
 		'<link href="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/vk'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
-		'<script type="text/javascript" src="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/vk'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
+		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/vk/vk'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
 		'<script type="text/javascript" src="'.SITE.'/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
 

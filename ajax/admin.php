@@ -14,5 +14,24 @@ switch(@$_POST['op']) {
 		$send['spisok'] = utf8($data['spisok']);
 		jsonSuccess($send);
 		break;
+	case 'user_update':
+		if(!$viewer_id = _isnum($_POST['viewer_id']))
+			jsonError();
+
+		require_once(VKPATH.'vkapi.class.php');
+		$VKAPI = new vkapi(API_ID, SECRET);
+		$res = $VKAPI->api('users.get', array(
+			'user_ids' => $viewer_id,
+			'fields' => 'photo,'.
+						'sex,'.
+						'country,'.
+						'city'
+		));
+		$send['u'] = $res['response'][0];
+
+		$app = $VKAPI->api('account.getAppPermissions', array('user_id'=>$viewer_id));
+		$send['u']['app_setup'] = $app;
+		jsonSuccess($send);
+		break;
 }
 jsonError();

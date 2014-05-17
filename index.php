@@ -25,9 +25,7 @@ switch($_GET['p']) {
 		$html .= adminMainLinks();
 		switch($_GET['d']) {
 			default:
-			case 'user':
-				$html .= admin_user();
-				break;
+			case 'user': $html .= _isnum(@$_GET['id']) ? admin_user_info($_GET['id']) : admin_user(); break;
 			case 'exit': header('Location:'.URL.'&p=ob'); break;
 		}
 		break;

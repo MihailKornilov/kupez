@@ -1,23 +1,28 @@
 .admin-user .result._busy{background-position:580px center}
 .admin-user #ob_write_radio span{float:right;color:#777}
 .admin-user .left{padding:8px}
-.admin-user .un{padding-bottom:8px;margin-bottom:8px;border-bottom:#dae1e8 solid 1px}
-.admin-user .tab{width:100%}
-.admin-user .img{width:57px;vertical-align:top}
-.admin-user .inf{vertical-align:top}
+.admin-user .user-unit{padding-bottom:8px;margin-bottom:8px;border-bottom:#dae1e8 solid 1px}
 .admin-user em{background-color:#ffc;border-bottom:#fe2 solid 1px;font-weight:bold}
-.admin-user .dlast{float:right;font-size:10px;color:#777;text-align:right}
-.admin-user .city{color:#aaa}
-.admin-user .ob{
+.admin-user ._empty{margin:3px}
+
+.user-unit .tab{width:100%}
+.user-unit .img{width:57px;vertical-align:top}
+.user-unit .inf{vertical-align:top}
+.user-unit .dlast{float:right;font-size:10px;color:#777;text-align:right}
+.user-unit .today{color:#4a4;font-size:10px}
+.user-unit .city{color:#aaa}
+.user-unit .ob{
 	display:inline-block;
 	padding:3px 7px;
 	margin-top:5px;
 	color:#fff;
 	background-color:#9ad
 }
-.admin-user .ob:hover{text-decoration:none}
-.admin-user .act{background-color:#7d7}
-.admin-user .arc{background-color:#aaa}
-.admin-user .del{background-color:#833}
-.admin-user .new{background-color:#7e7;margin-left:15px;padding:1px 9px;}
-.admin-user ._empty{margin:3px}
+.user-unit .ob:hover{text-decoration:none}
+.user-unit .act{background-color:#7d7}
+.user-unit .arc{background-color:#aaa}
+.user-unit .del{background-color:#833}
+.user-unit .new{background-color:#7e7;margin-left:15px;padding:1px 9px;}
+
+#user-info .left{padding:10px}
+#user-info .itab{border-spacing:4px;margin-top:10px}

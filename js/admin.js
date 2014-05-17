@@ -10,7 +10,7 @@ var AJAX_ADMIN = SITE + '/ajax/admin.php?' + VALUES,
 		if($('.result').hasClass('_busy'))
 			return;
 		$('.result').addClass('_busy');
-		$.post(AJAX_ADMIN, userFilter(), function (res) {
+		$.post(AJAX_ADMIN, userFilter(), function(res) {
 			$('.result').removeClass('_busy');
 			if(res.success) {
 				$('.result').html(res.result);
@@ -35,8 +35,7 @@ $(document)
 		}, 'json');
 	});
 
-$(document)
-	.ready(function() {
+$(function() {
 		if($('.admin-user').length) {
 			$('#find')._search({
 				width:138,
@@ -46,6 +45,24 @@ $(document)
 				func:userSpisok
 			});
 			$('#ob_write')._radio(userSpisok);
+		}
+		if($('#user-info').length) {
+			$('.update').click(function() {
+				var t = $(this),
+					send = {
+						op:'user_update',
+						viewer_id: t.attr('val')
+					};
+				if(t.hasClass('busy'))
+					return;
+				t.addClass('busy');
+				$.post(AJAX_ADMIN, send, function(res) {
+					t.removeClass('busy');
+					if(res.success) {
+
+					}
+				}, 'json');
+			});
 		}
 	});
 
