@@ -39,10 +39,20 @@ function admin_user() {
 	$ob_count = query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`gazeta_id` AND `viewer_id_add`");
 	$ob_act = query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`gazeta_id` AND `viewer_id_add` AND !`deleted` AND `day_active`>=DATE_FORMAT(NOW(),'%Y-%m-%d')");
 
+	$app_user = query_value("SELECT COUNT(*) FROM `vk_user` WHERE `is_app_user`");
+	$menu_left = query_value("SELECT COUNT(*) FROM `vk_user` WHERE `rule_menu_left`");
+	$notify = query_value("SELECT COUNT(*) FROM `vk_user` WHERE `rule_notify`");
+
 	$ob_write = array(
-		0 => 'Все посетители',
-		1 => 'Размещались<span>'.$ob_count.'</span>',
-		2 => 'Есть активные'.($ob_act ? '<span>'.$ob_act.'</span>' : '')
+		0 => 'Все',
+		1 => 'Размещали<span>'.$ob_count.'</span>',
+		2 => 'Есть активные<span>'.$ob_act.'</span>'
+	);
+	$rules = array(
+		0 => 'Все',
+		1 => 'Приложение установлено<span>'.$app_user.'</span>',
+		2 => 'Добавлено в левое меню<span>'.$menu_left.'</span>',
+		3 => 'Разрешены уведомления<span>'.$notify.'</span>'
 	);
 	return
 	'<div class="admin-user">'.
@@ -53,8 +63,8 @@ function admin_user() {
 					'<div id="find"></div>'.
 					'<div class="findHead">Объявления</div>'.
 					_radio('ob_write', $ob_write, 0, 1).
-					_check('is_app_user', 'Установили приложение').
-					_check('left_menu', 'Добавили в левое меню').
+					'<div class="findHead">Права</div>'.
+					_radio('rules', $rules, 0, 1).
 		'</table>'.
 	'</div>';
 }//admin_user()
@@ -64,8 +74,7 @@ function admin_user_filter($v=array()) {
 		'limit' => !empty($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) ? intval($v['limit']) : 30,
 		'find' => !empty($v['find']) ? win1251(htmlspecialchars(trim($v['find']))) : '',
 		'ob_write' => !empty($v['ob_write']) && preg_match(REGEXP_NUMERIC, $v['ob_write']) ? intval($v['ob_write']) : 0,
-		'is_app_user' => !empty($v['is_app_user']) && preg_match(REGEXP_NUMERIC, $v['is_app_user']) ? intval($v['is_app_user']) : 0,
-		'left_menu' => !empty($v['left_menu']) && preg_match(REGEXP_NUMERIC, $v['left_menu']) ? intval($v['left_menu']) : 0
+		'rules' => !empty($v['rules']) && preg_match(REGEXP_NUMERIC, $v['rules']) ? intval($v['rules']) : 0
 	);
 }//obFilter()
 function admin_user_spisok($v=array()) {
@@ -90,11 +99,12 @@ function admin_user_spisok($v=array()) {
 				$cond .= " AND !`ob`.`deleted`
 						   AND `ob`.`day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')";
 		}
-		if($filter['is_app_user'])
-			$cond .= " AND `u`.`is_app_user`";
-		if($filter['left_menu'])
-			$cond .= " AND `u`.`rule_menu_left`";
+		switch($filter['rules']) {
+			case 1: $cond .= " AND `u`.`is_app_user`"; break;
+			case 2: $cond .= " AND `u`.`rule_menu_left`"; break;
+			case 3: $cond .= " AND `u`.`rule_notify`"; break;
 		}
+	}
 
 	$sql = "SELECT `u`.`viewer_id`
 			FROM `vk_user` `u`
