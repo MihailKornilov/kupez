@@ -91,10 +91,12 @@ switch(@$_POST['op']) {
 			'content' => utf8($name.'<span>'.implode('<br />', $content).'</span>')
 		);
 
-		history_insert(array(
-			'type' => 51,
-			'client_id' => $send['uid']
-		));
+		_historyInsert(
+			51,
+			array('client_id' => $send['uid']),
+			'gazeta_history'
+		);
+
 		jsonSuccess($send);
 		break;
 	case 'client_edit':
@@ -162,11 +164,14 @@ switch(@$_POST['op']) {
 		if($client['skidka'] != $send['skidka'])
 			$changes .= '<tr><th>Скидка:<td>'.$client['skidka'].'%<td>»<td>'.$send['skidka'].'%';
 		if($changes)
-			history_insert(array(
-				'type' => 52,
-				'client_id' => $client_id,
-				'value' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				52,
+				array(
+					'client_id' => $client_id,
+					'value' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = clientInfoGet($send);
 		foreach($send as $i => $v)
@@ -174,9 +179,8 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'client_del':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+		if(!$client_id = _isnum($_POST['id']))
 			jsonError();
-		$client_id = intval($_POST['id']);
 		if(!query_value("SELECT COUNT(`id`) FROM `gazeta_client` WHERE !`deleted` AND `id`=".$client_id))
 			jsonError();
 		if(query_value("SELECT COUNT(`id`) FROM `gazeta_zayav` WHERE !`deleted` AND `client_id`=".$client_id))
@@ -194,10 +198,11 @@ switch(@$_POST['op']) {
 			   WHERE !`deleted`
 				 AND `client_id`=".$client_id);
 		clientBalansUpdate($client_id);
-		history_insert(array(
-			'type' => 53,
-			'client_id' => $client_id
-		));
+		_historyInsert(
+			53,
+			array('client_id' => $client_id),
+			'gazeta_history'
+		);
 		jsonSuccess();
 		break;
 	case 'client_spisok':
@@ -381,11 +386,14 @@ switch(@$_POST['op']) {
 			}
 		}
 
-		history_insert(array(
-			'type' => 11,
-			'client_id' => $client_id,
-			'zayav_id' => $send['id']
-		));
+		_historyInsert(
+			11,
+			array(
+				'client_id' => $client_id,
+				'zayav_id' => $send['id']
+			),
+			'gazeta_history'
+		);
 
 		_vkCommentAdd('zayav', $send['id'], $note);
 
@@ -537,9 +545,9 @@ switch(@$_POST['op']) {
 			$changes .= '<tr><th>Адрес:<td>'.$z['adres'].'<td>»<td>'.$adres;
 		if($z['size_x'] != $size_x || $z['size_y'] != $size_y)
 			$changes .= '<tr><th>Размер блока:'.
-							'<td>'.round($size_x, 1).'x'.round($size_y, 1).'='.round($size_x * $size_y).
+							'<td>'.round($z['size_x'], 1).'x'.round($z['size_y'], 1).'='.round($z['size_x'] * $z['size_y']).
 							'<td>»'.
-							'<td>'.round($z['size_x'], 1).'x'.round($z['size_y'], 1).'='.round($z['size_x'] * $z['size_y']);
+							'<td>'.round($size_x, 1).'x'.round($size_y, 1).'='.round($size_x * $size_y);
 		if($z['summa_manual'] != $summa_manual)
 			$changes .= '<tr><th>Сумма указана вручную:<td>'.($z['summa_manual'] ? 'да' : 'нет').'<td>»<td>'.($summa_manual ? 'да' : 'нет');
 		if($z['skidka'] != $skidka)
@@ -590,13 +598,16 @@ switch(@$_POST['op']) {
 			$gnChanges .= '<tr><th>Изменены<br />номера выпуска:'.
 							'<td colspan="3">'.implode('<br />', $gnCh);
 		if($changes || $gnChanges)
-			history_insert(array(
-				'type' => 31,
-				'client_id' => $client_id,
-				'zayav_id' => $zayav_id,
-				'value' => ($changes ? '<table>'.$changes.'</table>' : '').
-						   ($gnChanges ? '<table>'.$gnChanges.'</table>' : '')
-			));
+			_historyInsert(
+				31,
+				array(
+					'client_id' => $client_id,
+					'zayav_id' => $zayav_id,
+					'value' => ($changes ? '<table>'.$changes.'</table>' : '').
+							   ($gnChanges ? '<table>'.$gnChanges.'</table>' : '')
+				),
+				'gazeta_history'
+			);
 		jsonSuccess();
 		break;
 	case 'zayav_del':
@@ -627,11 +638,14 @@ switch(@$_POST['op']) {
 
 		clientBalansUpdate($z['client_id']);
 
-		history_insert(array(
-			'type' => 61,
-			'client_id' => $z['client_id'],
-			'zayav_id' => $zayav_id
-		));
+		_historyInsert(
+			61,
+			array(
+				'client_id' => $z['client_id'],
+				'zayav_id' => $zayav_id
+			),
+			'gazeta_history'
+		);
 		jsonSuccess();
 		break;
 
@@ -685,14 +699,17 @@ switch(@$_POST['op']) {
 			'id' => $id
 		));
 
-		history_insert(array(
-			'type' => 47,
-			'zayav_id' => $r['zayav_id'],
-			'client_id' => $r['client_id'],
-			'value' => round($r['sum'], 2),
-			'value1' => $r['prim'],
-			'value2' => $r['income_id']
-		));
+		_historyInsert(
+			47,
+			array(
+				'zayav_id' => $r['zayav_id'],
+				'client_id' => $r['client_id'],
+				'value' => round($r['sum'], 2),
+				'value1' => $r['prim'],
+				'value2' => $r['income_id']
+			),
+			'gazeta_history'
+		);
 
 		jsonSuccess();
 		break;
@@ -743,13 +760,16 @@ switch(@$_POST['op']) {
 			'id' => mysql_insert_id()
 		));
 
-		history_insert(array(
-			'type' => 81,
-			'value' => abs($sum),
-			'value1' => $category,
-			'value2' => $about,
-			'value3' => $worker ? $worker : ''
-		));
+		_historyInsert(
+			81,
+			array(
+				'value' => abs($sum),
+				'value1' => $category,
+				'value2' => $about,
+				'value3' => $worker ? $worker : ''
+			),
+			'gazeta_history'
+		);
 		jsonSuccess();
 		break;
 	case 'expense_del':
@@ -778,23 +798,18 @@ switch(@$_POST['op']) {
 			'id' => $id
 		));
 
-		history_insert(array(
-			'type' => 82,
-			'value' => round(abs($r['sum']), 2),
-			'value1' => $r['expense_id'],
-			'value2' => $r['prim'],
-			'value3' => $r['worker_id'] ? $r['worker_id'] : ''
-		));
+		_historyInsert(
+			82,
+			array(
+				'value' => round(abs($r['sum']), 2),
+				'value1' => $r['expense_id'],
+				'value2' => $r['prim'],
+				'value3' => $r['worker_id'] ? $r['worker_id'] : ''
+			),
+			'gazeta_history'
+		);
 
 		jsonSuccess();
-		break;
-
-	case 'history_next':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['page']))
-			jsonError();
-		$page = intval($_POST['page']);
-		$send['html'] = utf8(history_spisok($page));
-		jsonSuccess($send);
 		break;
 
 	case 'invoice_set':
@@ -820,11 +835,14 @@ switch(@$_POST['op']) {
 			'invoice_id' => $invoice_id
 		));
 
-		history_insert(array(
-			'type' => 91,
-			'value' => $sum,
-			'value1' => $invoice_id
-		));
+		_historyInsert(
+			91,
+			array(
+				'value' => $sum,
+				'value1' => $invoice_id
+			),
+			'gazeta_history'
+		);
 
 		$send['i'] = utf8(invoice_spisok());
 		jsonSuccess($send);
@@ -878,12 +896,15 @@ switch(@$_POST['op']) {
 			'id' => mysql_insert_id()
 		));
 
-		history_insert(array(
-			'type' => 92,
-			'value' => $sum,
-			'value1' => $from,
-			'value2' => $to
-		));
+		_historyInsert(
+			92,
+			array(
+				'value' => $sum,
+				'value1' => $from,
+				'value2' => $to
+			),
+			'gazeta_history'
+		);
 
 		$send['i'] = utf8(invoice_spisok());
 		$send['t'] = utf8(transfer_spisok());
@@ -902,10 +923,11 @@ switch(@$_POST['op']) {
 		query("UPDATE `vk_user` SET `gazeta_worker`=1 WHERE `viewer_id`=".$viewer_id);
 		xcache_unset(CACHE_PREFIX.'viewer_'.$viewer_id);
 
-		history_insert(array(
-			'type' => 1081,
-			'value' => $viewer_id
-		));
+		_historyInsert(
+			1081,
+			array('value' => $viewer_id),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_worker_spisok());
 		jsonSuccess($send);
@@ -924,10 +946,11 @@ switch(@$_POST['op']) {
 		query("UPDATE `vk_user` SET `gazeta_worker`=0 WHERE `viewer_id`=".$viewer_id);
 		xcache_unset(CACHE_PREFIX.'viewer_'.$viewer_id);
 
-		history_insert(array(
-			'type' => 1082,
-			'value' => $viewer_id
-		));
+		_historyInsert(
+			1082,
+			array('value' => $viewer_id),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_worker_spisok());
 		jsonSuccess($send);
@@ -997,10 +1020,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'gn');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1034,
-			'value' => $year
-		));
+		_historyInsert(
+			1034,
+			array('value' => $year),
+			'gazeta_history'
+		);
 
 		$send['year'] = utf8(setup_gn_year($year));
 		$send['html'] = utf8(setup_gn_spisok($year));
@@ -1042,10 +1066,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'gn');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1031,
-			'value' => $general_nomer
-		));
+		_historyInsert(
+			1031,
+			array('value' => $general_nomer),
+			'gazeta_history'
+		);
 
 		$send['year'] = utf8(setup_gn_year($year));
 		$send['html'] = utf8(setup_gn_spisok($year, $general_nomer));
@@ -1103,11 +1128,14 @@ switch(@$_POST['op']) {
 		if($r['day_public'] != $day_public)
 			$changes .= '<tr><th>День выхода:<td>'.FullData($r['day_public']).'<td>»<td>'.FullData($day_public);
 		if($changes)
-			history_insert(array(
-				'type' => 1032,
-				'value' => $general_nomer,
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1032,
+				array(
+					'value' => $general_nomer,
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['year'] = utf8(setup_gn_year($year));
 		$send['html'] = utf8(setup_gn_spisok($year, $general_nomer));
@@ -1131,10 +1159,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'gn');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1033,
-			'value' => $general
-		));
+		_historyInsert(
+			1033,
+			array('value' => $general),
+			'gazeta_history'
+		);
 
 		$send['year'] = utf8(setup_gn_year($year));
 		$send['html'] = utf8(setup_gn_spisok($year));
@@ -1157,10 +1186,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'person');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1011,
-			'value' => $name
-		));
+		_historyInsert(
+			1011,
+			array('value' => $name),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_person_spisok());
 		jsonSuccess($send);
@@ -1189,11 +1219,14 @@ switch(@$_POST['op']) {
 		if($r['name'] != $name)
 			$changes .= '<tr><th>Наименование:<td>'.$r['name'].'<td>»<td>'.$name;
 		if($changes)
-			history_insert(array(
-				'type' => 1012,
-				'value' => $name,
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1012,
+				array(
+					'value' => $name,
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_person_spisok());
 		jsonSuccess($send);
@@ -1215,10 +1248,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'person');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1013,
-			'value' => $r['name']
-		));
+		_historyInsert(
+			1013,
+			array('value' => $r['name']),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_person_spisok());
 		jsonSuccess($send);
@@ -1240,10 +1274,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'rubric');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1021,
-			'value' => $name
-		));
+		_historyInsert(
+			1021,
+			array('value' => $name),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_rubric_spisok());
 		jsonSuccess($send);
@@ -1272,11 +1307,14 @@ switch(@$_POST['op']) {
 		if($r['name'] != $name)
 			$changes .= '<tr><th>Наименование:<td>'.$r['name'].'<td>»<td>'.$name;
 		if($changes)
-			history_insert(array(
-				'type' => 1022,
-				'value' => $name,
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1022,
+				array(
+					'value' => $name,
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_rubric_spisok());
 		jsonSuccess($send);
@@ -1301,10 +1339,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'rubric');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1023,
-			'value' => $r['name']
-		));
+		_historyInsert(
+			1023,
+			array('value' => $r['name']),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_rubric_spisok());
 		jsonSuccess($send);
@@ -1336,11 +1375,14 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'rubric_sub');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1071,
-			'value' => _rubric($rubric_id),
-			'value1' => $name
-		));
+		_historyInsert(
+			1071,
+			array(
+				'value' => _rubric($rubric_id),
+				'value1' => $name
+			),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_rubric_sub_spisok($rubric_id));
 		jsonSuccess($send);
@@ -1370,11 +1412,14 @@ switch(@$_POST['op']) {
 		if($r['name'] != $name)
 			$changes .= '<tr><th>Наименование:<td>'.$r['name'].'<td>»<td>'.$name;
 		if($changes)
-			history_insert(array(
-				'type' => 1072,
-				'value' => _rubric($r['rubric_id']),
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1072,
+				array(
+					'value' => _rubric($r['rubric_id']),
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_rubric_sub_spisok($r['rubric_id']));
 		jsonSuccess($send);
@@ -1397,11 +1442,14 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'rubric_sub');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1073,
-			'value' => _rubric($r['rubric_id']),
-			'value1' => $r['name']
-		));
+		_historyInsert(
+			1073,
+			array(
+				'value' => _rubric($r['rubric_id']),
+				'value1' => $r['name']
+			),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_rubric_sub_spisok($r['rubric_id']));
 		jsonSuccess($send);
@@ -1439,9 +1487,7 @@ switch(@$_POST['op']) {
 				LIMIT 1";
 		query($sql);
 
-		history_insert(array(
-			'type' => 1091
-		));
+		_historyInsert(1091, array(), 'gazeta_history');
 
 		xcache_unset(CACHE_PREFIX.'setup_global');
 		GvaluesCreate();
@@ -1473,11 +1519,14 @@ switch(@$_POST['op']) {
 		if($r['cena'] != $cena)
 			$changes .= '<tr><th>Стоимость:<td>'.$r['cena'].'<td>»<td>'.$cena;
 		if($changes)
-			history_insert(array(
-				'type' => 1062,
-				'value' => $r['name'],
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1062,
+				array(
+					'value' => $r['name'],
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_obdop_spisok());
 		jsonSuccess($send);
@@ -1504,10 +1553,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'polosa');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1041,
-			'value' => $name
-		));
+		_historyInsert(
+			1041,
+			array('value' => $name),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_polosa_spisok());
 		jsonSuccess($send);
@@ -1542,11 +1592,14 @@ switch(@$_POST['op']) {
 		if($r['cena'] != $cena)
 			$changes .= '<tr><th>Наименование:<td>'.round($r['cena'], 2).'<td>»<td>'.round($cena, 2);
 		if($changes)
-			history_insert(array(
-				'type' => 1042,
-				'value' => $name,
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1042,
+				array(
+					'value' => $name,
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_polosa_spisok());
 		jsonSuccess($send);
@@ -1582,11 +1635,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'invoice');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1121,
-			'value' => $name
-		));
-
+		_historyInsert(
+			1121,
+			array('value' => $name),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_invoice_spisok());
 		jsonSuccess($send);
@@ -1639,11 +1692,14 @@ switch(@$_POST['op']) {
 		if($r['about'] != $about)
 			$changes .= '<tr><th>Описание:<td>'.str_replace("\n", '<br />', $r['about']).'<td>»<td>'.str_replace("\n", '<br />', $about);
 		if($changes)
-			history_insert(array(
-				'type' => 1122,
-				'value' => $name,
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1122,
+				array(
+					'value' => $name,
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_invoice_spisok());
 		jsonSuccess($send);
@@ -1663,10 +1719,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'invoice');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1123,
-			'value' => $r['name']
-		));
+		_historyInsert(
+			1123,
+			array('value' => $r['name']),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_invoice_spisok());
 		jsonSuccess($send);
@@ -1688,10 +1745,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'money_type');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1111,
-			'value' => $name
-		));
+		_historyInsert(
+			1111,
+			array('value' => $name),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_money_spisok());
 		jsonSuccess($send);
@@ -1720,11 +1778,14 @@ switch(@$_POST['op']) {
 		if($r['name'] != $name)
 			$changes .= '<tr><th>Наименование:<td>'.$r['name'].'<td>»<td>'.$name;
 		if($changes)
-			history_insert(array(
-				'type' => 1112,
-				'value' => $name,
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1112,
+				array(
+					'value' => $name,
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_money_spisok());
 		jsonSuccess($send);
@@ -1746,10 +1807,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'money_type');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1113,
-			'value' => $r['name']
-		));
+		_historyInsert(
+			1113,
+			array('value' => $r['name']),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_money_spisok());
 		jsonSuccess($send);
@@ -1774,10 +1836,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'skidka');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1051,
-			'value' => $razmer
-		));
+		_historyInsert(
+			1051,
+			array('value' => $razmer),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_skidka_spisok());
 		jsonSuccess($send);
@@ -1805,11 +1868,14 @@ switch(@$_POST['op']) {
 		if($r['about'] != $about)
 			$changes .= '<tr><th>Описание:<td>'.$r['about'].'<td>»<td>'.$about;
 		if($changes)
-			history_insert(array(
-				'type' => 1052,
-				'value' => $razmer,
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1052,
+				array(
+					'value' => $razmer,
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_skidka_spisok());
 		jsonSuccess($send);
@@ -1829,10 +1895,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'skidka');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1053,
-			'value' => $razmer
-		));
+		_historyInsert(
+			1053,
+			array('value' => $razmer),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_skidka_spisok());
 		jsonSuccess($send);
@@ -1861,15 +1928,12 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'expense');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1101,
-			'value' => $name
-		));
+		_historyInsert(1101, array('value' => $name), 'gazeta_history');
 
 		$send['html'] = utf8(setup_expense_spisok());
 		jsonSuccess($send);
 		break;
-	case 'setup_rashod_edit':
+	case 'setup_expense_edit':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
 			jsonError();
 		if(!preg_match(REGEXP_BOOL, $_POST['show_worker']))
@@ -1901,16 +1965,19 @@ switch(@$_POST['op']) {
 		if($r['show_worker'] != $show_worker)
 			$changes .= '<tr><th>Список сотрудников:<td>'.($r['show_worker'] ? 'да' : 'нет').'<td>»<td>'.($show_worker ? 'да' : 'нет');
 		if($changes)
-			history_insert(array(
-				'type' => 1102,
-				'value' => $name,
-				'value1' => '<table>'.$changes.'</table>'
-			));
+			_historyInsert(
+				1102,
+				array(
+					'value' => $name,
+					'value1' => '<table>'.$changes.'</table>'
+				),
+				'gazeta_history'
+			);
 
 		$send['html'] = utf8(setup_expense_spisok());
 		jsonSuccess($send);
 		break;
-	case 'setup_rashod_del':
+	case 'setup_expense_del':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
 			jsonError();
 		$id = intval($_POST['id']);
@@ -1927,10 +1994,11 @@ switch(@$_POST['op']) {
 		xcache_unset(CACHE_PREFIX.'expense');
 		GvaluesCreate();
 
-		history_insert(array(
-			'type' => 1103,
-			'value' => $r['name']
-		));
+		_historyInsert(
+			1103,
+			array('value' => $r['name']),
+			'gazeta_history'
+		);
 
 		$send['html'] = utf8(setup_expense_spisok());
 		jsonSuccess($send);

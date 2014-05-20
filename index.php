@@ -16,8 +16,8 @@ switch($_GET['p']) {
 		break;
 	case 'admin':
 		if(!SA) {
-			$html .= _noauth();
-			break;
+			header('Location:'.URL.'&p=ob');
+			exit;
 		}
 		require_once(DOCUMENT_ROOT.'/view/admin.php');
 		if(empty($_GET['d']))
@@ -26,13 +26,14 @@ switch($_GET['p']) {
 		switch($_GET['d']) {
 			default:
 			case 'user': $html .= _isnum(@$_GET['id']) ? admin_user_info($_GET['id']) : admin_user(); break;
-			case 'exit': header('Location:'.URL.'&p=ob'); break;
+			case 'history': $html .= ob_history(); break;
+			case 'exit': header('Location:'.URL.'&p=ob'); exit;
 		}
 		break;
 	case 'gazeta':
 		if(!GAZETA_WORKER) {
-			$html .= _noauth();
-			break;
+			header('Location:'.URL.'&p=ob');
+			exit;
 		}
 		require_once(DOCUMENT_ROOT.'/view/gazeta.php');
 		if(empty($_GET['d']))
@@ -64,7 +65,7 @@ switch($_GET['p']) {
 				break;
 			case 'report': $html .= report(); break;
 			case 'setup': $html .= setup(); break;
-			case 'ob': header('Location:'.URL.'&p=ob'); break;
+			case 'ob': header('Location:'.URL.'&p=ob'); exit;
 		}
 		break;
 }

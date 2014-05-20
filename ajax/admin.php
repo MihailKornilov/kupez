@@ -18,19 +18,27 @@ switch(@$_POST['op']) {
 		if(!$viewer_id = _isnum($_POST['viewer_id']))
 			jsonError();
 
-		require_once(VKPATH.'vkapi.class.php');
-		$VKAPI = new vkapi(API_ID, SECRET);
-		$res = $VKAPI->api('users.get', array(
+		if(!$u = query_assoc("SELECT * FROM `vk_user` WHERE `viewer_id`=".$viewer_id))
+			jsonError();
+
+		$res = _vkapi('users.get', array(
 			'user_ids' => $viewer_id,
 			'fields' => 'photo,'.
 						'sex,'.
 						'country,'.
 						'city'
 		));
-		$send['u'] = $res['response'][0];
+		$send['user'] = $res['response'][0];
 
-		$app = $VKAPI->api('account.getAppPermissions', array('user_id'=>$viewer_id));
-		$send['u']['app_setup'] = $app;
+		$res = _vkapi('account.getAppPermissions', array('user_id' => $viewer_id));
+		$send['menu_left'] = $res;
+
+		$res = _vkapi('users.isAppUser', array('user_id' => $viewer_id));
+		$send['is_app_user'] = $res;
+
+		xcache_unset(CACHE_PREFIX.'viewer_166424274');
+		xcache_unset(CACHE_PREFIX.'viewer_'.$viewer_id);
+
 		jsonSuccess($send);
 		break;
 }

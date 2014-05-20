@@ -11,7 +11,7 @@ switch(@$_POST['op']) {
 		$q = query($sql);
 		while($r = mysql_fetch_assoc($q))
 			xcache_unset(CACHE_PREFIX.'viewer_'.$r['viewer_id']);
-		//xcache_unset(CACHE_PREFIX.'viewer_166424274');
+		xcache_unset(CACHE_PREFIX.'viewer_166424274');
 		query("UPDATE `setup_global` SET `version`=`version`+1");
 		_cacheClear();
 		jsonSuccess();

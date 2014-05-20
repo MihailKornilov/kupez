@@ -56,10 +56,11 @@ function _hashCookieSet() {
 }//_hashCookieSet()
 function _cacheClear() {
 	xcache_unset(CACHE_PREFIX.'setup_global');
+	xcache_unset(CACHE_PREFIX.'gn');
+	xcache_unset(CACHE_PREFIX.'gn_first_max');
 	xcache_unset(CACHE_PREFIX.'person');
 	xcache_unset(CACHE_PREFIX.'rubric');
 	xcache_unset(CACHE_PREFIX.'rubric_sub');
-	xcache_unset(CACHE_PREFIX.'gn');
 	xcache_unset(CACHE_PREFIX.'obdop');
 	xcache_unset(CACHE_PREFIX.'polosa');
 	xcache_unset(CACHE_PREFIX.'invoice');
@@ -101,8 +102,8 @@ function _header() {
 		'</script>'.
 
 		//Подключение api VK. Стили VK должны стоять до основных стилей сайта
-		'<link href="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk/vk'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
-		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/vk/vk'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
+		'<link href="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk'.(defined('TEST') ? 'test' : '').'/vk'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
+		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/vk'.(defined('TEST') ? 'test' : '').'/vk'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
 		'<script type="text/javascript" src="'.SITE.'/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
 
@@ -445,7 +446,7 @@ function ob_unit($r) {
 	(SA ?
 		'<div class="sa-edit">'.
 			'<span class="dt">'.FullDataTime($r['dtime_add']).'</span>'.
-			($r['viewer_id_add'] ? _viewer($r['viewer_id_add'], 'link') : '').
+			($r['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$r['viewer_id_add'].'">'._viewer($r['viewer_id_add'], 'name').'</a>' : '').
 			($r['gazeta_id'] ? 'КупецЪ' : '').
 			'<div class="ed">'.
 				'<a class="to-arch">в архив</a>'.
@@ -625,6 +626,34 @@ function ob_my_unit($r) {
 }//ob_my_unit()
 
 
+function ob_history() {
+	$data = ob_history_data();
+	return
+		'<table class="tabLR">'.
+			'<tr><td class="left">'.$data['spisok'].
+				'<td class="right">'.
+		'</table>';
+}//ob_history()
+function ob_history_types($v) {
+	switch($v['type']) {
+		case 1: return 'Новый <a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">посетитель</a>.';
+
+		default: return $v['type'];
+	}
+}//ob_history_types()
+function ob_history_data($v=array()) {
+	return _history(
+		'ob_history_types',
+		array(),
+		$v,
+		array(
+			'table' => 'vk_history'
+		)
+	);
+}//history()
+
+
+
 
 /*
 function to_new_images() {//Перенос картинок в новый формат
@@ -702,80 +731,4 @@ function to_new_images() {//Перенос картинок в новый формат
 			query("UPDATE `vk_ob` SET gazeta_id=IFNULL((
 				SELECT id FROM `gazeta_zayav` WHERE category=1 AND `dtime_add`='".$r['dtime_add']."' LIMIT 1
 			),0) WHERE `id`=".$r['id']);
-
-
-
-// Проверка пользователя на наличие в базе. Также обновление при первом входе в Контакт
-function vkUserCheck($vku, $update = false)
-{
-	if ($update or !isset($vku['viewer_id'])) {
-		require_once('include/vkapi.class.php');
-		$VKAPI = new vkapi(API_ID, API_SECRET);
-		$res = $VKAPI->api('users.get',array('uids' => VIEWER_ID, 'fields' => 'photo,sex,country,city'));
-		$vku['viewer_id'] = VIEWER_ID;
-		$vku['first_name'] = win1251($res['response'][0]['first_name']);
-		$vku['last_name'] = win1251($res['response'][0]['last_name']);
-		$vku['sex'] = $res['response'][0]['sex'];
-		$vku['photo'] = $res['response'][0]['photo'];
-		$vku['country_id'] = isset($res['response'][0]['country']) ? $res['response'][0]['country'] : 0;
-		$vku['city_id'] = isset($res['response'][0]['city']) ? $res['response'][0]['city'] : 0;
-		$vku['menu_left_set'] = 0;
-		$vku['enter_last'] = curTime();
-
-		// установил ли приложение
-		$app = $VKAPI->api('isAppUser',array('uid'=>VIEWER_ID));
-		$vku['app_setup'] = $app['response'];
-		// поместил ли в левое меню
-		$mls = $VKAPI->api('getUserSettings',array('uid'=>VIEWER_ID));
-		$vku['menu_left_set'] = ($mls['response']&256) > 0 ? 1 : 0;
-		global $VK;
-		$VK->Query('INSERT INTO `vk_user` (
-					`viewer_id`,
-					`first_name`,
-					`last_name`,
-					`sex`,
-					`photo`,
-					`app_setup`,
-					`menu_left_set`,
-					`country_id`,
-					`city_id`,
-					`enter_last`
-					) values (
-					'.VIEWER_ID.',
-					"'.$vku['first_name'].'",
-					"'.$vku['last_name'].'",
-					'.$vku['sex'].',
-					"'.$vku['photo'].'",
-					'.$vku['app_setup'].',
-					'.$vku['menu_left_set'].',
-					'.$vku['country_id'].',
-					'.$vku['city_id'].',
-					current_timestamp)
-					ON DUPLICATE KEY UPDATE
-					`first_name`="'.$vku['first_name'].'",
-					`last_name`="'.$vku['last_name'].'",
-					`sex`='.$vku['sex'].',
-					`photo`="'.$vku['photo'].'",
-					`app_setup`='.$vku['app_setup'].',
-					`menu_left_set`='.$vku['menu_left_set'].',
-					`country_id`='.$vku['country_id'].',
-					`city_id`='.$vku['city_id'].',
-					`enter_last`=current_timestamp
-					');
-
-		// сброс счётчика объявлений
-		if($vku['menu_left_set'] == 1) {
-			$VKAPI->api('secure.setCounter', array('counter'=>0, 'uid'=>VIEWER_ID, 'timestamp'=>time(), 'random'=>rand(1,1000)));
-		}
-		// счётчик посетителей
-		$id = $VK->QRow('SELECT `id` FROM `vk_visit` WHERE `viewer_id`='.VIEWER_ID.' AND `dtime_add`>="'.strftime("%Y-%m-%d").' 00:00:00" LIMIT 1');
-		$VK->Query('INSERT INTO `vk_visit` (`id`,`viewer_id`)
-								 VALUES ('.($id ? $id : 0).','.VIEWER_ID.')
-								 ON DUPLICATE KEY UPDATE `count_day`=`count_day`+1,`dtime_add`=current_timestamp');
-		$VK->Query('UPDATE `vk_user` SET
-						   `count_day`='.($id ? '`count_day`+1' : 1).',
-						   `enter_last`=current_timestamp where viewer_id='.VIEWER_ID);
-	}
-	return $vku;
-}
 */

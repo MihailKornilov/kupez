@@ -53,6 +53,8 @@ function admin_user() {
 					'<div id="find"></div>'.
 					'<div class="findHead">Объявления</div>'.
 					_radio('ob_write', $ob_write, 0, 1).
+					_check('is_app_user', 'Установили приложение').
+					_check('left_menu', 'Добавили в левое меню').
 		'</table>'.
 	'</div>';
 }//admin_user()
@@ -61,7 +63,9 @@ function admin_user_filter($v=array()) {
 		'page' => !empty($v['page']) && preg_match(REGEXP_NUMERIC, $v['page']) ? intval($v['page']) : 1,
 		'limit' => !empty($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) ? intval($v['limit']) : 30,
 		'find' => !empty($v['find']) ? win1251(htmlspecialchars(trim($v['find']))) : '',
-		'ob_write' => !empty($v['ob_write']) && preg_match(REGEXP_NUMERIC, $v['ob_write']) ? intval($v['ob_write']) : 0
+		'ob_write' => !empty($v['ob_write']) && preg_match(REGEXP_NUMERIC, $v['ob_write']) ? intval($v['ob_write']) : 0,
+		'is_app_user' => !empty($v['is_app_user']) && preg_match(REGEXP_NUMERIC, $v['is_app_user']) ? intval($v['is_app_user']) : 0,
+		'left_menu' => !empty($v['left_menu']) && preg_match(REGEXP_NUMERIC, $v['left_menu']) ? intval($v['left_menu']) : 0
 	);
 }//obFilter()
 function admin_user_spisok($v=array()) {
@@ -86,7 +90,11 @@ function admin_user_spisok($v=array()) {
 				$cond .= " AND !`ob`.`deleted`
 						   AND `ob`.`day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')";
 		}
-	}
+		if($filter['is_app_user'])
+			$cond .= " AND `u`.`is_app_user`";
+		if($filter['left_menu'])
+			$cond .= " AND `u`.`rule_menu_left`";
+		}
 
 	$sql = "SELECT `u`.`viewer_id`
 			FROM `vk_user` `u`
@@ -202,7 +210,7 @@ function admin_user_unit($r) {
 	return
 	'<div class="user-unit" val="'.$r['viewer_id'].'">'.
 		'<table class="tab">'.
-			'<tr><td class="img"><a href="'.URL.'&p=admin&id='.$r['viewer_id'].'"><img src="'.$r['photo'].'"></a>'.
+			'<tr><td class="img"><a href="'.URL.'&p=admin&d=user&id='.$r['viewer_id'].'"><img src="'.$r['photo'].'"></a>'.
 				'<td class="inf">'.
 					'<div class="dlast">'.
 						(substr($r['enter_last'], 0, 10) == CURDAY ? '<span class="today">'.substr($r['enter_last'], 11, 5).'</span>' : FullDataTime($r['enter_last'])).
@@ -250,7 +258,9 @@ function admin_user_info($viewer_id) {
 			'<tr><td class="left user-unit">'.
 
 					'<table class="tab">'.
-							'<tr><td class="img"><img src="'.$r['photo'].'">'.
+							'<tr><td class="img">'.
+									'<img src="'.$r['photo'].'">'.
+									'<div class="id">'.$viewer_id.'</div>'.
 								'<td class="inf">'.
 									'<div class="dlast">'.
 										(substr($r['enter_last'], 0, 10) == CURDAY ? '<span class="today">'.substr($r['enter_last'], 11, 5).'</span>' : FullDataTime($r['enter_last'])).
@@ -266,8 +276,9 @@ function admin_user_info($viewer_id) {
 
 						'<table class="itab">'.
 							'<tr><td class="label r">Регистрация:<td>'.FullDataTime($r['dtime_add']).
-							'<tr><td class="label r">Приложение<td> '.($r['app_setup'] ? '' : 'не ').'установлено'.
-							'<tr><td class="label r">В левое меню<td>'.($r['menu_left_set'] ? '' : 'не ').'добавлено'.
+							'<tr><td class="label r">Приложение<td> '.($r['is_app_user'] ? '' : 'не ').'установлено'.
+							'<tr><td class="label r">В левое меню<td>'.($r['rule_menu_left'] ? '' : 'не ').'добавлено'.
+							'<tr><td class="label r">Уведомления<td>'.($r['rule_notify'] ? '' : 'не ').'разрешены'.
 						'</table>'.
 						'<div class="vkButton update" val="'.$viewer_id.'"><button>Обновить данные</button></div>'.
 					'<td class="right">'.

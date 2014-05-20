@@ -3,7 +3,9 @@ var AJAX_ADMIN = SITE + '/ajax/admin.php?' + VALUES,
 		return {
 			op:'user_spisok',
 			find:$('#find')._search('val'),
-			ob_write:$('#ob_write').val()
+			ob_write:$('#ob_write').val(),
+			is_app_user:$('#is_app_user').val(),
+			left_menu:$('#left_menu').val()
 		};
 	},
 	userSpisok = function() {
@@ -38,13 +40,15 @@ $(document)
 $(function() {
 		if($('.admin-user').length) {
 			$('#find')._search({
-				width:138,
+				width:148,
 				focus:1,
 				enter:1,
 				txt:'Быстрый поиск',
 				func:userSpisok
 			});
 			$('#ob_write')._radio(userSpisok);
+			$('#is_app_user')._check(userSpisok);
+			$('#left_menu')._check(userSpisok);
 		}
 		if($('#user-info').length) {
 			$('.update').click(function() {

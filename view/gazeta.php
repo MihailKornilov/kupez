@@ -535,12 +535,8 @@ function client_info($client_id) {
 								AND `table_id`=".$client_id);
 
 	$zayav = zayav_data(array('client_id'=>$client_id));
-
-	//Платежи
 	$income = income_spisok(array('client_id'=>$client_id));
-
-	$histCount = 0;
-//	$histCount = query_value("SELECT COUNT(`id`) FROM `history` WHERE `client_id`=".$client_id);
+	$history = gazeta_history(array('client_id'=>$client_id,'limit'=>15));
 
 	return
 		'<script type="text/javascript">'.
@@ -575,7 +571,7 @@ function client_info($client_id) {
 				'<a class="link sel" val="zayav">Заявки'.($zayav['all'] ? ' ('.$zayav['all'].')' : '').'</a>'.
 				'<a class="link" val="inc">Платежи'.($income['all'] ? ' ('.$income['all'].')' : '').'</a>'.
 				'<a class="link" val="note">Заметки'.($commCount ? ' ('.$commCount.')' : '').'</a>'.
-				'<a class="link" val="hist">История'.($histCount ? ' ('.$histCount.')' : '').'</a>'.
+				'<a class="link" val="hist">История'.($history['all'] ? ' ('.$history['all'].')' : '').'</a>'.
 			'</div>'.
 
 			'<table class="tabLR">'.
@@ -583,7 +579,7 @@ function client_info($client_id) {
 						'<div id="zayav_spisok">'.$zayav['spisok'].'</div>'.
 						'<div id="income_spisok">'.$income['spisok'].'</div>'.
 						'<div id="notes">'._vkComment('client', $client_id).'</div>'.
-						'<div id="histories">'.history_spisok(1, array('client_id'=>$client_id)).'</div>'.
+						'<div id="histories">'.$history['spisok'].'</div>'.
 					'<td class="right">'.
 			'</table>'.
 		'</div>';
@@ -639,7 +635,7 @@ function _zayavLink($arr) {//Добавление в массив информации о заявках
 	$q = query($sql);
 	while($r = mysql_fetch_assoc($q))
 		foreach($arrIds[$r['id']] as $id) {
-			$arr[$id]['zayav_link'] = '<a'.($r['deleted'] ? ' class="deleted" title="Заявка удалена"' : '').
+			$arr[$id]['zayav_link'] = '<a '.($r['deleted'] ? ' class="deleted" title="Заявка удалена"' : '').
 											'href="'.URL.'&p=gazeta&d=zayav&d1=info&id='.$r['id'].'">'.
 										'№'.$r['id'].
 									  '</a>';
@@ -943,8 +939,8 @@ function zayav_info($zayav_id) {
 			'</table>';
 	}
 
-	//Платежи
 	$income = income_spisok(array('zayav_id'=>$zayav_id));
+	$history = gazeta_history(array('zayav_id'=>$zayav_id));
 
 	return
 	'<script type="text/javascript">'.
@@ -1008,7 +1004,7 @@ function zayav_info($zayav_id) {
 			'<div id="income_spisok">'.($income['all'] ? $income['spisok'] : '').'</div>'.
 			_vkComment('zayav', $zayav_id).
 		'</div>'.
-		'<div class="histories">'.history_spisok(1, array('zayav_id'=>$zayav_id)).'</div>'.
+		'<div class="histories">'.$history['spisok'].'</div>'.
 	'</div>';
 }//zayav_info()
 function zayav_edit($zayav_id) {
@@ -1118,7 +1114,10 @@ function report() {
 	$right = '';
 	switch(@$_GET['d1']) {
 		default:
-		case 'history': $left = history_spisok(); break;
+		case 'history':
+			$data = gazeta_history();
+			$left = $data['spisok'];
+		break;
 		case 'zayav':
 			$data = '';
 			$left = '';
@@ -1174,29 +1173,7 @@ function report() {
 				$right.
 	'</table>';
 }//report()
-function history_insert($arr) {
-	$sql = "INSERT INTO `gazeta_history` (
-			   `type`,
-			   `value`,
-			   `value1`,
-			   `value2`,
-			   `value3`,
-			   `client_id`,
-			   `zayav_id`,
-			   `viewer_id_add`
-			) VALUES (
-				".$arr['type'].",
-				'".(isset($arr['value']) ? $arr['value'] : '')."',
-				'".(isset($arr['value1']) ? $arr['value1'] : '')."',
-				'".(isset($arr['value2']) ? $arr['value2'] : '')."',
-				'".(isset($arr['value3']) ? $arr['value3'] : '')."',
-				".(isset($arr['client_id']) ? $arr['client_id'] : 0).",
-				".(isset($arr['zayav_id']) ? $arr['zayav_id'] : 0).",
-				".VIEWER_ID."
-			)";
-	query($sql);
-}//history_insert()
-function history_types($v) {
+function gazeta_history_types($v, $filter) {
 	switch($v['type']) {
 		case 11: return 'Создание новой заявки '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>'.
 						($v['client_id'] ? ' для клиента '.$v['client_link'] : '').'.';
@@ -1288,63 +1265,19 @@ function history_types($v) {
 
 		default: return $v['type'];
 	}
-}//history_types()
-function history_spisok($page=1, $filter=array()) {
-	$limit = 30;
-	$cond = "`id`".
-		(isset($filter['client_id']) ? ' AND `client_id`='.$filter['client_id'] : '').
-		(isset($filter['zayav_id']) ? ' AND `zayav_id`='.$filter['zayav_id'] : '');
-	$sql = "SELECT COUNT(`id`) AS `all`
-			FROM `gazeta_history`
-			WHERE ".$cond."
-			LIMIT 1";
-	$all = query_value($sql);
-	if(!$all)
-		return 'Истории по указанным условиям нет.';
-	$start = ($page - 1) * $limit;
-
-	$sql = "SELECT *
-			FROM `gazeta_history`
-			WHERE ".$cond."
-			ORDER BY `id` DESC
-			LIMIT ".$start.",".$limit;
-	$q = query($sql);
-	$history = array();
-	while($r = mysql_fetch_assoc($q))
-		$history[$r['id']] = $r;
-	$history = _viewer($history);
-	$history = _clientLink($history);
-	$history = _zayavLink($history);
-
-	$send = '';
-	$txt = '';
-	end($history);
-	$keyEnd = key($history);
-	reset($history);
-	foreach($history as $r) {
-		if(!$txt) {
-			$time = strtotime($r['dtime_add']);
-			$viewer_id = $r['viewer_id_add'];
-		}
-		$txt .= '<li><div class="li">'.history_types($r).'</div>';
-		$key = key($history);
-		if(!$key ||
-		   $key == $keyEnd ||
-		   $time - strtotime($history[$key]['dtime_add']) > 900 ||
-		   $viewer_id != $history[$key]['viewer_id_add']) {
-			$send .=
-				'<div class="history_unit">'.
-					'<div class="head"><span>'.FullDataTime($r['dtime_add']).'</span>'.$r['viewer_name'].'</div>'.
-					'<ul>'.$txt.'</ul>'.
-				'</div>';
-			$txt = '';
-		}
-		next($history);
-	}
-	if($start + $limit < $all)
-		$send .= '<div class="_next" id="history_next" val="'.($page + 1).'"><span>Показать более ранние записи...</span></div>';
-	return $send;
-}//history_spisok()
+}//gazeta_history_types()
+function gazeta_history($v=array()) {
+	return _history(
+		'gazeta_history_types',
+		array('_clientLink', '_zayavLink'),
+		$v,
+		array(
+			'table' => 'gazeta_history',
+			'client_id' => !empty($v['client_id']) && _isnum($v['client_id']) ? intval($v['client_id']) : 0,
+			'zayav_id' => !empty($v['zayav_id']) && _isnum($v['zayav_id']) ? intval($v['zayav_id']) : 0
+		)
+	);
+}//gazeta_history()
 
 function income_path($data) {
 	$ex = explode(':', $data);
@@ -1597,14 +1530,17 @@ function income_insert($v) {//Внесение платежа
 		'id' => $insert_id
 	));
 
-	history_insert(array(
-		'type' => 45,
-		'zayav_id' => $v['zayav_id'],
-		'client_id' => $v['client_id'],
-		'value' => $v['sum'],
-		'value1' => $v['prim'],
-		'value2' => $v['income_id']
-	));
+	_historyInsert(
+		45,
+		array(
+			'zayav_id' => $v['zayav_id'],
+			'client_id' => $v['client_id'],
+			'value' => $v['sum'],
+			'value1' => $v['prim'],
+			'value2' => $v['income_id']
+		),
+		'gazeta_history'
+	);
 
 	switch($v['from']) {
 		case 'client':
@@ -2627,7 +2563,7 @@ function setup_money() {
 }//setup_money()
 function setup_money_spisok() {
 	$sql = "SELECT `s`.*,
-				   COUNT(*) AS `count`
+				   COUNT(`g`.`id`) AS `count`
 			FROM `setup_income` AS `s`
 			  LEFT JOIN `gazeta_money` AS `g`
 			  ON `s`.`id`=`g`.`income_id`

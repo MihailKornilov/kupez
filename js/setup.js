@@ -1380,7 +1380,7 @@ $(document)
 		$('#show_worker')._check();
 		function submit() {
 			var send = {
-				op:'setup_rashod_edit',
+				op:'setup_expense_edit',
 				id:id,
 				name:$('#name').val(),
 				show_worker:$('#show_worker').val()
@@ -1423,7 +1423,7 @@ $(document)
 			while(t[0].tagName != 'DD')
 				t = t.parent();
 			var send = {
-				op:'setup_rashod_del',
+				op:'setup_expense_del',
 				id:t.attr('val')
 			};
 			dialog.process();

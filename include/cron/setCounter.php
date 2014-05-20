@@ -13,7 +13,7 @@ $mysql = array(
 
 $VK = new MysqlDB($mysql['host'],$mysql['user'],$mysql['pass'],$mysql['database'],$mysql['names']);
 
-$spisok=$VK->QueryObjectArray("select * from vk_user where menu_left_set=1 order by enter_last desc");
+$spisok=$VK->QueryObjectArray("select * from vk_user where rule_menu_left=1 order by enter_last desc");
 if(!count($spisok))
 	die('No users.');
 

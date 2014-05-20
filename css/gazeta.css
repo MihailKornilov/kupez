@@ -39,10 +39,9 @@
 #clientInfo #dopLinks.busy{background-position:right center}
 #clientInfo #zayav_result{color:#777;text-align:center}
 #clientInfo ._next{margin:5px 10px 0 10px}
-#clientInfo #income_spisok,#clientInfo #histories{margin:10px;display:none}
+#clientInfo #income_spisok,#clientInfo #histories{display:none}
 #clientInfo #income_spisok ._empty{margin:0;padding:60px 10px}
 #clientInfo #notes{margin:0 10px;display:none}
-#clientInfo .history_unit{width:440px;overflow:hidden}
 #clientInfo .right{width:145px;height:auto}
 #clientInfo .cdel{color:red}
 
@@ -215,7 +214,7 @@
 #zayav-info .headBlue{margin:10px 10px 0}
 #zayav-info #income_spisok{margin:0 10px 10px}
 #zayav-info .vkComment{margin:15px 10px}
-#zayav-info .histories{margin:10px 15px}
+#zayav-info .histories{margin:10px 8px}
 
 /* Редактирование заявки */
 #zayav-edit{padding-bottom:50px}
@@ -239,22 +238,6 @@
 
 
 #report .right{width:160px;padding-bottom:200px}
-#report.history .left{padding:10px}
-#report .history_unit{width:445px;overflow:hidden}
-.history_unit{margin-bottom:12px;padding-bottom:8px;border-bottom:#dae1e8 solid 1px}
-.history_unit .head{font-size:10px}
-.history_unit .head span{color:#777;font-size:10px;margin-right:10px}
-.history_unit ul{margin:5px 0 7px 25px}
-.history_unit li{margin:0 0 8px}
-.history_unit .li{margin-left:-4px}
-.history_unit em{color:#707070}
-.history_unit .changes *{font-size:10px;color:#777}
-.history_unit .changes table{border-collapse:collapse;margin-top:3px}
-.history_unit .changes th{text-align:right;font-weight:700}
-.history_unit .changes th,.history_unit .changes td{border:#ddd solid 1px;padding:2px 4px;vertical-align:top}
-.history_unit a.deleted{color:#a66}
-.history_unit .prim{font:italic 11px Arial;color:#555}
-.history_unit .oplata{color:#770}
 .income-show{white-space:nowrap}
 .income#report .headName{margin:10px}
 .income .inc-path{margin:15px 10px}
