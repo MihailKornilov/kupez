@@ -36,8 +36,13 @@ function adminMainLinks() {
 
 function admin_user() {
 	$data = admin_user_spisok();
-	$ob_count = query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`gazeta_id` AND `viewer_id_add`");
-	$ob_act = query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`gazeta_id` AND `viewer_id_add` AND !`deleted` AND `day_active`>=DATE_FORMAT(NOW(),'%Y-%m-%d')");
+	$ob_count = query_value("SELECT COUNT(DISTINCT `viewer_id_add`) FROM `vk_ob` WHERE !`gazeta_id` AND `viewer_id_add`");
+	$ob_act = query_value("SELECT COUNT(DISTINCT `viewer_id_add`)
+						   FROM `vk_ob`
+						   WHERE !`gazeta_id`
+						     AND `viewer_id_add`
+						     AND !`deleted`
+						     AND `day_active`>=DATE_FORMAT(NOW(),'%Y-%m-%d')");
 
 	$app_user = query_value("SELECT COUNT(*) FROM `vk_user` WHERE `is_app_user`");
 	$menu_left = query_value("SELECT COUNT(*) FROM `vk_user` WHERE `rule_menu_left`");
@@ -85,6 +90,8 @@ function admin_user_spisok($v=array()) {
 
 	$cond = "`u`.`viewer_id`";
 
+	$obCount = 0;
+
 	if($filter['find']) {
 		if(_isnum($filter['find']))
 			$cond .= " AND `u`.`viewer_id`=".$filter['find'];
@@ -93,11 +100,23 @@ function admin_user_spisok($v=array()) {
 			$reg = '/('.$filter['find'].')/i';
 		}
 	} else {
-		if($filter['ob_write']) {
-			$cond .= " AND `ob`.`viewer_id_add` AND `ob`.`viewer_id_add`=`u`.`viewer_id`";
-			if($filter['ob_write'] == 2)
-				$cond .= " AND !`ob`.`deleted`
+		switch($filter['ob_write']) {
+			case 1:
+				$cond .= " AND `ob`.`viewer_id_add` AND `ob`.`viewer_id_add`=`u`.`viewer_id`";
+				$obCount = query_value("SELECT COUNT(*) FROM `vk_ob` WHERE !`gazeta_id` AND `viewer_id_add`");
+				break;
+			case 2:
+				$cond .= " AND `ob`.`viewer_id_add`
+				           AND `ob`.`viewer_id_add`=`u`.`viewer_id`
+				           AND !`ob`.`deleted`
 						   AND `ob`.`day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')";
+				$obCount = query_value("SELECT COUNT(*)
+									   FROM `vk_ob`
+									   WHERE !`gazeta_id`
+									     AND `viewer_id_add`
+									     AND !`deleted`
+									     AND `day_active`>=DATE_FORMAT(NOW(),'%Y-%m-%d')");
+				break;
 		}
 		switch($filter['rules']) {
 			case 1: $cond .= " AND `u`.`is_app_user`"; break;
@@ -123,7 +142,8 @@ function admin_user_spisok($v=array()) {
 		);
 
 	$send['all'] = $all;
-	$send['result'] = 'Показан'._end($all, '', 'о').' '.$all.' посетител'._end($all, 'ь', 'я', 'ей');
+	$send['result'] = 'Показан'._end($all, '', 'о').' '.$all.' посетител'._end($all, 'ь', 'я', 'ей').
+					  ($obCount ? '<span>('.$obCount.' объявлени'._end($obCount, 'е', 'я', 'й').')</span>' : '');
 	$send['filter'] = $filter;
 	$send['spisok'] = '';
 
@@ -210,7 +230,7 @@ function admin_user_spisok($v=array()) {
 		$c = $c > $limit ? $limit : $c;
 		$send['spisok'] .=
 			'<div class="_next" val="'.($page + 1).'">'.
-				'<span>Показать ещё '.$c.' посетител'._end($all, 'я', 'ей').'</span>'.
+				'<span>Показать ещё '.$c.' посетител'._end($c, 'я', 'я', 'ей').'</span>'.
 			'</div>';
 	}
 
@@ -227,7 +247,7 @@ function admin_user_unit($r) {
 						(substr($r['dtime_add'], 0, 10) == CURDAY ? '<br /><span class="ob new">Новый</span>' : '').
 					'</div>'.
 					'<a href="'.URL.'&p=admin&id='.$r['viewer_id'].'"><b>'.$r['name'].'</b></a>'.
-					'<div class="city">'.$r['city_name'].($r['country_name'] ? ', '.$r['country_name'] : '').'</div>'.
+					'<div class="city">'.$r['country_name'].($r['city_name'] ? ', '.$r['city_name'] : '').'</div>'.
 					($r['ob'] ? '<a class="ob">Объявления: <b>'.$r['ob'].'</b></a>' : '').
 					($r['act'] ? '<span class="ob act">'.$r['act'].'</span>' : '').
 					($r['arc'] ? '<span class="ob arc">'.$r['arc'].'</span>' : '').

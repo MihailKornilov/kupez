@@ -29,6 +29,7 @@ switch(@$_POST['op']) {
 						'city'
 		));
 		$send['user'] = $res['response'][0];
+		$send['url'] = $res['url'];
 
 		$res = _vkapi('account.getAppPermissions', array('user_id' => $viewer_id));
 		$send['menu_left'] = $res;
@@ -36,7 +37,11 @@ switch(@$_POST['op']) {
 		$res = _vkapi('users.isAppUser', array('user_id' => $viewer_id));
 		$send['is_app_user'] = $res;
 
+		$send['code'] = md5(API_ID.'_'.$viewer_id.'_'.SECRET);
+		$send['token'] = query_value("SELECT `access_token` FROM `vk_user` ORDER BY `enter_last` DESC LIMIT 1");
+
 		xcache_unset(CACHE_PREFIX.'viewer_166424274');
+		xcache_unset(CACHE_PREFIX.'viewer_110533495');
 		xcache_unset(CACHE_PREFIX.'viewer_'.$viewer_id);
 
 		jsonSuccess($send);
