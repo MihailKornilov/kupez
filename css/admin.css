@@ -14,6 +14,7 @@
 .user-unit .inf{vertical-align:top}
 .user-unit .dlast{float:right;font-size:10px;color:#777;text-align:right}
 .user-unit .today{color:#4a4;font-size:10px}
+.user-unit .cday{color:#c44;font-size:10px;margin-right:10px}
 .user-unit .city{color:#aaa}
 .user-unit .ob{
 	display:inline-block;

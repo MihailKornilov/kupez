@@ -243,7 +243,10 @@ function admin_user_unit($r) {
 			'<tr><td class="img"><a href="'.URL.'&p=admin&d=user&id='.$r['viewer_id'].'"><img src="'.$r['photo'].'"></a>'.
 				'<td class="inf">'.
 					'<div class="dlast">'.
-						(substr($r['enter_last'], 0, 10) == CURDAY ? '<span class="today">'.substr($r['enter_last'], 11, 5).'</span>' : FullDataTime($r['enter_last'])).
+						(substr($r['enter_last'], 0, 10) == CURDAY ?
+							($r['count_day'] > 1 ? '<span class="cday">'.$r['count_day'].'x</span>' : '').'<span class="today">'.substr($r['enter_last'], 11, 5).'</span>' :
+							FullDataTime($r['enter_last'])
+						).
 						(substr($r['dtime_add'], 0, 10) == CURDAY ? '<br /><span class="ob new">Новый</span>' : '').
 					'</div>'.
 					'<a href="'.URL.'&p=admin&id='.$r['viewer_id'].'"><b>'.$r['name'].'</b></a>'.

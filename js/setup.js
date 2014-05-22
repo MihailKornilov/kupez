@@ -132,10 +132,10 @@ $(document)
 						'<input type="text" id="general_nomer" maxlength="4" value="' + GN_MAX + '" />' +
 				'<tr><td class="label">Дни отправки в печать:<td><input type="hidden" id="day_print" value="1" />' +
 				'<tr><td class="label">Дни выхода:<td><input type="hidden" id="day_public" value="4" />' +
+				'<tr><td class="label">Количество полос:<td><input type="hidden" id="polosa_count" value="8" />' +
 				'<tr><td class="label">Первый день выхода:<td><input type="hidden" id="day_first" value="' + year + '-01-01" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:310,
 				head:'Создание списка номеров газеты',
 				content:html,
@@ -155,6 +155,10 @@ $(document)
 		$('#week_nomer,#general_nomer').keyEnter(submit);
 		$('#day_print')._select({width:100, spisok:weeks});
 		$('#day_public')._select({width:100, spisok:weeks});
+		$('#polosa_count')._select({
+			width:50,
+			spisok:POLOSA_COUNT
+		});
 		$('#day_first')._calendar({lost:1});
 		function submit() {
 			var send = {
@@ -164,6 +168,7 @@ $(document)
 				general_nomer:$('#general_nomer').val(),
 				day_print:$('#day_print').val(),
 				day_public:$('#day_public').val(),
+				polosa_count:$('#polosa_count').val(),
 				day_first:$('#day_first').val()
 			};
 			if(!REGEXP_NUMERIC.test(send.week_nomer)) {
@@ -206,9 +211,9 @@ $(document)
 						'<input type="text" id="general_nomer" maxlength="4" />' +
 				'<tr><td class="label r">День отправки в печать:<td><input type="hidden" id="day_print" />' +
 				'<tr><td class="label r">День выхода:<td><input type="hidden" id="day_public" />' +
+				'<tr><td class="label r">Количество полос:<td><input type="hidden" id="polosa_count" value="8" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:310,
 				head:'Добавление номера газеты',
 				content:html,
@@ -218,6 +223,10 @@ $(document)
 		$('#week_nomer,#general_nomer').keyEnter(submit);
 		$('#day_print')._calendar({lost:1});
 		$('#day_public')._calendar({lost:1});
+		$('#polosa_count')._select({
+			width:50,
+			spisok:POLOSA_COUNT
+		});
 		function submit() {
 			var send = {
 				op:'setup_gn_add',
@@ -225,6 +234,7 @@ $(document)
 				general_nomer:$('#general_nomer').val(),
 				day_print:$('#day_print').val(),
 				day_public:$('#day_public').val(),
+				polosa_count:$('#polosa_count').val(),
 				year:$('#dopLinks .sel').html()
 			};
 			if(!REGEXP_NUMERIC.test(send.week_nomer)) {
@@ -267,15 +277,16 @@ $(document)
 			general = t.find('.nomer span').html(),
 			print = t.find('.print s').html(),
 			pub = t.find('.pub s').html(),
+			pc = t.find('.pc').html(),
 			html = '<table class="setup-gn-tab">' +
 				'<tr><td class="label r">Номер выпуска:' +
 				'<td><input type="text" id="week_nomer" maxlength="2" value="' + week + '" />' +
 				'<input type="text" id="general_nomer" maxlength="4"  value="' + general + '" />' +
 				'<tr><td class="label r">День отправки в печать:<td><input type="hidden" id="day_print" value="' + print + '" />' +
 				'<tr><td class="label r">День выхода:<td><input type="hidden" id="day_public" value="' + pub + '" />' +
+				'<tr><td class="label r">Количество полос:<td><input type="hidden" id="polosa_count" value="' + pc + '" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:310,
 				head:'Редактирование номера газеты',
 				content:html,
@@ -286,6 +297,10 @@ $(document)
 		$('#week_nomer,#general_nomer').keyEnter(submit);
 		$('#day_print')._calendar({lost:1});
 		$('#day_public')._calendar({lost:1});
+		$('#polosa_count')._select({
+			width:50,
+			spisok:POLOSA_COUNT
+		});
 		function submit() {
 			var send = {
 				op:'setup_gn_edit',
@@ -294,6 +309,7 @@ $(document)
 				general_nomer:$('#general_nomer').val(),
 				day_print:$('#day_print').val(),
 				day_public:$('#day_public').val(),
+				polosa_count:$('#polosa_count').val(),
 				year:$('#dopLinks .sel').html()
 			};
 			if(!REGEXP_NUMERIC.test(send.week_nomer)) {
@@ -359,14 +375,12 @@ $(document)
 		}
 	})
 
-
 	.on('click', '#setup_person .add', function() {
 		var t = $(this),
 			html = '<table class="setup-tab">' +
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Внесение новой категории',
 				content:html,
@@ -412,7 +426,6 @@ $(document)
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" value="' + name + '" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Редактирование категории клиентов',
 				content:html,
@@ -486,7 +499,6 @@ $(document)
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Внесение новой рубрики',
 				content:html,
@@ -532,7 +544,6 @@ $(document)
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" value="' + name + '" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Редактирование рубрики',
 				content:html,
@@ -606,7 +617,6 @@ $(document)
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Внесение новой подрубрики',
 				content:html,
@@ -653,7 +663,6 @@ $(document)
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" value="' + name + '" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Редактирование подрубрики',
 				content:html,
@@ -775,7 +784,6 @@ $(document)
 				'<tr><td class="label">Стоимость:<td><input id="cena" type="text" maxlength="6" value="' + cena + '" /> руб.' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Редактирование параметра',
 				content:html,
@@ -821,9 +829,9 @@ $(document)
 			html = '<table class="setup-tab">' +
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" />' +
 				'<tr><td class="label">Цена за см&sup2;:<td><input id="cena" type="text" maxlength="6" /> руб.' +
+				'<tr><td class="label">Указывать<br />номер полосы:<td><input id="polosa" type="hidden" /> руб.' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Внесение новой полосы',
 				content:html,
@@ -831,11 +839,13 @@ $(document)
 			});
 		$('#name').focus();
 		$('#name,#cena').keyEnter(submit);
+		$('#polosa')._check();
 		function submit() {
 			var send = {
 				op:'setup_polosa_add',
 				name:$('#name').val(),
-				cena:$('#cena').val()
+				cena:$('#cena').val(),
+				polosa:$('#polosa').val()
 			};
 			if(!send.name) {
 				err('Не указано наименование');
@@ -874,12 +884,13 @@ $(document)
 		var id = t.attr('val'),
 			name = t.find('.name').html(),
 			cena = t.find('.cena').html(),
+			polosa = t.find('.pn').html() ? 1 : 0,
 			html = '<table class="setup-tab">' +
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="50" value="' + name + '" />' +
 				'<tr><td class="label">Цена за см&sup2;:<td><input id="cena" type="text" maxlength="6" value="' + cena + '" /> руб.' +
+				'<tr><td class="label">Указывать<br />номер полосы:<td><input id="polosa" type="hidden" value="' + polosa + '" /> руб.' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Редактирование данных полосы',
 				content:html,
@@ -888,12 +899,14 @@ $(document)
 			});
 		$('#name').focus();
 		$('#name,#cena').keyEnter(submit);
+		$('#polosa')._check();
 		function submit() {
 			var send = {
 				op:'setup_polosa_edit',
 				id:id,
 				name:$('#name').val(),
-				cena:$('#cena').val()
+				cena:$('#cena').val(),
+				polosa:$('#polosa').val()
 			};
 			if(!send.name) {
 				err('Не указано наименование');
@@ -1077,7 +1090,6 @@ $(document)
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="100" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Внесение новой вида платежа',
 				content:html,
@@ -1123,7 +1135,6 @@ $(document)
 				'<tr><td class="label">Наименование:<td><input id="name" type="text" maxlength="100" value="' + name + '" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Редактирование вида платежа',
 				content:html,
@@ -1198,7 +1209,6 @@ $(document)
 				'<tr><td class="label">Описание:<td><input id="about" type="text" maxlength="200" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Внесение новой скидки',
 				content:html,
@@ -1246,7 +1256,6 @@ $(document)
 				'<tr><td class="label">Описание:<td><input id="about" type="text" maxlength="200" value="' + about + '" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Редактирование скидки',
 				content:html,
@@ -1320,7 +1329,6 @@ $(document)
 				'<tr><td class="label r">Список сотрудников:<td><input id="show_worker" type="hidden" />' +
 				'</table>',
 			dialog = _dialog({
-				top:60,
 				width:390,
 				head:'Внесение новой категории расхода',
 				content:html,

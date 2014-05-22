@@ -659,15 +659,18 @@ function gns_control($post, $category, $zayav_id='{zayav_id}') {//проверка прави
 			return false;
 		if(!isset($ex[2]) || !preg_match(REGEXP_NUMERIC, $ex[2]))
 			return false;
+		if(!isset($ex[3]) || !preg_match(REGEXP_NUMERIC, $ex[3]))
+			return false;
 		if($category == 2 && !$ex[2])
 			return false;
 		$cena = round(str_replace(',', '.', $ex[1]), 6);
 		$send['summa'] += $cena;
 		$send['count']++;
-		$gns[] = '('.$zayav_id.','.intval($ex[0]).','.intval($ex[2]).','.$cena.')';
+		$gns[] = '('.$zayav_id.','.intval($ex[0]).','.intval($ex[2]).','.$cena.','.intval($ex[3]).')';
 		$send['array'][$ex[0]] = array(
 			'cena' => round($cena, 2),
-			'dop' => $ex[2]
+			'dop' => $ex[2],
+			'polosa' => $ex[3]
 		);
 	}
 	$send['summa'] = round($send['summa'], 2);
@@ -676,9 +679,20 @@ function gns_control($post, $category, $zayav_id='{zayav_id}') {//проверка прави
 }
 function zayav_add() {
 	query("UPDATE `images` SET `deleted`=1 WHERE `owner`='".VIEWER_ID."'");
-	$client_id = empty($_GET['client_id']) || !preg_match(REGEXP_NUMERIC, $_GET['client_id']) ? 0 : $_GET['client_id'];
-	$back = $client_id ? 'client&d1=info&id='.$client_id : 'zayav';
+	$client_id = 0;
+	$skidka = 0;
+	if(!empty($_GET['client_id']) && $id = _isnum($_GET['client_id']))
+		if($r = query_assoc("SELECT * FROM `gazeta_client` WHERE !`deleted` AND `id`=".$id)) {
+			$client_id = $id;
+			$skidka = $r['skidka'];
+		}
 	return
+	'<script type="text/javascript">'.
+		'var ZA={'.
+			'back:"'.($client_id ? 'client&d1=info&id='.$client_id : 'zayav').'",'.
+			'skidka:'.$skidka.
+		'};'.
+	'</script>'.
 	'<div id="zayav-add">'.
 		'<div class="headName">Внесение новой заявки</div>'.
 		'<table class="zatab">'.
@@ -704,7 +718,7 @@ function zayav_add() {
 			'<tr><td class="label top">Номера выпуска:<td id="gn_spisok">'.
 		'</table>'.
 		'<table class="zatab skd dn">'.
-            '<tr><td class="label">Скидка:<td><input type="hidden" id="skidka" />'.
+            '<tr><td class="label">Скидка:<td><input type="hidden" id="skidka" value="'.$skidka.'" />'.
         '</table>'.
         '<table class="zatab manual">'.
             '<tr><td class="label">Указать стоимость вручную:<td>'._check('summa_manual').
@@ -715,7 +729,7 @@ function zayav_add() {
 					'<span id="skidka-txt"></span><input type="hidden" id="skidka_sum" value="0" />'.
             '<tr><td class="label top">Заметка:<td><textarea id="note"></textarea>'.
             '<tr><td><td><div class="vkButton"><button>Внести</button></div>'.
-                        '<div class="vkCancel" val="'.$back.'"><button>Отмена</button></div>'.
+                        '<div class="vkCancel"><button>Отмена</button></div>'.
         '</table>'.
 	'</div>';
 }//zayav_add()
@@ -751,15 +765,15 @@ function zayav_data($v=array()) {
             `adres` LIKE '%".$filter['find']."%')";
 		$reg = '/('.$filter['find'].')/i';
 		$regNoSpace = '/('.$find.')/i';
-		if($page == 1 && preg_match(REGEXP_NUMERIC, $filter['find']))
-			$find_id = intval($filter['find']);
+		if($page == 1)
+			$find_id = _isnum($filter['find']);
 	} else {
 		if($filter['cat'])
 			$cond .= " AND `category`=".$filter['cat'];
 		if($filter['client_id'])
 			$cond .= " AND `client_id`=".$filter['client_id'];
 		elseif($filter['nopublic'])
-			$cond .= " AND `gn_count`=0";
+			$cond .= " AND !`gn_count`";
 		else {
 			if($filter['nomer'])
 				$ids = query_ids("SELECT DISTINCT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']);
@@ -770,12 +784,24 @@ function zayav_data($v=array()) {
 			$cond .= " AND `id` IN (".$ids.")";
 		}
 	}
-	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `gazeta_zayav` WHERE ".$cond." LIMIT 1");
+
+	$spisok =
+		$page == 1
+			? '<input type="hidden" id="fz-client_id" value="'.$filter['client_id'].'" />'.
+			'<input type="hidden" id="fz-find" value="'.addslashes($filter['find']).'" />'.
+			'<input type="hidden" id="fz-cat" value="'.$filter['cat'].'" />'.
+			'<input type="hidden" id="fz-gnyear" value="'.$filter['gnyear'].'" />'.
+			'<input type="hidden" id="fz-nomer" value="'.$filter['nomer'].'" />'.
+			'<input type="hidden" id="fz-nopublic" value="'.$filter['nopublic'].'" />'
+		: '';
+
+
+	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `gazeta_zayav` WHERE ".$cond);
 
 	$zayav = array();
 	if(isset($find_id)) {
-		$sql = "SELECT * FROM `gazeta_zayav` WHERE `deleted`=0 AND `id`=".$find_id." LIMIT 1";
-		if($r = mysql_fetch_assoc(query($sql))) {
+		$sql = "SELECT * FROM `gazeta_zayav` WHERE !`deleted` AND `id`=".$find_id;
+		if($r = query_assoc($sql)) {
 			$all++;
 			$r['find_id'] = 1;
 			$zayav[$r['id']] = $r;
@@ -786,13 +812,16 @@ function zayav_data($v=array()) {
 		return array(
 			'all' => 0,
 			'result' => 'Заявок не найдено.',
-			'spisok' => '<div class="_empty">Заявок не найдено.</div>',
+			'spisok' => $spisok.'<div class="_empty">Заявок не найдено.</div>',
 			'filter' => $filter
 		);
 
-	$send['all'] = $all;
-	$send['result'] = 'Показан'._end($all, '', 'о').' '.$all.' заяв'._end($all, 'ка', 'ки', 'ок');
-	$send['filter'] = $filter;
+	$send = array(
+		'all' => $all,
+		'result' => 'Показан'._end($all, 'а', 'о').' '.$all.' заяв'._end($all, 'ка', 'ки', 'ок'),
+		'filter' => $filter,
+		'spisok' => $spisok
+	);
 
 	$start = ($page - 1) * $limit;
 	$sql = "SELECT *
@@ -821,15 +850,6 @@ function zayav_data($v=array()) {
 
 	$zayav = _clientLink($zayav);
 
-	$send['spisok'] =
-		$page == 1
-		? '<input type="hidden" id="fz-client_id" value="'.$filter['client_id'].'" />'.
-		  '<input type="hidden" id="fz-find" value="'.addslashes($filter['find']).'" />'.
-		  '<input type="hidden" id="fz-cat" value="'.$filter['cat'].'" />'.
-		  '<input type="hidden" id="fz-gnyear" value="'.$filter['gnyear'].'" />'.
-		  '<input type="hidden" id="fz-nomer" value="'.$filter['nomer'].'" />'.
-		  '<input type="hidden" id="fz-nopublic" value="'.$filter['nopublic'].'" />'
-		: '';
 	foreach($zayav as $id => $r) {
 		$send['spisok'] .=
 			'<div class="zayav_unit">'.
@@ -898,10 +918,10 @@ function zayav_list() {
 	'</div>';
 }//zayav_list()
 function zayav_info($zayav_id) {
-	if(!preg_match(REGEXP_NUMERIC, $zayav_id))
+	if(!_isnum($zayav_id))
 		return _noauth('Страницы не существует');
 	$sql = "SELECT * FROM `gazeta_zayav` WHERE `id`=".$zayav_id;
-	if(!$z = mysql_fetch_assoc(query($sql)))
+	if(!$z = query_assoc($sql))
 		return _noauth('Заявки не существует');
 
 	if(!VIEWER_ADMIN && $z['deleted'])
@@ -923,7 +943,11 @@ function zayav_info($zayav_id) {
 				'<td class="nomer"><b>'._gn($r['general_nomer'], 'week').'</b><em>('.$r['general_nomer'].')</em>'.
 				'<td class="public">'._gn($r['general_nomer'], 'pub').
 				'<td class="cena">'.round($r['cena'], 2).
-				(OB || REK ? '<td class="dop">'.(OB ? _obDop($r['dop']) : _polosa($r['dop'])) : '');
+			(OB || REK ?
+				'<td class="dop">'.(OB ?
+					_obDop($r['dop']) :
+					_polosa($r['dop']).($r['polosa'] ? ' '.$r['polosa'].'-я' : ''))
+			: '');
 			if($r['general_nomer'] < GN_FIRST_ACTIVE)
 				$public_lost++;
 		}
@@ -1023,7 +1047,7 @@ function zayav_edit($zayav_id) {
 	$q = query($sql);
 	$gns = array();
 	while($r = mysql_fetch_assoc($q))
-		$gns[] = $r['general_nomer'].':['.round($r['cena'], 6).','.$r['dop'].']';
+		$gns[] = $r['general_nomer'].':['.round($r['cena'], 6).','.$r['dop'].','.$r['polosa'].']';
 
 	return
 	'<script type="text/javascript">'.
@@ -1230,7 +1254,7 @@ function gazeta_history_types($v, $filter) {
 
 		case 1031: return 'В настройках добавлен '.$v['value'].'-й номер газеты.';
 		case 1032: return 'В настройках изменены данные '.$v['value'].'-го номера газеты:<div class="changes">'.$v['value1'].'</div>';
-		case 1033: return 'В настройках удалён '.$v['value'].'-ый номер газеты.';
+		case 1033: return 'В настройках удалён '.$v['value'].'-й номер газеты.';
 		case 1034: return 'В настройках создан список номеров газет на '.$v['value'].' год.';
 
 		case 1041: return 'В настройках добавлено новое название полосы <u>'.$v['value'].'</u>.';
@@ -2249,14 +2273,9 @@ function setup_gn_year($y=CURRENT_YEAR) {
 	return $send;
 }//setup_gn_year()
 function setup_gn_spisok($y=CURRENT_YEAR, $gnedit=0) {
-	$sql = "SELECT
-				`gn`.*,
-				COUNT(`pub`.`id`) AS `count`
-			FROM `gazeta_nomer` AS `gn`
-				LEFT JOIN `gazeta_nomer_pub` AS `pub`
-				ON `gn`.`general_nomer`=`pub`.`general_nomer`
+	$sql = "SELECT *
+			FROM `gazeta_nomer`
 			WHERE `day_public` LIKE '".$y."-%'
-			GROUP BY `general_nomer`
 			ORDER BY `general_nomer`";
 	$q = query($sql);
 	if(!mysql_num_rows($q))
@@ -2267,7 +2286,7 @@ function setup_gn_spisok($y=CURRENT_YEAR, $gnedit=0) {
 			'<tr><th>Номер<br />выпуска'.
 				'<th>День отправки<br />в печать'.
 				'<th>День выхода'.
-				'<th>Заявки'.
+				'<th>Кол-во<br />полос'.
 				'<th>';
 	$cur = time() - 86400;
 	while($r = mysql_fetch_assoc($q)) {
@@ -2278,8 +2297,8 @@ function setup_gn_spisok($y=CURRENT_YEAR, $gnedit=0) {
 			'<td class="nomer"><b>'.$r['week_nomer'].'</b> (<span>'.$r['general_nomer'].'</span>)'.
 			'<td class="print">'.FullData($r['day_print'], 0, 1, 1).'<s>'.$r['day_print'].'</s>'.
 			'<td class="pub">'.FullData($r['day_public'], 0, 1, 1).'<s>'.$r['day_public'].'</s>'.
-			'<td class="z">'.($r['count'] ? $r['count'] : '').
-			'<td><div class="img_edit"></div><div class="img_del"></div>';
+			'<td class="pc">'.$r['polosa_count'].
+			'<td class="ed"><div class="img_edit"></div><div class="img_del"></div>';
 	}
 	$send .= '</table>';
 	return $send;
@@ -2493,6 +2512,7 @@ function setup_polosa_spisok() {
 		'<table class="_spisok">'.
 			'<tr><th class="name">Полоса'.
 				'<th class="cena">Цена за см&sup2;<br />руб.'.
+				'<th class="pn">Указывать<br />номер<br />полосы'.
 				'<th class="set">'.
 		'</table>'.
 		'<dl class="_sort" val="setup_polosa_cost">';
@@ -2501,6 +2521,7 @@ function setup_polosa_spisok() {
 			'<table class="_spisok">'.
 				'<tr><td class="name">'.$r['name'].
 					'<td class="cena">'.round($r['cena'], 2).
+					'<td class="pn">'.($r['polosa'] ? 'да' : '').
 					'<td class="set"><div class="img_edit"></div>'.
 			'</table>';
 	$send .= '</dl>';

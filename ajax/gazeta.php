@@ -13,17 +13,24 @@ switch(@$_POST['op']) {
 		$client_id = intval($_POST['client_id']);
 		$sql = "SELECT *
 				FROM `gazeta_client`
-				WHERE `deleted`=0".
-			(!empty($val) ? " AND (`org_name` LIKE '%".$val."%' OR `fio` LIKE '%".$val."%' OR `telefon` LIKE '%".$val."%' OR `adres` LIKE '%".$val."%')" : '').
-			($client_id ? " AND `id`<=".$client_id : '')."
+				WHERE !`deleted`".
+					(!empty($val) ?
+						" AND (`org_name` LIKE '%".$val."%'
+								OR `fio` LIKE '%".$val."%'
+								OR `telefon` LIKE '%".$val."%'
+								OR `adres` LIKE '%".$val."%'
+							)"
+					: '').
+					($client_id ? " AND `id`<=".$client_id : '')."
 				ORDER BY `id` DESC
 				LIMIT 50";
 		$q = query($sql);
 		while($r = mysql_fetch_assoc($q)) {
 			$name = $r['org_name'] ? $r['org_name'] : $r['fio'];
 			$unit = array(
-				'uid' => $r['id'],
-				'title' => utf8(htmlspecialchars_decode($name))
+				'uid' => intval($r['id']),
+				'title' => utf8(htmlspecialchars_decode($name)),
+				'skidka' => intval($r['skidka'])
 			);
 			$content = array();
 			if($r['telefon'])
@@ -223,16 +230,15 @@ switch(@$_POST['op']) {
 		$data = zayav_data($_POST);
 		$send['result'] = utf8($data['result']);
 		$send['spisok'] = utf8($data['spisok']);
-		if(!$data['filter']['nomer'] && $data['filter']['page'] > 1)
+		if(!$data['filter']['nomer'] && $data['filter']['page'] == 1)
 			$send['gn_sel'] = gnJson($data['filter']['gnyear'], 1);
 		jsonSuccess($send);
 		break;
 	case 'zayav_add':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['client_id']))
 			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['category']) || !$_POST['category'])
+		if(!$category = _isnum($_POST['category']))
 			jsonError();
-		$category = intval($_POST['category']);
 		if($category == 1 && (!preg_match(REGEXP_NUMERIC, $_POST['rubric_id']) || !$_POST['rubric_id']))
 			jsonError();
 		if($category == 1 && !preg_match(REGEXP_NUMERIC, $_POST['rubric_sub_id']))
@@ -243,8 +249,6 @@ switch(@$_POST['op']) {
 			jsonError();
 		if($category == 2 && !preg_match(REGEXP_NUMERIC, $_POST['skidka']))
 			jsonError();
-		if(!preg_match(REGEXP_BOOL, $_POST['summa_manual']))
-			jsonError();
 		$client_id = intval($_POST['client_id']);
 		$rubric_id = $category == 1 ? intval($_POST['rubric_id']) : 0;
 		$rubric_sub_id = $category == 1 ? intval($_POST['rubric_sub_id']) : 0;
@@ -254,7 +258,7 @@ switch(@$_POST['op']) {
 		$size_x = $category == 2 ? round(str_replace(',', '.', $_POST['size_x']), 1) : 0;
 		$size_y = $category == 2 ? round(str_replace(',', '.', $_POST['size_y']), 1) : 0;
 		$skidka = $category == 2 ? intval($_POST['skidka']) : 0;
-		$summa_manual = intval($_POST['summa_manual']);
+		$summa_manual = _isbool($_POST['summa_manual']);
 		$note = win1251(htmlspecialchars(trim($_POST['note'])));
 		if($category == 2 && !$client_id)
 			jsonError();
@@ -314,7 +318,8 @@ switch(@$_POST['op']) {
 					`zayav_id`,
 					`general_nomer`,
 					`dop`,
-					`cena`
+					`cena`,
+					`polosa`
 			   ) VALUES ".str_replace('{zayav_id}', $send['id'], $gns['insert']));
 
 
@@ -400,11 +405,10 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'zayav_edit':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['zayav_id']) || !$_POST['zayav_id'])
+		if(!$zayav_id = _isnum($_POST['zayav_id']))
 			jsonError();
-		$zayav_id = intval($_POST['zayav_id']);
 		$sql = "SELECT * FROM `gazeta_zayav` WHERE !`deleted` AND `id`=".$zayav_id;
-		if(!$z = mysql_fetch_assoc(query($sql)))
+		if(!$z = query_assoc($sql))
 			jsonError();
 
 		$client_id = $z['client_id'];
@@ -476,7 +480,8 @@ switch(@$_POST['op']) {
 		while($r = mysql_fetch_assoc($q))
 			$gnPrev[$r['general_nomer']] = array(
 				'cena' => round($r['cena'], 2),
-				'dop' => $r['dop']
+				'dop' => $r['dop'],
+				'polosa' => $r['polosa']
 			);
 
 		//Обновление номеров выпуска
@@ -486,7 +491,8 @@ switch(@$_POST['op']) {
 					`zayav_id`,
 					`general_nomer`,
 					`dop`,
-					`cena`
+					`cena`,
+					`polosa`
 			       ) VALUES ".$gns['insert']);
 		$pub = query_assoc("
 				SELECT
@@ -567,16 +573,20 @@ switch(@$_POST['op']) {
 					_gn($n, 'pub').', '.
 					'цена: '.$r['cena'].
 					($z['category'] == 1 && $r['dop'] ? ', '._obDop($r['dop']) : '').
-					($z['category'] == 2 && $r['dop'] ? ', полоса: '._polosa($r['dop']) : '');
+					($z['category'] == 2 && $r['dop'] ? ', полоса: '._polosa($r['dop']).($r['polosa'] ? ' '.$r['polosa'].'-я' : '') : '');
 			else {
 				$new = $gns['array'][$n];
-				if($new['cena'] != $r['cena'] || $new['dop'] != $r['dop'])
+				if($new['cena'] != $r['cena'] || $new['dop'] != $r['dop'] || $new['polosa'] != $r['polosa'])
 					$gnCh[] =
 						'<b>'._gn($n, 'week').'</b>('.$n.') '.
 						_gn($n, 'pub').'<br />'.
 						'&nbsp;&nbsp;цена: '.$r['cena'].' » '.$new['cena'].
 						($z['category'] == 1 && $r['dop'] ? '<br />&nbsp;&nbsp;доп: '._obDop($r['dop']).' » '._obDop($new['dop']) : '').
-						($z['category'] == 2 && $r['dop'] ? '<br />&nbsp;&nbsp;полоса: '._polosa($r['dop']).' » '._polosa($new['dop']) : '');
+						($z['category'] == 2 && $r['dop'] ?
+							'<br />&nbsp;&nbsp;полоса: '._polosa($r['dop']).($r['polosa'] ? ' '.$r['polosa'].'-я' : '').
+							' » '.
+							_polosa($new['dop']).($new['polosa'] ? ' '.$new['polosa'].'-я' : '')
+						: '');
 				unset($gns['array'][$n]);
 			}
 		//Проверка на добавление новых номеров выпуска
@@ -586,7 +596,7 @@ switch(@$_POST['op']) {
 				_gn($n, 'pub').', '.
 				'цена: '.$r['cena'].
 				($z['category'] == 1 && $r['dop'] ? ', '._obDop($r['dop']) : '').
-				($z['category'] == 2 && $r['dop'] ? ', полоса: '._polosa($r['dop']) : '');
+				($z['category'] == 2 && $r['dop'] ? ', полоса: '._polosa($r['dop']).($r['polosa'] ? ' '.$r['polosa'].'-я' : '') : '');
 		$gnChanges = '';
 		if(!empty($gnAdd))
 			$gnChanges .= '<tr><th>Добавлены<br />номера выпуска:'.
@@ -964,23 +974,21 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'setup_gn_spisok_create':
-		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+		if(!$year = _isnum($_POST['year']))
 			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['week_nomer']))
+		if(!$week_nomer = _isnum($_POST['week_nomer']))
 			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['general_nomer']))
+		if(!$general_nomer = _isnum($_POST['general_nomer']))
 			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['day_print']))
+		if(!$day_print = _isnum($_POST['day_print']))
 			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['day_public']))
+		if(!$day_public = _isnum($_POST['day_public']))
 			jsonError();
 		if(!preg_match(REGEXP_DATE, $_POST['day_first']))
 			jsonError();
-		$year = intval($_POST['year']);
-		$week_nomer = intval($_POST['week_nomer']);
-		$general_nomer = intval($_POST['general_nomer']);
-		$day_print = intval($_POST['day_print']);
-		$day_public = intval($_POST['day_public']);
+		if(!$polosa_count = _isnum($_POST['polosa_count']))
+			jsonError();
+
 		$day_first = $_POST['day_first'];
 
 		$sql = "SELECT `general_nomer` FROM `gazeta_nomer` WHERE `general_nomer`=".$general_nomer;
@@ -1000,11 +1008,14 @@ switch(@$_POST['op']) {
 		$timeEnd = strtotime($year.'-12-31');
 		$gnArr = array();
 		while($weekFirst < $timeEnd) {
-			array_push($gnArr, '('.
-		        $general_nomer++.','.
-		        $week_nomer++.','.
-		        'DATE_ADD("'.strftime('%Y-%m-%d', $weekFirst).'", INTERVAL '.$day_print.' DAY),'.
-		        'DATE_ADD("'.strftime('%Y-%m-%d', $weekFirst).'", INTERVAL '.$day_public.' DAY))'
+			array_push($gnArr,
+				'('.
+			        $general_nomer++.','.
+			        $week_nomer++.','.
+			        'DATE_ADD("'.strftime('%Y-%m-%d', $weekFirst).'", INTERVAL '.$day_print.' DAY),'.
+			        'DATE_ADD("'.strftime('%Y-%m-%d', $weekFirst).'", INTERVAL '.$day_public.' DAY),'.
+					$polosa_count.
+				')'
 			);
 			$weekFirst += 604800;
 		}
@@ -1013,7 +1024,8 @@ switch(@$_POST['op']) {
 					`general_nomer`,
 					`week_nomer`,
 					`day_print`,
-					`day_public`
+					`day_public`,
+					`polosa_count`
 				) VALUES '.implode(',', $gnArr);
 		query($sql);
 
@@ -1031,21 +1043,20 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'setup_gn_add':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['week_nomer']))
+		if(!$week_nomer = _isnum($_POST['week_nomer']))
 			jsonError('Некорректно указан номер недели выпуска');
-		if(!preg_match(REGEXP_NUMERIC, $_POST['general_nomer']))
+		if(!$general_nomer = _isnum($_POST['general_nomer']))
 			jsonError('Некорректно указан общий номер выпуска');
 		if(!preg_match(REGEXP_DATE, $_POST['day_print']))
 			jsonError('Некорректно указана дата отправки в печать');
 		if(!preg_match(REGEXP_DATE, $_POST['day_public']))
 			jsonError('Некорректно указана дата выхода газеты');
-		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+		if(!$year = _isnum($_POST['year']))
 			jsonError();
-		$week_nomer = intval($_POST['week_nomer']);
-		$general_nomer = intval($_POST['general_nomer']);
+		if(!$polosa_count = _isnum($_POST['polosa_count']))
+			jsonError();
 		$day_print = $_POST['day_print'];
 		$day_public = $_POST['day_public'];
-		$year = intval($_POST['year']);
 
 		if(query_value("SELECT `general_nomer` FROM `gazeta_nomer` WHERE `general_nomer`=".$general_nomer))
 			jsonError('Номер газеты <b>'.$general_nomer.'</b> уже есть в списке');
@@ -1054,12 +1065,14 @@ switch(@$_POST['op']) {
 					`week_nomer`,
 					`general_nomer`,
 					`day_print`,
-					`day_public`
+					`day_public`,
+					`polosa_count`
 				) VALUES (
 					".$week_nomer.",
 					".$general_nomer.",
 					'".$day_print."',
-					'".$day_public."'
+					'".$day_public."',
+					".$polosa_count."
 				)";
 		query($sql);
 
@@ -1077,24 +1090,22 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'setup_gn_edit':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['gn']))
+		if(!$gn = _isnum($_POST['gn']))
 			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['week_nomer']))
+		if(!$week_nomer = _isnum($_POST['week_nomer']))
 			jsonError('Некорректно указан номер недели выпуска');
-		if(!preg_match(REGEXP_NUMERIC, $_POST['general_nomer']))
+		if(!$general_nomer = _isnum($_POST['general_nomer']))
 			jsonError('Некорректно указан общий номер выпуска');
 		if(!preg_match(REGEXP_DATE, $_POST['day_print']))
 			jsonError('Некорректно указана дата отправки в печать');
 		if(!preg_match(REGEXP_DATE, $_POST['day_public']))
 			jsonError('Некорректно указана дата выхода газеты');
-		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+		if(!$year = _isnum($_POST['year']))
 			jsonError();
-		$gn = intval($_POST['gn']);
-		$week_nomer = intval($_POST['week_nomer']);
-		$general_nomer = intval($_POST['general_nomer']);
+		if(!$polosa_count = _isnum($_POST['polosa_count']))
+			jsonError();
 		$day_print = $_POST['day_print'];
 		$day_public = $_POST['day_public'];
-		$year = intval($_POST['year']);
 
 		if($gn != $general_nomer) {
 			$sql = "SELECT `general_nomer` FROM `gazeta_nomer` WHERE `general_nomer`=".$general_nomer;
@@ -1110,7 +1121,8 @@ switch(@$_POST['op']) {
 				SET `week_nomer`=".$week_nomer.",
 					`general_nomer`=".$general_nomer.",
 					`day_print`='".$day_print."',
-					`day_public`='".$day_public."'
+					`day_public`='".$day_public."',
+					`polosa_count`=".$polosa_count."
 				WHERE `general_nomer`=".$gn."
 				LIMIT 1";
 		query($sql);
@@ -1127,6 +1139,8 @@ switch(@$_POST['op']) {
 			$changes .= '<tr><th>День отправки в печать:<td>'.FullData($r['day_print']).'<td>»<td>'.FullData($day_print);
 		if($r['day_public'] != $day_public)
 			$changes .= '<tr><th>День выхода:<td>'.FullData($r['day_public']).'<td>»<td>'.FullData($day_public);
+		if($r['polosa_count'] != $polosa_count)
+			$changes .= '<tr><th>Количество полос:<td>'.$r['polosa_count'].'<td>»<td>'.$polosa_count;
 		if($changes)
 			_historyInsert(
 				1032,
@@ -1142,15 +1156,13 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'setup_gn_del':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['general']))
+		if(!$general = _isnum($_POST['general']))
 			jsonError();
-		if(!preg_match(REGEXP_YEAR, $_POST['year']))
+		if(!$year = _isnum($_POST['year']))
 			jsonError();
-		$general = intval($_POST['general']);
-		$year = intval($_POST['year']);
 
 		$sql = "SELECT * FROM `gazeta_nomer` WHERE `general_nomer`=".$general;
-		if(!$r = mysql_fetch_assoc(query($sql)))
+		if(!$r = query_assoc($sql))
 			jsonError();
 
 		$sql = "DELETE FROM `gazeta_nomer` WHERE `general_nomer`=".$general;
@@ -1535,6 +1547,7 @@ switch(@$_POST['op']) {
 	case 'setup_polosa_add':
 		if(!preg_match(REGEXP_CENA, $_POST['cena']))
 			jsonError();
+		$polosa = _isbool($_POST['polosa']);
 		$cena = round($_POST['cena'], 2);
 		$name = win1251(htmlspecialchars(trim($_POST['name'])));
 		if(empty($name))
@@ -1542,10 +1555,12 @@ switch(@$_POST['op']) {
 		$sql = "INSERT INTO `setup_polosa_cost` (
 					`name`,
 					`cena`,
+					`polosa`,
 					`sort`
 				) VALUES (
 					'".addslashes($name)."',
 					".$cena.",
+					".$polosa.",
 					"._maxSql('setup_polosa_cost', 'sort')."
 				)";
 		query($sql);
@@ -1563,11 +1578,11 @@ switch(@$_POST['op']) {
 		jsonSuccess($send);
 		break;
 	case 'setup_polosa_edit':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['id']))
+		if(!$id = _isnum($_POST['id']))
 			jsonError();
 		if(!preg_match(REGEXP_CENA, $_POST['cena']))
 			jsonError();
-		$id = intval($_POST['id']);
+		$polosa = _isbool($_POST['polosa']);
 		$cena = round($_POST['cena'], 2);
 		$name = win1251(htmlspecialchars(trim($_POST['name'])));
 		if(empty($name))
@@ -1579,7 +1594,8 @@ switch(@$_POST['op']) {
 
 		$sql = "UPDATE `setup_polosa_cost`
 				SET `name`='".addslashes($name)."',
-					`cena`=".$cena."
+					`cena`=".$cena.",
+					`polosa`=".$polosa."
 				WHERE `id`=".$id;
 		query($sql);
 
@@ -1591,6 +1607,8 @@ switch(@$_POST['op']) {
 			$changes .= '<tr><th>Наименование:<td>'.$r['name'].'<td>»<td>'.$name;
 		if($r['cena'] != $cena)
 			$changes .= '<tr><th>Наименование:<td>'.round($r['cena'], 2).'<td>»<td>'.round($cena, 2);
+		if($r['polosa'] != $polosa)
+			$changes .= '<tr><th>Указывать номер полосы:<td>'.($r['polosa'] ? 'да' : 'нет').'<td>»<td>'.($polosa ? 'да' : 'нет');
 		if($changes)
 			_historyInsert(
 				1042,

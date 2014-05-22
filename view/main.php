@@ -145,8 +145,10 @@ function GvaluesCreate() {// составление файла G_values.js
 		"\n".'TXT_CENA_NEXT='.$g['txt_cena_next'].','.
 		"\n".'OBDOP_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_ob_dop` ORDER BY `id`').','.
 		"\n".'OBDOP_CENA_ASS='.query_ptpJson('SELECT `id`,`cena` FROM `setup_ob_dop` ORDER BY `id`').','.
+		"\n".'POLOSA_COUNT=[{uid:4,title:4},{uid:6,title:6},{uid:8,title:8},{uid:10,title:10},{uid:12,title:12}],'.
 		"\n".'POLOSA_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_polosa_cost` ORDER BY `sort`').','.
 		"\n".'POLOSA_CENA_ASS='.query_ptpJson('SELECT `id`,ROUND(`cena`) FROM `setup_polosa_cost` ORDER BY `id`').','.
+		"\n".'POLOSA_NUM='.query_ptpJson('SELECT `id`,`polosa` FROM `setup_polosa_cost` WHERE `polosa`').','.
 		"\n".'INVOICE_SPISOK='.query_selJson("SELECT `id`,`name` FROM `gazeta_invoice` ORDER BY `id`").','.
 		"\n".'EXPENSE_SPISOK='.query_selJson('SELECT `id`,`name` FROM `setup_expense` ORDER BY `sort`').','.
 		"\n".'EXPENSE_WORKER='.query_ptpJson("SELECT `id`,`show_worker` FROM `setup_expense` WHERE `show_worker`").','.
@@ -193,7 +195,9 @@ function GvaluesCreate() {// составление файла G_values.js
 		array_push($gn, "\n".$r['general_nomer'].':{'.
 			'week:'.$r['week_nomer'].','.
 			'pub:"'.$r['day_public'].'",'.
-			'txt:"'.FullData($r['day_public'], 0, 0, 1).'"}');
+			'txt:"'.FullData($r['day_public'], 0, 0, 1).'",'.
+			'pc:'.$r['polosa_count'].
+			'}');
 
 	$save .= "\n".'GN={'.implode(',', $gn).'};';
 

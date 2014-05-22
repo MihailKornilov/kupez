@@ -67,5 +67,6 @@ function _getVkUser() {//Получение данных о пользователе
 			 ) ON DUPLICATE KEY UPDATE
 				`count_day`=`count_day`+1";
 		query($sql);
+		query("UPDATE `vk_user` SET `count_day`=".($id === false ? 1 : "`count_day`+1")." WHERE `viewer_id`=".VIEWER_ID);
 	}
 }//end of _getVkUser()
