@@ -234,6 +234,74 @@ switch(@$_POST['op']) {
 			$send['gn_sel'] = gnJson($data['filter']['gnyear'], 1);
 		jsonSuccess($send);
 		break;
+	case 'zayav_pub':
+		if(!$pub_id = _isnum($_POST['pub_id']))
+			jsonError();
+		if(!$dop = _isnum($_POST['dop']))
+			jsonError();
+
+		$sql = "SELECT * FROM `gazeta_nomer_pub` WHERE `id`=".$pub_id;
+		if(!$p = query_assoc($sql))
+			jsonError();
+
+		$sql = "SELECT * FROM `gazeta_zayav` WHERE !`deleted` AND `id`=".$p['zayav_id'];
+		if(!$z = query_assoc($sql))
+			jsonError();
+
+		if($dop != $p['dop']) {
+			query("UPDATE `gazeta_nomer_pub` SET `dop`=".$dop.",`polosa`=0 WHERE `id`=".$pub_id);
+
+			_historyInsert(
+				32,
+				array(
+					'client_id' => $z['client_id'],
+					'zayav_id' => $p['zayav_id'],
+					'value' => $p['general_nomer'],
+					'value1' => '<table>'.
+								'<td>'._polosa($p['dop']).($p['polosa'] ? ' '.$p['polosa'].'-ÿ' : '').
+								'<td>»'.
+								'<td>'._polosa($dop).
+							   '</table>'
+				),
+				'gazeta_history'
+			);
+		}
+		jsonSuccess();
+		break;
+	case 'zayav_pub_nomer':
+		if(!$pub_id = _isnum($_POST['pub_id']))
+			jsonError();
+
+		$polosa = _isnum($_POST['polosa']);
+
+		$sql = "SELECT * FROM `gazeta_nomer_pub` WHERE `id`=".$pub_id;
+		if(!$p = query_assoc($sql))
+			jsonError();
+
+		$sql = "SELECT * FROM `gazeta_zayav` WHERE !`deleted` AND `id`=".$p['zayav_id'];
+		if(!$z = query_assoc($sql))
+			jsonError();
+
+		if($polosa != $p['polosa']) {
+			query("UPDATE `gazeta_nomer_pub` SET `polosa`=".$polosa." WHERE `id`=".$pub_id);
+
+			_historyInsert(
+				32,
+				array(
+					'client_id' => $z['client_id'],
+					'zayav_id' => $p['zayav_id'],
+					'value' => $p['general_nomer'],
+					'value1' => '<table>'.
+								'<td>'._polosa($p['dop']).($p['polosa'] ? ' '.$p['polosa'].'-ÿ' : '').
+								'<td>»'.
+								'<td>'._polosa($p['dop']).($polosa ? ' '.$polosa.'-ÿ' : '').
+							   '</table>'
+				),
+				'gazeta_history'
+			);
+		}
+		jsonSuccess();
+		break;
 	case 'zayav_add':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['client_id']))
 			jsonError();

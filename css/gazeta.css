@@ -68,7 +68,7 @@
 .zayav_unit .tab{width:100%}
 .zayav_unit .td-values{vertical-align:top}
 .zayav_unit .image{vertical-align:top;width:80px;text-align:center}
-.zayav_unit .values{border-spacing:4px}
+.zayav_unit .values{border-spacing:4px;width:100%}
 .zayav_unit .label{width:60px}
 .zayav_unit .ug{margin:0 5px;color:#777}
 .zayav_unit .txt{
@@ -82,6 +82,19 @@
 .zayav_unit em{background-color:#e1e7ed}
 .zayav_unit .txt em{font:14px Times New Roman}
 .zayav_unit .name em{font-size:13px;font-weight:bold}
+.zayav_unit .sum{position:relative}
+.zayav_unit .pub{
+	position:absolute;
+	right:-5px;
+	top:-4px;
+	border:#ded solid 1px;
+	background-color:#DFD;
+	padding:2px 0 2px 5px;
+}
+.zayav_unit .pub tt{color:#888;margin-left:2px}
+.zayav_unit .pub.lost{border:#ddd solid 1px;background-color:#f3f3f3}
+.zayav_unit .pub ._dropdown{margin-right:6px}
+.zayav_unit .pub._busy ._dropdown{visibility:hidden}
 
 .zayav_next{margin:0 8px 10px}
 

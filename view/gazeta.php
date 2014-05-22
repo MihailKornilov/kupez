@@ -753,6 +753,7 @@ function zayav_data($v=array()) {
 	$page = $filter['page'];
 
 	$cond = "!`deleted`";
+	$pub = array();
 
 	if($filter['find']) {
 		$find = preg_replace( '/\s+/', '', $filter['find']);
@@ -775,9 +776,16 @@ function zayav_data($v=array()) {
 		elseif($filter['nopublic'])
 			$cond .= " AND !`gn_count`";
 		else {
-			if($filter['nomer'])
-				$ids = query_ids("SELECT DISTINCT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']);
-			else {
+			if($filter['nomer']) {
+				$ids = array();
+				$sql = "SELECT * FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer'];
+				$q = query($sql);
+				while($r = mysql_fetch_assoc($q)) {
+					$ids[] = $r['zayav_id'];
+					$pub[$r['zayav_id']] = $r;
+				}
+				$ids = empty($ids) ? 0 : implode(',', $ids);
+			} else {
 				$ids = query_ids("SELECT `general_nomer` FROM `gazeta_nomer` WHERE SUBSTR(`day_public`,1,4)=".$filter['gnyear']);
 				$ids = query_ids('SELECT DISTINCT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer` IN ('.$ids.')');
 			}
@@ -850,7 +858,17 @@ function zayav_data($v=array()) {
 
 	$zayav = _clientLink($zayav);
 
+
+
 	foreach($zayav as $id => $r) {
+		$gn = '';
+		if(!empty($pub[$id]) && $r['category'] == 2) {
+			$p = $pub[$id];
+			$gn = '<div class="pub'.($p['general_nomer'] < GN_FIRST_ACTIVE ? ' lost' : '').'">'.
+					'<input type="hidden" class="topub" id="p'.$p['id'].'" value="'.$p['dop'].'" />'.
+					'<input type="hidden" id="np'.$p['id'].'" value="'.$p['polosa'].'" />'.
+				  '</div>';
+		}
 		$send['spisok'] .=
 			'<div class="zayav_unit">'.
 				'<div class="dtime">'.FullDataTime($r['dtime_add']).'</div>'.
@@ -874,8 +892,12 @@ function zayav_data($v=array()) {
 							: '').
 							(isset($r['telefon_find']) ? '<tr><td class="label">Телефон:<td>'.$r['telefon_find'] : '').
 							(isset($r['adres_find']) ? '<tr><td class="label">Адрес:<td>'.$r['adres_find'] : '').
-							'<tr><td class="label">Стоимость:<td><b>'.round($r['summa'], 2).'</b> руб.'.
-								($r['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
+							'<tr><td class="label">Стоимость:'.
+								'<td><div class="sum">'.
+										$gn.
+										'<b>'.round($r['summa'], 2).'</b> руб.'.
+										($r['summa_manual'] ? '<span class="manual">(указана вручную)</span>' : '').
+									'</div>'.
 						'</table>'.
  ($r['image_id'] ? '<td class="image"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
 				'</table>'.
@@ -1203,6 +1225,8 @@ function gazeta_history_types($v, $filter) {
 						($v['client_id'] ? ' для клиента '.$v['client_link'] : '').'.';
 		case 31: return 'Редактирование заявки '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>'.
 						($v['value'] ? ':<div class="changes">'.$v['value'].'</div>' : '.');
+		case 32: return 'Изменение полосы у '.$v['value'].'-го номера для Рекламы '.$v['zayav_link'].':'.
+						'<div class="changes">'.$v['value1'].'</div>';
 
 		case 45: return
 			'Платёж <span class="oplata">'._income($v['value2']).'</span> '.

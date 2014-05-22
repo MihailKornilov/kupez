@@ -90,7 +90,7 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 		if(result.hasClass('busy'))
 			return;
 		result.addClass('busy');
-		$.post(AJAX_GAZ, send, function (res) {
+		$.post(AJAX_GAZ, send, function(res) {
 			result.removeClass('busy');
 			if(res.success) {
 				result.html(res.result);
@@ -122,15 +122,71 @@ var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
 		if($('#mainLinks').hasClass('busy'))
 			return;
 		$('#mainLinks').addClass('busy');
-		$.post(AJAX_GAZ, send, function (res) {
+		$.post(AJAX_GAZ, send, function(res) {
 			$('#mainLinks').removeClass('busy');
 			if(res.success) {
 				$('.result').html(res.result);
 				$('.left').html(res.spisok);
 				if(res.gn_sel)
 					$('#nomer')._select(res.gn_sel);
+				zayavPub();
 			}
 		}, 'json');
+	},
+	zayavPub = function() {
+		var p = $('.topub');
+		if(!p.length)
+			return;
+		var pc = [];
+		for(n = 2; n < GN[$('#fz-nomer').val()].pc; n++)
+			pc.push({uid:n,title:n + '-я'});
+		for(var n = 0; n < p.length; n++) {
+			var sp = p.eq(n),
+				id = sp.attr('id'),
+				val = sp.val();
+			$('#' + id)._dropdown({
+				spisok:POLOSA_SPISOK,
+				func:function(v, id) {
+					zayavPubNomer(pc, id, POLOSA_NUM[v], 1);
+					var send = {
+							op:'zayav_pub',
+							pub_id:id.split('p')[1],
+							dop:v
+						},
+						inp = $('#' + id).parent();
+					inp.addClass('_busy');
+					$.post(AJAX_GAZ, send, function(res) {
+						inp.removeClass('_busy');
+					}, 'json');
+				}
+			});
+			zayavPubNomer(pc, id, POLOSA_NUM[val]);
+			sp.removeClass('topub');
+		}
+	},
+	zayavPubNomer = function(pc, id, show, nl) {
+		if(!show) {
+			$('#n' + id)._dropdown('remove');
+			return;
+		}
+		if(nl)
+			$('#n' + id).val(0);
+		$('#n' + id)._dropdown({
+			title0:'??',
+			spisok:pc,
+			func:function(v) {
+				var send = {
+						op:'zayav_pub_nomer',
+						pub_id:id.split('p')[1],
+						polosa:v
+					},
+					inp = $('#' + id).parent();
+				inp.addClass('_busy');
+				$.post(AJAX_GAZ, send, function(res) {
+					inp.removeClass('_busy');
+				}, 'json');
+			}
+		});
 	},
 	zayavRubric = function() {
 		$('#rubric_id')._select({
@@ -323,7 +379,6 @@ $.fn.gnGet = function(o) {
 		func:function() {}
 	}, o);
 	var t = $(this),
-		n,
 		pix = 21, // высота номера выпуска в пикселях
 		gns_begin = GN_FIRST_ACTIVE,
 		gns_end = gns_begin + o.show,
@@ -346,12 +401,12 @@ $.fn.gnGet = function(o) {
 	t.html(html);
 
 	$(document)
-		.on('click', '#darr', function () {// Разворачивание списка
+		.on('click', '#darr', function() {// Разворачивание списка
 			gns_begin = gns_end;
 			gns_end += o.add;
 			gnsPrint();
 		})
-		.on('click', '.gns-week', function () {// Действие по нажатию на номер газеты
+		.on('click', '.gns-week', function() {// Действие по нажатию на номер газеты
 			dopMenuA.removeClass('sel');
 			var th = $(this),
 				sel = !th.hasClass('gnsel'),
@@ -427,7 +482,7 @@ $.fn.gnGet = function(o) {
 		gnsPrint();
 	dopMenu();
 
-	dopMenuA.click(function () {// выбор номеров на месяц, 3 месяца, полгода и год начиная сначала
+	dopMenuA.click(function() {// выбор номеров на месяц, 3 месяца, полгода и год начиная сначала
 		var t = $(this),
 			v = t.attr('val') * 1;
 		gnsClear();
@@ -512,7 +567,7 @@ $.fn.gnGet = function(o) {
 				});
 				if(o.category == 2 && POLOSA_NUM[sp.dop]) {
 					var pc = [];
-					for(n = 2; n < GN[sp.n].pc; n++)
+					for(var n = 2; n < GN[sp.n].pc; n++)
 						pc.push({uid:n,title:n + '-я'});
 					$('#pn' + sp.n)._dropdown({
 						title0:'??',
@@ -737,7 +792,7 @@ $(document)
 		send.op = 'client_next';
 		send.page = next.attr('val');
 		next.addClass('busy');
-		$.post(AJAX_GAZ, send, function (res) {
+		$.post(AJAX_GAZ, send, function(res) {
 			if(res.success) {
 				next.remove();
 				$('#client .left').append(res.spisok);
@@ -754,9 +809,10 @@ $(document)
 			return;
 		next.addClass('busy');
 		$.post(AJAX_GAZ, send, function(res) {
-			if(res.success)
+			if(res.success) {
 				next.after(res.spisok).remove();
-			else
+				zayavPub();
+			} else
 				next.removeClass('busy');
 		}, 'json');
 	})
@@ -999,7 +1055,6 @@ $(document)
 		}, 'json');
 	})
 
-
 	.on('click', '#history_next', function() {
 		if($(this).hasClass('busy'))
 			return;
@@ -1217,7 +1272,7 @@ $(document)
 				});
 			$('#cat').rightLink(zayavSpisok);
 			$('.img_word')
-				.click(function () {
+				.click(function() {
 					var gn = $('#nomer').val();
 					if(gn == 0)
 						$(this).vkHint({
@@ -1266,6 +1321,7 @@ $(document)
 				spisok:GN_SEL,
 				func:zayavSpisok
 			});
+			zayavPub();
 		}
 		if($('#zayav-add').length) {
 			$('#client_id').clientSel({
@@ -1648,7 +1704,7 @@ $(document)
 					else if(!REGEXP_CENA.test(send.sum) || send.sum == 0) { err('Некорректно указана сумма.'); $('#sum').focus(); }
 					else {
 						dialog.process();
-						$.post(AJAX_GAZ, send, function (res) {
+						$.post(AJAX_GAZ, send, function(res) {
 							if(res.success) {
 								dialog.close();
 								_msg('Новый расход внесён.');
