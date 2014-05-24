@@ -28,10 +28,11 @@ var hashLoc,
 			VK.callMethod('setLocation', hashLoc);
 	},
 
-	obFilter = function() {
+	obFilter = function(find) {
 		return {
 			op:'ob_spisok',
 			find:$('#find')._search('val'),
+			find_query:find ? 1 : 0,
 			country_id:$('#countries').val(),
 			city_id:$('#cities').val(),
 			rubric_id:$('#rub').val(),
@@ -40,11 +41,11 @@ var hashLoc,
 			nokupez:$('#nokupez').length ? $('#nokupez').val() : 0
 		};
 	},
-	obSpisok = function() {
+	obSpisok = function(v, attr_id) {
 		if($('.region').hasClass('_busy'))
 			return;
 		$('.region').addClass('_busy');
-		$.post(AJAX_MAIN, obFilter(), function (res) {
+		$.post(AJAX_MAIN, obFilter(attr_id == 'find'), function (res) {
 			$('.region').removeClass('_busy');
 			if(res.success) {
 				$('.result').html(res.result);

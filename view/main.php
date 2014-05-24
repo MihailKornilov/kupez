@@ -249,6 +249,28 @@ function _rubricsub($item_id=false) {//Список изделий для заявок
 	return $item_id !== false ? constant('RUBRICSUB_'.$item_id) : $arr;
 }//_rubricsub()
 
+function viewerSettingsHistory($old, $u) {
+	if($old['is_app_user'] != $u['is_app_user'])
+		_historyInsert(
+			$u['is_app_user'] ? 2 : 3,
+			array('viewer_id' => $u['id']),
+			'vk_history'
+		);
+
+	if($old['rule_menu_left'] != $u['rule_menu_left'])
+		_historyInsert(
+			$u['rule_menu_left'] ? 4 : 5,
+			array('viewer_id' => $u['id']),
+			'vk_history'
+		);
+
+	if($old['rule_notify'] != $u['rule_notify'])
+		_historyInsert(
+			$u['rule_notify'] ? 6 : 7,
+			array('viewer_id' => $u['id']),
+			'vk_history'
+		);
+}//viewerSettingsHistory()
 
 
 function ob() {//Главная страница с объявлениями
@@ -364,6 +386,7 @@ function obFilter($v=array()) {
 		'page' => !empty($v['page']) && preg_match(REGEXP_NUMERIC, $v['page']) ? intval($v['page']) : 1,
 		'limit' => !empty($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) ? intval($v['limit']) : 20,
 		'find' => !empty($v['find']) ? win1251(htmlspecialchars(trim($v['find']))) : '',
+		'find_query' => !empty($v['find_query']) && preg_match(REGEXP_NUMERIC, $v['find_query']) ? intval($v['find_query']) : 0,
 		'country_id' => !empty($v['country_id']) && preg_match(REGEXP_NUMERIC, $v['country_id']) ? intval($v['country_id']) : 0,
 		'city_id' => !empty($v['city_id']) && preg_match(REGEXP_NUMERIC, $v['city_id']) ? intval($v['city_id']) : 0,
 		'rubric_id' => !empty($v['rubric_id']) && preg_match(REGEXP_NUMERIC, $v['rubric_id']) ? intval($v['rubric_id']) : 0,
@@ -398,6 +421,19 @@ function ob_spisok($v=array()) {
 		$cond .= " AND !`gazeta_id`";
 
 	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `vk_ob` WHERE ".$cond);
+
+	if($page == 1 && $filter['find_query']) {
+		$sql = "INSERT INTO `vk_ob_find_query` (
+						`txt`,
+						`rows`,
+						`viewer_id_add`
+					) VALUES (
+						'".addslashes($filter['find'])."',
+						".$all.",
+						".VIEWER_ID."
+					)";
+		query($sql);
+	}
 
 	$links = '<a href="'.URL.'&p=ob&d=my" class="my">Мои объявления</a>'.
 			 (GAZETA_WORKER ? '<a href="'.URL.'&p=gazeta&d=zayav" class="prog">Войти в программу</a>' : '');
@@ -642,6 +678,20 @@ function ob_history_types($v) {
 	switch($v['type']) {
 		case 1: return 'Новый <a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">посетитель</a>.';
 
+		case 2: return (!$v['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">'._viewer($v['viewer_id'], 'name').'</a> у' : 'У').
+					   'становил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложение.';
+		case 3: return (!$v['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">'._viewer($v['viewer_id'], 'name').'</a> у' : 'У').
+						'далил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложение.';
+
+		case 4: return (!$v['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">'._viewer($v['viewer_id'], 'name').'</a> д' : 'Д').
+						'обавил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложение в левое меню.';
+		case 5: return (!$v['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">'._viewer($v['viewer_id'], 'name').'</a> у' : 'У').
+						'далил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложение из левого меню.';
+
+		case 6: return (!$v['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">'._viewer($v['viewer_id'], 'name').'</a> р' : 'Р').
+						'азрешил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложению отправлять уведомления.';
+		case 7: return (!$v['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">'._viewer($v['viewer_id'], 'name').'</a> з' : 'З').
+						'апретил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложению отправлять уведомления.';
 		default: return $v['type'];
 	}
 }//ob_history_types()

@@ -300,7 +300,7 @@ function admin_user_info($viewer_id) {
 										(substr($r['dtime_add'], 0, 10) == CURDAY ? '<br /><span class="ob new">Новый</span>' : '').
 									'</div>'.
 									'<a href="http://vk.com/id'.$r['viewer_id'].'" target="_blank"><b>'.$r['first_name'].' '.$r['last_name'].'</b></a>'.
-									'<div class="city">'.$r['city_name'].($r['country_name'] ? ', '.$r['country_name'] : '').'</div>'.
+									'<div class="city">'.$r['country_name'].($r['city_name'] ? ', '.$r['city_name'] : '').'</div>'.
 									($ob ? '<a class="ob">Объявления: <b>'.$ob.'</b></a>' : '').
 									($act ? '<span class="ob act">'.$act.'</span>' : '').
 									($arc ? '<span class="ob arc">'.$arc.'</span>' : '').
@@ -321,5 +321,3 @@ function admin_user_info($viewer_id) {
 	'</div>';
 
 }//admin_user_info()
-
-

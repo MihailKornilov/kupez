@@ -1,8 +1,10 @@
 <?php
 function toMailSend() {
 	echo "\n\n----\ntime: ".round(microtime(true) - TIME, 3);
-	if(!defined('UPDATE_OK'))
+	if(!defined('UPDATE_OK')) {
+		query("UPDATE `setup_global` SET `access_token`=''");
 		mail(CRON_MAIL, 'CRON kupez/vk_users_update.php', ob_get_contents());
+	}
 }
 
 set_time_limit(180);
@@ -12,17 +14,43 @@ register_shutdown_function('toMailSend');
 define('CRON', true);
 require_once dirname(dirname(__FILE__)).'/config.php';
 
-$count = 20;
-$start = query_value("SELECT `cron_viewer_start` FROM `setup_global`");
+$count = 2;
+$g = query_assoc("SELECT * FROM `setup_global`");
+$start = $g['cron_viewer_start'];
+
+if(empty($g['access_token']))
+	for($n = 0; $n < 10; $n++) {
+		$sql = "SELECT * FROM `vk_user` WHERE LENGTH(`access_token`) ORDER BY `enter_last` DESC LIMIT 1";
+		$r = query_assoc($sql);
+		echo $n.'. Get token in '.$r['viewer_id'].': '.$r['access_token']."\n";
+		$_GET['access_token'] = $r['access_token'];
+		$app = _vkapi('users.isAppUser', array('user_id'=>982006));
+		if(isset($app['response'])) {
+			query("UPDATE `setup_global` SET `access_token`='".$r['access_token']."'");
+			$g['access_token'] = $r['access_token'];
+			break;
+		}
+		query("UPDATE `vk_user` SET `access_token`='' WHERE `viewer_id`=".$r['viewer_id']);
+		usleep(500000);
+	}
+$_GET['access_token'] = $g['access_token'];
+
+
+
 $all = query_value("SELECT COUNT(*) FROM `vk_user`");
 if($start >= $all)
 	$start = 0;
 
-$ids = query_ids("SELECT `viewer_id` FROM `vk_user` ORDER BY `dtime_add` ASC LIMIT ".$start.",".$count);
-$_GET['access_token'] = query_value("SELECT `access_token` FROM `vk_user` ORDER BY `enter_last` DESC LIMIT 1");
+$viewer = array();
+$sql = "SELECT * FROM `vk_user` ORDER BY `dtime_add` ASC LIMIT ".$start.",".$count;
+//$sql = "SELECT * FROM `vk_user` WHERE `viewer_id`=166424274";
+$q = query($sql);
+while($r = mysql_fetch_assoc($q))
+	$viewer[$r['viewer_id']] = $r;
 
 $res = _vkapi('users.get', array(
-	'user_ids' => $ids,
+	'user_ids' => implode(',', array_keys($viewer)),
+	'access_token' => '',
 	'fields' => 'photo,'.
 				'sex,'.
 				'country,'.
@@ -30,22 +58,30 @@ $res = _vkapi('users.get', array(
 ));
 
 if(!empty($res['response'])) {
+	$uarr = array();
 	foreach($res['response'] as $u) {
-		usleep(500000);
+		usleep(800000);
 		$app = _vkapi('users.isAppUser', array('user_id'=>$u['id']));
 		if(!isset($app['response'])) {
 			print_r($app);
 			exit;
 		}
 
-		usleep(500000);
+		usleep(800000);
 		$rule = _vkapi('account.getAppPermissions', array('user_id'=>$u['id']));
 		if(!isset($rule['response'])) {
 			print_r($rule);
 			exit;
 		}
 
-		$q[] =
+		$u += array(
+			'is_app_user' => intval($app['response']),
+			'rule_menu_left' => $rule['response']&256 ? 1 : 0,
+			'rule_notify' => $rule['response']&1 ? 1 : 0
+		);
+		viewerSettingsHistory($viewer[$u['id']], $u);
+
+		$uarr[] =
 			"(".$u['id'].",
 				'".addslashes(win1251($u['first_name']))."',
 				'".addslashes(win1251($u['last_name']))."',
@@ -55,9 +91,9 @@ if(!empty($res['response'])) {
 				'".(empty($u['country']) ? '' : addslashes(win1251($u['country']['title'])))."',
 				".(empty($u['city']) ? 0 : $u['city']['id']).",
 				'".(empty($u['city']) ? '' : addslashes(win1251($u['city']['title'])))."',
-				".intval($app['response']).",
-				".($rule['response']&256 ? 1 : 0).",
-				".($rule['response']&1 ? 1 : 0)."
+				".$u['is_app_user'].",
+				".$u['rule_menu_left'].",
+				".$u['rule_notify']."
 			)";
 	}
 
@@ -75,7 +111,7 @@ if(!empty($res['response'])) {
 				`rule_menu_left`,
 				`rule_notify`
 			)
-			VALUES ".implode(',', $q)."
+			VALUES ".implode(',', $uarr)."
 			ON DUPLICATE KEY UPDATE
 				`first_name`=VALUES(`first_name`),
 				`last_name`=VALUES(`last_name`),
@@ -89,8 +125,8 @@ if(!empty($res['response'])) {
 				`rule_menu_left`=VALUES(`rule_menu_left`),
 				`rule_notify`=VALUES(`rule_notify`)";
 	query($sql);
-	echo implode('<br />', $q);
 
+	echo implode('<br />', $uarr);
 	query("UPDATE `setup_global` SET `cron_viewer_start`=".($start + $count));
 	define('UPDATE_OK', 1);
 } else

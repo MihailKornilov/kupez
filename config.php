@@ -4,7 +4,7 @@ define('NAMES', 'cp1251');
 define('DOMAIN', $_SERVER["SERVER_NAME"]);
 define('LOCAL', DOMAIN == 'kupez');
 
-$SA[166424274] = 1;
+//$SA[166424274] = 1;
 require_once(DOCUMENT_ROOT.'/syncro.php');
 require_once(VKPATH.'/vk.php');
 _appAuth();
