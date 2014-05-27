@@ -31,3 +31,8 @@
 
 #user-info .left{padding:10px}
 #user-info .itab{border-spacing:4px;margin-top:10px}
+
+#find-query .left{padding:10px}
+#find-query .rows{width:40px;text-align:center}
+#find-query .us{width:90px;white-space:nowrap}
+#find-query .us a{font-size:10px}

@@ -34,6 +34,10 @@ function adminMainLinks() {
 	return $send;
 }//adminMainLinks()
 
+function adminUserLink($viewer_id) {
+	return '<a href="'.URL.'&p=admin&id='.$viewer_id.'">'._viewer($viewer_id, 'name').'</a>';
+}//adminUserLink()
+
 function admin_user() {
 	$data = admin_user_spisok();
 	$ob_count = query_value("SELECT COUNT(DISTINCT `viewer_id_add`) FROM `vk_ob` WHERE !`gazeta_id` AND `viewer_id_add`");
@@ -77,11 +81,11 @@ function admin_user_filter($v=array()) {
 	return array(
 		'page' => !empty($v['page']) && preg_match(REGEXP_NUMERIC, $v['page']) ? intval($v['page']) : 1,
 		'limit' => !empty($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) ? intval($v['limit']) : 30,
-		'find' => !empty($v['find']) ? win1251(htmlspecialchars(trim($v['find']))) : '',
+		'find' => !empty($v['find']) ? win1251(trim(htmlspecialchars($v['find']))) : '',
 		'ob_write' => !empty($v['ob_write']) && preg_match(REGEXP_NUMERIC, $v['ob_write']) ? intval($v['ob_write']) : 0,
 		'rules' => !empty($v['rules']) && preg_match(REGEXP_NUMERIC, $v['rules']) ? intval($v['rules']) : 0
 	);
-}//obFilter()
+}//admin_user_filter()
 function admin_user_spisok($v=array()) {
 	$filter = admin_user_filter($v);
 
@@ -314,10 +318,111 @@ function admin_user_info($viewer_id) {
 							'<tr><td class="label r">Уведомления<td>'.($r['rule_notify'] ? '' : 'не ').'разрешены'.
 						'</table>'.
 						'<div class="vkButton update" val="'.$viewer_id.'"><button>Обновить данные</button></div>'.
+
+						'<a id="server-get">получить адрес сервера для загрузки фото</a>'.
+						'<form id="vkform" '.
+							  'method="post" '.
+							  'action="" '.
+							  'enctype="multipart/form-data"'.
+							  'target="fframe">'.
+							'<input type="file" name="file1" />'.
+							//'<input type="text" name="file1" value="http://kupez.nyandoma.ru/files/images/ob14987-bpgqp612kx-b.jpg" />'.
+							'<input type="submit">'.
+						'</form>'.
+						'<iframe name="fframe" style="width:400px;height:300px"></iframe>'.
+						'<a id="photo-save">сохранить фотографию</a>'.
+
 					'<td class="right">'.
 						_rightLink('menu', $menu).
-		'</table>'.
+						'<a id="rules-get">права</a><br />'.
+						'<a id="rules-test">проверка прав</a><br />'.
+	'</table>'.
 
 	'</div>';
 
 }//admin_user_info()
+
+function admin_find_query() {
+	$data = admin_find_query_spisok();
+	$filter = $data['filter'];
+	return
+	'<script type="text/javascript">'.
+		'var FQ={'.
+			'op:"find_query_spisok",'.
+			'limit:'.$filter['limit'].
+		'};'.
+	'</script>'.
+	'<div id="find-query">'.
+		'<div class="result">'.$data['result'].'</div>'.
+		'<table class="tabLR">'.
+			'<tr><td class="left">'.$data['spisok'].
+				'<td class="right">'.
+		'</table>'.
+	'</div>';
+}//admin_find_query()
+function admin_find_query_filter($v) {
+	return array(
+		'page' => _isnum(@$v['page']) ? intval($v['page']) : 1,
+		'limit' => _isnum(@$v['limit']) ? intval($v['limit']) : 50
+	);
+}//admin_find_query_filter()
+function admin_find_query_spisok($v=array()) {
+	$filter = admin_find_query_filter($v);
+
+	$limit = $filter['limit'];
+	$page = $filter['page'];
+
+	$cond = "`id`";
+
+	$all = query_value("SELECT COUNT(*) FROM `vk_ob_find_query` WHERE ".$cond);
+
+	if(!$all)
+		return array(
+			'all' => 0,
+			'result' => 'Запросов не найдено.',
+			'spisok' => '<div class="_empty">Запросов не найдено.</div>',
+			'filter' => $filter
+		);
+
+	$send['all'] = $all;
+	$send['result'] = 'Показан'._end($all, '', 'о').' '.$all.' запрос'._end($all, '', 'а', 'ов');
+	$send['filter'] = $filter;
+	$send['spisok'] = $page == 1 ?
+		'<table class="_spisok _money">'.
+			'<tr><th>Запрос'.
+				'<th>Кол-во'.
+				'<th>Пользователь'.
+				'<th>Дата'
+		: '';
+
+	$start = ($page - 1) * $limit;
+	$sql = "SELECT *
+			FROM `vk_ob_find_query`
+			WHERE ".$cond."
+			ORDER BY `id` DESC
+			LIMIT ".$start.",".$limit;
+	$q = query($sql);
+	$fq = array();
+	while($r = mysql_fetch_assoc($q))
+		$fq[$r['id']] = $r;
+
+	foreach($fq as $r)
+		$send['spisok'] .=
+			'<tr><td><a>'.$r['txt'].'</a>'.
+				'<td class="rows">'.($r['rows'] ? $r['rows'] : '').
+				'<td class="us">'.adminUserLink($r['viewer_id_add']).
+				'<td class="dtime">'.FullDataTime($r['dtime_add']);
+
+	if($start + $limit < $all) {
+		$c = $all - $start - $limit;
+		$c = $c > $limit ? $limit : $c;
+		$send['spisok'] .=
+			'<tr class="_next" val="'.($page + 1).'"><td colspan="4">'.
+				'<span>Показать ещё '.$c.' запрос'._end($c, '', 'а', 'ов').'</span>';
+	}
+
+	if($page == 1)
+		$send['spisok'] .= '</table>';
+	return $send;
+}//admin_find_query_spisok()
+

@@ -39,26 +39,22 @@ switch(@$_POST['op']) {
 		jsonSuccess();
 		break;
 	case 'ob_create':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_id']) || !$_POST['rubric_id'])
-			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_sub_id']))
-			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['country_id']))
-			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['city_id']))
-			jsonError();
-		if(!preg_match(REGEXP_BOOL, $_POST['viewer_id_show']))
+		if(!$rubric_id = _isnum($_POST['rubric_id']))
 			jsonError();
 
-		$rubric_id = intval($_POST['rubric_id']);
-		$rubric_sub_id = intval($_POST['rubric_sub_id']);
+		$rubric_sub_id = _isnum($_POST['rubric_sub_id']);
 		$txt = win1251(htmlspecialchars(trim($_POST['txt'])));
 		$telefon = win1251(htmlspecialchars(trim($_POST['telefon'])));
-		$country_id = intval($_POST['country_id']);
+		$country_id = _isnum($_POST['country_id']);
 		$country_name = win1251(htmlspecialchars(trim($_POST['country_name'])));
-		$city_id = intval($_POST['city_id']);
+		$city_id = _isnum($_POST['city_id']);
 		$city_name = win1251(htmlspecialchars(trim($_POST['city_name'])));
-		$viewer_id_show = intval($_POST['viewer_id_show']);
+		$viewer_id_show = _isbool($_POST['viewer_id_show']);
+
+		if(empty($txt))
+			jsonError();
+
+		ini_set('max_execution_time', 120);
 
 		$sql = "INSERT INTO `vk_ob` (
 					`rubric_id`,
@@ -97,6 +93,16 @@ switch(@$_POST['op']) {
 
 		$insert_id = mysql_insert_id();
 
+		$send['insert_id'] = $insert_id;
+		$send['msg'] = utf8(htmlspecialchars_decode(
+			_rubric($rubric_id).
+			($rubric_sub_id ? ' » '._rubricsub($rubric_sub_id) : '').': '.
+			trim(substr($txt, 0, 100))."...".
+			($telefon ? "\n".'&#9742; '.$telefon : '').//&#128222;
+			//($viewer_id_show ? ' @id'.VIEWER_ID.'('._viewer(VIEWER_ID, 'name').')' : '').
+			"\n".'Читайте полностью на vk.com/kupezz'
+		));
+
 		//сохранение изображений
 		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='".VIEWER_ID."' ORDER BY `sort`";
 		$q = query($sql);
@@ -114,13 +120,57 @@ switch(@$_POST['op']) {
 				if(!$n) {
 					$image_id = $r['id'];
 					$image_link = $r['path'].$small_name;
+					$image_post_url = $r['path'].$big_name; //изображение для сохранения на стену
 				}
 				$n++;
 			}
 			query("UPDATE `vk_ob` SET `image_id`=".$image_id.",`image_link`='".$image_link."' WHERE `id`=".$insert_id);
-		}
 
-		jsonSuccess();
+			$group_id = 72078602;   //Группа КупецЪ
+			$album_id = 195528889;  //Основной альбом
+			$res = _vkapi('photos.getUploadServer', array(
+				'v' => 5.21,
+				'album_id' => $album_id,
+				'group_id' => $group_id
+			));
+			if(!empty($res['response'])) {
+				$upload_url = $res['response']['upload_url'];
+
+				$img = file_get_contents($image_post_url);
+				$name = PATH.'files/'.VIEWER_ID.time().'.jpg';
+				$f = fopen($name, 'w');
+				fwrite($f, $img);
+				fclose($f);
+
+				$curl = curl_init();
+				curl_setopt($curl, CURLOPT_URL, $upload_url);
+				curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+				curl_setopt($curl, CURLOPT_POST, 1);
+				curl_setopt($curl, CURLOPT_POSTFIELDS, array('file1'=>'@'.$name));
+				$out = json_decode(curl_exec($curl), true);
+				curl_close($curl);
+				unlink($name);
+
+				$server = $out['server'];
+				$photos_list = $out['photos_list'];
+				$hash = $out['hash'];
+
+				$res = _vkapi('photos.save', array(
+					'v' => 5.21,
+					'album_id' => $album_id,
+					'group_id' => $group_id,
+					'server' => $server,
+					'photos_list' => $photos_list,
+					'hash' => $hash,
+					'caption' => addslashes($send['msg'])
+				));
+				if(!empty($res['response'])) {
+					$r = $res['response'][0];
+					$send['photo'] = 'photo'.$r['owner_id'].'_'.$r['id'];
+				}
+			}
+		}
+		jsonSuccess($send);
 		break;
 	case 'ob_load':
 		if(!$id = _isnum($_POST['id']))

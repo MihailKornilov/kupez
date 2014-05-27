@@ -84,7 +84,7 @@ function _header() {
 
 		//Стороние скрипты
 		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/js/jquery-2.0.3.min.js"></script>'.
-		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/vk/xd_connection'.(DEBUG ? '' : '.min').'.js"></script>'.
+		'<script type="text/javascript" src="//'.(LOCAL ? 'nyandoma/vk' : 'vk.com/js/api').'/xd_connection.js?20"></script>'.
 
 		//Установка начального значения таймера.
 		(SA ? '<script type="text/javascript">var TIME=(new Date()).getTime();</script>' : '').
@@ -274,6 +274,15 @@ function viewerSettingsHistory($old, $u) {
 
 
 function ob() {//Главная страница с объявлениями
+	if($insert_id = _isnum(@$_GET['insert_id'])) {
+		$wallpost = _isbool(@$_GET['wallpost']);
+		_historyInsert(
+			$wallpost ? 8 : 9,
+			array('ob_id' => $insert_id),
+			'vk_history'
+		);
+	}
+
 	$sql =
 		"SELECT
 			`country_id`,
@@ -422,7 +431,7 @@ function ob_spisok($v=array()) {
 
 	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `vk_ob` WHERE ".$cond);
 
-	if($page == 1 && $filter['find_query']) {
+	if($page == 1 && $filter['find_query'] && $filter['find']) {
 		$sql = "INSERT INTO `vk_ob_find_query` (
 						`txt`,
 						`rows`,
@@ -665,7 +674,6 @@ function ob_my_unit($r) {
 	'</div>';
 }//ob_my_unit()
 
-
 function ob_history() {
 	$data = ob_history_data();
 	return
@@ -692,6 +700,10 @@ function ob_history_types($v) {
 						'азрешил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложению отправлять уведомления.';
 		case 7: return (!$v['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">'._viewer($v['viewer_id'], 'name').'</a> з' : 'З').
 						'апретил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложению отправлять уведомления.';
+
+		case 8: return 'Разместил объявление '.$v['ob_id'].' на стене своей страницы.';
+		case 9: return 'Отклонил размещение объявления '.$v['ob_id'].' на стене своей страницы.';
+
 		default: return $v['type'];
 	}
 }//ob_history_types()

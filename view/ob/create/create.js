@@ -1,36 +1,3 @@
-fotoUpload();
-
-// загрузка изображений
-function fotoUpload() {
-    $("#images").val('');
-    preview();
-    $("#upload").fotoUpload({
-        func:function (res) {
-            $("#images").val(res.link);
-            $("#upload").html(res.img + "<div class=img_del />");
-            $("#upload .img_del").click(fotoUpload);
-            preview();
-        }
-    });
-}
-/*
-$("#images_upload").bind({
-    mouseenter: function () {
-        $("#ms_images").alertShow({
-            txt:"Вы можете загрузить до 4 изображений.",
-            left:-3,
-            top:-43,
-            otstup:30,
-            delayShow:500,
-            delayHide:0
-        });
-    },
-    mouseleave: function () { $("#alert").remove(); },
-    click:function () { $("#alert").remove(); $(this).unbind(); }
-});
-*/
-
-
 $("#pay_service").myCheck({func:function (id) {
     $("#payContent").css('display', id == 1 ? 'block' : 'none');
     if (id == 0) {

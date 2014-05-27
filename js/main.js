@@ -56,7 +56,7 @@ var hashLoc,
 		}, 'json');
 	},
 	obPreview = function() {
-		if(!$('#ob-my').length)
+		if(!$('#ob-create').length)
 			return;
 		var txt = $('#txt').val().replace(/\n/g, '<br />'),
 			rubric_id = $('#rubric_id').val() * 1,
@@ -152,6 +152,41 @@ var hashLoc,
 			top:-12,
 			left:211,
 			indent:15
+		});
+	},
+	wallTest = function(o) {
+		VK.api('account.getAppPermissions', {}, function(data) {
+			if(typeof data.response == 'number') {
+				if(data.response & 8192)
+					wallPost(o);
+				else {
+					VK.addCallback('onSettingsChanged', function(data) {
+						if(data & 8192) {
+							VK.removeCallback('onWindowFocus');
+							wallPost(o);
+						}
+					});
+					VK.addCallback('onWindowFocus', function() {
+						location.href = URL + '&p=ob';
+					});
+					VK.callMethod('showSettingsBox', 8192);
+				}
+			} else
+				location.href = URL + '&p=ob';
+		});
+	},
+	wallPost = function(o) {
+		var send = {
+			message:o.msg,
+			attachments:(o.photo ? o.photo + ',' : '') + 'http://vk.com/kupezz'
+		};
+		VK.api('wall.post', send, function(data) {
+			if(data.response)
+				_msg('Объявление размещено на стене Вашей страницы.', function() {
+					location.href = URL + '&p=ob&wallpost=1&insert_id=' + o.insert_id;
+				});
+			else
+				location.href = URL + '&p=ob&wallpost=0&insert_id=' + o.insert_id;
 		});
 	};
 
@@ -431,6 +466,21 @@ $(document)
 			});
 		}
 		if($('#ob-create').length) {
+			VK.api('account.getAppPermissions', {}, function(data) {
+				if(typeof data.response == 'number') {
+					if(!(data.response & 8192) || !(data.response & 4)) {
+						VK.addCallback('onSettingsChanged', function(data) {
+							if((data & 8192) && (data & 4))
+								VK.removeCallback('onWindowFocus');
+						});
+						VK.addCallback('onWindowFocus', function() {
+							location.href = URL + '&p=ob';
+						});
+						VK.callMethod('showSettingsBox', 8192 + 4);
+					}
+				} else
+					location.href = URL + '&p=ob';
+			});
 			$('._info a').click(function () {
 				var html =
 					'<div id="ob-create-rules">' +
@@ -545,7 +595,7 @@ $(document)
 					t.addClass('busy');
 					$.post(AJAX_MAIN, send, function(res) {
 						if(res.success)
-							location.href = URL + '&p=ob';
+							wallTest(res);
 						else
 							t.removeClass('busy');
 					}, 'json');

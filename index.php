@@ -26,6 +26,7 @@ switch($_GET['p']) {
 		switch($_GET['d']) {
 			default:
 			case 'user': $html .= _isnum(@$_GET['id']) ? admin_user_info($_GET['id']) : admin_user(); break;
+			case 'query': $html .= admin_find_query(); break;
 			case 'history': $html .= ob_history(); break;
 			case 'exit': header('Location:'.URL.'&p=ob'); exit;
 		}
