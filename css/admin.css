@@ -31,6 +31,12 @@
 
 #user-info .left{padding:10px}
 #user-info .itab{border-spacing:4px;margin-top:10px}
+#user-info #content{margin-top:10px}
+#user-info #content .headName{margin:0}
+#user-info #content .headName span{float:right;color:#888}
+#user-info #content ._empty{margin:10px 0}
+#user-info .fstat._busy{background-position:right center}
+#user-info ._radio span{float:right}
 
 #find-query .left{padding:10px}
 #find-query .rows{width:40px;text-align:center}

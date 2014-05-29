@@ -40,60 +40,6 @@ switch(@$_POST['op']) {
 //		$res = _vkapi('photos.getUploadServer', array('album_id' => 130124967));
 //		$send['photos.getUploadServer'] = $res;
 
-		$res = _vkapi('photos.getUploadServer', array(
-			'v' => 5.21,
-			'album_id' => 195528889,
-			'group_id' => 72078602
-		));
-		$send['photos.getUploadServer'] = $res;
-		if(!empty($res['response'])) {
-			$upload_url = $res['response']['upload_url'];
-			$album_id = $res['response']['album_id'];
-			$user_id = $res['response']['user_id'];
-
-			$img = file_get_contents('http://cs5383.vk.me/u982006/135809479/w_e702e92f.jpg');
-			$name = PATH.'files/'.time().'.jpg';
-			$f = fopen($name, 'w');
-			fwrite($f, $img);
-			fclose($f);
-
-			$post_data = array (
-				'file1' => '@'.$name
-			);
-
-			$curl = curl_init();
-			curl_setopt($curl, CURLOPT_URL, $upload_url);
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-			curl_setopt($curl, CURLOPT_POST, 1);
-			curl_setopt($curl, CURLOPT_POSTFIELDS, $post_data);
-			$out = json_decode(curl_exec($curl), true);
-			curl_close($curl);
-			unlink($name);
-			$send['image'] = $out;
-
-			$server = $out['server'];
-			$photos_list = $out['photos_list'];
-			$hash = $out['hash'];
-
-			$res = _vkapi('photos.save', array(
-				'v' => 5.21,
-				'album_id' => 195528889,
-				'group_id' => 72078602,
-				'server' => $server,
-				'photos_list' => $photos_list,
-				'hash' => $hash,
-				'caption' => utf8('текст описания фотографии')
-			));
-			$send['photos.save'] = $res;
-		}
-
-/*		$res = _vkapi('photos.getAlbums', array(
-			'owner_id' => $viewer_id,
-			'need_covers' => 1
-		));
-		$send['photos.getAlbums'] = $res;
-*/
-
 		xcache_unset(CACHE_PREFIX.'viewer_166424274');
 		xcache_unset(CACHE_PREFIX.'viewer_'.$viewer_id);
 

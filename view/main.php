@@ -490,6 +490,40 @@ function ob_spisok($v=array()) {
 	return $send;
 }//ob_spisok()
 function ob_unit($r) {
+	$r['txt'] = wordwrap($r['txt'], 40, ' ', 1);
+	$r['txt'] = nl2br($r['txt']);
+	$ex = explode('<br />', $r['txt']);
+	$count = count($ex);
+	$txt = array();
+	for($n = 0; $n < ($count > 7 ? 7 : $count); $n++)
+		$txt[] = $ex[$n];
+	$txt = implode('<br />', $txt);
+
+	$hidden = '';
+	if($count > 7) {
+		$txt_hidden = array();
+		for($n = 7; $n < $count; $n++)
+			$txt_hidden[] = $ex[$n];
+		$hidden .= implode('<br />', $txt_hidden);
+	}
+
+	$ex = explode(' ', $txt);
+	$count = count($ex);
+	$txt = array();
+	for($n = 0; $n < ($count > 40 ? 40 : $count); $n++)
+		$txt[] = $ex[$n];
+	$txt = implode(' ', $txt);
+	if($count > 40) {
+		$txt_hidden = array();
+		for($n = 40; $n < $count; $n++)
+			$txt_hidden[] = $ex[$n];
+		$hidden = $hidden.' '.implode(' ', $txt_hidden);
+	}
+
+	if($hidden)
+		$txt .= '<a class="full">Показать полностью..</a>'.
+				'<span class="dop dn">'.$hidden.'</span>';
+
 	return
 	'<div class="ob-unit'.(isset($r['edited']) ? ' edited' : '').'"'.(SA ? ' val="'.$r['id'].'"' : '').'>'.
 	(SA ?
@@ -507,7 +541,7 @@ function ob_unit($r) {
 			'<tr><td class="txt">'.
 					'<a class="rub" val="'.$r['rubric_id'].'">'._rubric($r['rubric_id']).'</a><u>»</u>'.
 					($r['rubric_sub_id'] ? '<a class="rubsub" val="'.$r['rubric_id'].'_'.$r['rubric_sub_id'].'">'._rubricsub($r['rubric_sub_id']).'</a><u>»</u>' : '').
-					$r['txt'].
+					$txt.
 					($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
 		($r['image_id'] ?
 				'<td class="foto"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />'
@@ -572,12 +606,20 @@ function ob_create() {
 
 function ob_my() {
 	$data = ob_my_spisok();
-	$menu = array(
+	$status = array(
 		0 => 'Все объявления',
 		1 => 'Активные',
 		2 => 'Архив',
 	);
+	$f = $data['filter'];
 	return
+	'<script type="text/javascript">'.
+		'var OBMY={'.
+			'op:"ob_my_spisok",'.
+			'limit:'.$f['limit'].','.
+			'status:'.$f['status'].
+		'};'.
+	'</script>'.
 	'<div id="ob-my">'.
 		'<div class="path"><a href="'.URL.'&p=ob">КупецЪ</a> » Мои объявления</div>'.
 		'<div class="result">'.$data['result'].'</div>'.
@@ -585,15 +627,17 @@ function ob_my() {
 			'<tr><td class="left">'.$data['spisok'].
 				'<td class="right">'.
 					'<div id="buttonCreate"><a href="'.URL.'&p=ob&d=create&back=my">Новое объявление</a></div>'.
-					_rightLink('menu', $menu).
+					_rightLink('status', $status).
 		'</table>'.
 	'</div>';
 }//ob_my()
 function obMyFilter($v=array()) {
 	return array(
-		'page' => !empty($v['page']) && preg_match(REGEXP_NUMERIC, $v['page']) ? intval($v['page']) : 1,
-		'limit' => !empty($v['limit']) && preg_match(REGEXP_NUMERIC, $v['limit']) ? intval($v['limit']) : 20,
-		'menu' => isset($v['menu']) && preg_match(REGEXP_NUMERIC, $v['menu']) ? intval($v['menu']) : 0
+		'page' => _isnum(@$v['page']) ? intval($v['page']) : 1,
+		'limit' => _isnum(@$v['limit']) ? intval($v['limit']) : 20,
+		'status' => _isnum(@$v['status']),
+		'viewer_id' => SA && _isnum(@$v['viewer_id']) ? intval($v['viewer_id']) : VIEWER_ID,
+		'deleted' => SA ? _isbool(@$v['deleted']) : 0
 	);
 }//obMyFilter()
 function ob_my_spisok($v=array()) {
@@ -602,11 +646,13 @@ function ob_my_spisok($v=array()) {
 	$limit = $filter['limit'];
 	$page = $filter['page'];
 
-	$cond = "!`deleted` AND `viewer_id_add`=".VIEWER_ID;
+	$cond = (SA && $filter['deleted'] ? '' : "!`deleted` AND ").
+			"`viewer_id_add`=".$filter['viewer_id'];
 
-	switch($filter['menu']) {
-		case 1: $cond .= " AND `day_active`>=DATE_FORMAT(NOW(),'%Y-%m-%d')"; break;
-		case 2: $cond .= " AND `day_active`<DATE_FORMAT(NOW(),'%Y-%m-%d')"; break;
+	switch($filter['status']) {
+		case 1: $cond .= " AND !`deleted` AND `day_active`>=DATE_FORMAT(NOW(),'%Y-%m-%d')"; break;
+		case 2: $cond .= " AND !`deleted` AND `day_active`<DATE_FORMAT(NOW(),'%Y-%m-%d')"; break;
+		case 3: $cond .= " AND `deleted`"; break;
 	}
 
 	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `vk_ob` WHERE ".$cond);
@@ -638,27 +684,32 @@ function ob_my_spisok($v=array()) {
 		$c = $all - $start - $limit;
 		$c = $c > $limit ? $limit : $c;
 		$send['spisok'] .=
-			'<div class="_next" val="'.($page + 1).'">'.
-			'<span>Показать ещё '.$c.' объявлен'._end($c, 'ие', 'ия', 'ий').'</span>'.
+			'<div class="_next" id="ob_my_next" val="'.($page + 1).'">'.
+				'<span>Показать ещё '.$c.' объявлени'._end($c, 'е', 'я', 'й').'</span>'.
 			'</div>';
 	}
 
 	return $send;
 }//ob_my_spisok()
 function ob_my_unit($r) {
-	$dayTime = strtotime($r['day_active']) - time() + 86400;
+	$dayTime = !$r['deleted'] ? strtotime($r['day_active']) - strtotime(strftime('%Y-%m-%d')) + 86400 : 0;
 	$dayLast = $dayTime > 0 ? floor($dayTime / 86400) : 0;
 	return
-	'<div class="ob-unit'.($dayLast ? '' : ' arc').(isset($r['edited']) ? ' edited' : '').'" val="'.$r['id'].'">'.
+	'<div class="ob-unit'.($r['deleted'] || $dayLast ? '' : ' archive').(isset($r['edited']) ? ' edited' : '').($r['deleted'] ? ' deleted' : '').'" val="'.$r['id'].'">'.
 		'<div class="edit">'.
 			FullData($r['dtime_add'], 0, 1).
 			'<span class="last">'.
-				($dayLast ? 'Остал'._end($dayLast, 'ся ', 'ось ').$dayLast._end($dayLast, ' день', ' дня', ' дней') : 'в архиве').
+				($r['deleted'] ?
+					'удалено' :
+					($dayLast ? 'Остал'._end($dayLast, 'ся ', 'ось ').$dayLast._end($dayLast, ' день', ' дня', ' дней') : 'в архиве')
+				).
 			'</span>'.
+		(!$r['deleted'] ?
 			'<div class="icon">'.
 				'<div class="img_edit'._tooltip('Редактировать', -50).'</div>'.
-				'<div class="img_del'._tooltip('Удалить', -29).'</div>'.
-			'</div>'.
+				(!SA || $r['viewer_id_add'] == VIEWER_ID ? '<div class="img_del'._tooltip('Удалить', -29).'</div>' : '').
+			'</div>'
+		: '').
 		'</div>'.
 		'<table class="utab">'.
 			'<tr><td class="txt">'.
@@ -701,8 +752,13 @@ function ob_history_types($v) {
 		case 7: return (!$v['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$v['viewer_id'].'">'._viewer($v['viewer_id'], 'name').'</a> з' : 'З').
 						'апретил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложению отправлять уведомления.';
 
-		case 8: return 'Разместил объявление '.$v['ob_id'].' на стене своей страницы.';
-		case 9: return 'Отклонил размещение объявления '.$v['ob_id'].' на стене своей страницы.';
+		case 8: return 'Разместил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' объявление '.$v['ob_id'].' на стене '.
+						'<a href="http://vk.com/id'.$v['viewer_id_add'].'" target="_blank">своей страницы</a>.';
+		case 9: return 'Отклонил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' размещение объявления '.$v['ob_id'].' на стене своей страницы.';
+
+		case 10: return 'Изменил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' данные объявления '.$v['ob_id'].':'.
+						'<div class="changes">'.$v['value'].'</div>';
+		case 11: return 'Удалил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' объявление '.$v['ob_id'].'.';
 
 		default: return $v['type'];
 	}

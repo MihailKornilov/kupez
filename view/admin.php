@@ -255,7 +255,7 @@ function admin_user_unit($r) {
 					'</div>'.
 					'<a href="'.URL.'&p=admin&id='.$r['viewer_id'].'"><b>'.$r['name'].'</b></a>'.
 					'<div class="city">'.$r['country_name'].($r['city_name'] ? ', '.$r['city_name'] : '').'</div>'.
-					($r['ob'] ? '<a class="ob">Объявления: <b>'.$r['ob'].'</b></a>' : '').
+					($r['ob'] ? '<a class="ob" href="'.URL.'&p=admin&d=user&d1=1&id='.$r['viewer_id'].'">Объявления: <b>'.$r['ob'].'</b></a>' : '').
 					($r['act'] ? '<span class="ob act">'.$r['act'].'</span>' : '').
 					($r['arc'] ? '<span class="ob arc">'.$r['arc'].'</span>' : '').
 					($r['del'] ? '<span class="ob del">'.$r['del'].'</span>' : '').
@@ -267,80 +267,114 @@ function admin_user_info($viewer_id) {
 	if(!$r = query_assoc("SELECT * FROM `vk_user` WHERE `viewer_id`=".$viewer_id))
 		return 'Пользователь не внесён в базу';
 
-	//все объявления
-	$ob = query_value("SELECT COUNT(`id`) FROM `vk_ob` WHERE `viewer_id_add`=".$viewer_id);
-	$act = query_value("SELECT COUNT(`id`)
-						FROM `vk_ob`
-						WHERE !`deleted`
-						  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
-						  AND`viewer_id_add`=".$viewer_id);
-	$arc = query_value("SELECT COUNT(`id`)
-						FROM `vk_ob`
-						WHERE !`deleted`
-						  AND `day_active`<DATE_FORMAT(NOW(), '%Y-%m-%d')
-						  AND`viewer_id_add`=".$viewer_id);
-	$del = query_value("SELECT COUNT(`id`) FROM `vk_ob` WHERE `deleted` AND `viewer_id_add`=".$viewer_id);
-
-	define('CURDAY', strftime('%Y-%m-%d'));
-
 	$menu = array(
 		0 => 'Информация',
 		1 => 'Объявления',
 		2 => 'История действий'
 	);
 
+	$d1 = _isnum(@$_GET['d1']);
+	$right = '';
+	switch($d1) {
+		default: $content = admin_user_info_i($r); break;
+		case 1:
+			$content = admin_user_info_ob($viewer_id);
+			//все объявления
+			$ob = query_value("SELECT COUNT(`id`) FROM `vk_ob` WHERE `viewer_id_add`=".$viewer_id);
+			$act = query_value("SELECT COUNT(`id`)
+						FROM `vk_ob`
+						WHERE !`deleted`
+						  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
+						  AND`viewer_id_add`=".$viewer_id);
+			$arc = query_value("SELECT COUNT(`id`)
+						FROM `vk_ob`
+						WHERE !`deleted`
+						  AND `day_active`<DATE_FORMAT(NOW(), '%Y-%m-%d')
+						  AND`viewer_id_add`=".$viewer_id);
+			$del = query_value("SELECT COUNT(`id`) FROM `vk_ob` WHERE `deleted` AND `viewer_id_add`=".$viewer_id);
+			$status = array(
+				0 => 'Все объявления'.($ob ? '<span>'.$ob.'</span>' : ''),
+				1 => 'Активные'.($act ? '<span>'.$act.'</span>' : ''),
+				2 => 'Архив'.($arc ? '<span>'.$arc.'</span>' : ''),
+				3 => 'Удалены'.($del ? '<span>'.$del.'</span>' : '')
+			);
+			$right = '<div class="findHead fstat">Статус</div>'.
+					 _radio('status', $status, 0, 1);
+			break;
+		case 2:
+			$data = _history(
+				'ob_history_types',
+				array(),
+				array('viewer_id_add'=>$viewer_id),
+				array('table' => 'vk_history')
+			);
+			$content = '<div class="headName">'.
+							'История действий'.
+							($data['all'] ? '<span>'.$data['all'].' запис'._end($data['all'], 'ь', 'и', 'ей').'</span>' : '').
+					   '</div>'.
+					   $data['spisok'];
+			break;
+	}
+
 	return
+	'<script type="text/javascript">var VID='.$viewer_id.';</script>'.
 	'<div id="user-info">'.
 		'<table class="tabLR">'.
 			'<tr><td class="left user-unit">'.
-
-					'<table class="tab">'.
-							'<tr><td class="img">'.
-									'<img src="'.$r['photo'].'">'.
-									'<div class="id">'.$viewer_id.'</div>'.
-								'<td class="inf">'.
-									'<div class="dlast">'.
-										(substr($r['enter_last'], 0, 10) == CURDAY ? '<span class="today">'.substr($r['enter_last'], 11, 5).'</span>' : FullDataTime($r['enter_last'])).
-										(substr($r['dtime_add'], 0, 10) == CURDAY ? '<br /><span class="ob new">Новый</span>' : '').
-									'</div>'.
-									'<a href="http://vk.com/id'.$r['viewer_id'].'" target="_blank"><b>'.$r['first_name'].' '.$r['last_name'].'</b></a>'.
-									'<div class="city">'.$r['country_name'].($r['city_name'] ? ', '.$r['city_name'] : '').'</div>'.
-									($ob ? '<a class="ob">Объявления: <b>'.$ob.'</b></a>' : '').
-									($act ? '<span class="ob act">'.$act.'</span>' : '').
-									($arc ? '<span class="ob arc">'.$arc.'</span>' : '').
-									($del ? '<span class="ob del">'.$del.'</span>' : '').
-						'</table>'.
-
-						'<table class="itab">'.
-							'<tr><td class="label r">Регистрация:<td>'.FullDataTime($r['dtime_add']).
-							'<tr><td class="label r">Приложение<td> '.($r['is_app_user'] ? '' : 'не ').'установлено'.
-							'<tr><td class="label r">В левое меню<td>'.($r['rule_menu_left'] ? '' : 'не ').'добавлено'.
-							'<tr><td class="label r">Уведомления<td>'.($r['rule_notify'] ? '' : 'не ').'разрешены'.
-						'</table>'.
-						'<div class="vkButton update" val="'.$viewer_id.'"><button>Обновить данные</button></div>'.
-
-						'<a id="server-get">получить адрес сервера для загрузки фото</a>'.
-						'<form id="vkform" '.
-							  'method="post" '.
-							  'action="" '.
-							  'enctype="multipart/form-data"'.
-							  'target="fframe">'.
-							'<input type="file" name="file1" />'.
-							//'<input type="text" name="file1" value="http://kupez.nyandoma.ru/files/images/ob14987-bpgqp612kx-b.jpg" />'.
-							'<input type="submit">'.
-						'</form>'.
-						'<iframe name="fframe" style="width:400px;height:300px"></iframe>'.
-						'<a id="photo-save">сохранить фотографию</a>'.
-
-					'<td class="right">'.
-						_rightLink('menu', $menu).
-						'<a id="rules-get">права</a><br />'.
-						'<a id="rules-test">проверка прав</a><br />'.
-	'</table>'.
-
+					admin_user_info_main($viewer_id, $r['enter_last']).
+					'<div id="content">'.$content.'</div>'.
+				'<td class="right">'.
+					_rightLink('menu', $menu, $d1).
+					$right.
+		'</table>'.
 	'</div>';
-
 }//admin_user_info()
+function admin_user_info_main($viewer_id, $enter_last) {
+	define('CURDAY', strftime('%Y-%m-%d'));
+	$u = _viewer($viewer_id);
+	return
+	'<table class="tab">'.
+		'<tr><td class="img">'.
+				$u['photo'].
+				'<div class="id">'.$viewer_id.'</div>'.
+			'<td class="inf">'.
+				'<div class="dlast">'.
+					(substr($enter_last, 0, 10) == CURDAY ? '<span class="today">'.substr($enter_last, 11, 5).'</span>' : FullDataTime($enter_last)).
+					(substr($u['dtime_add'], 0, 10) == CURDAY ? '<br /><span class="ob new">Новый</span>' : '').
+				'</div>'.
+				'<a href="http://vk.com/id'.$viewer_id.'" target="_blank"><b>'.$u['name'].'</b></a>'.
+				'<div class="city">'.$u['country_name'].($u['city_name'] ? ', '.$u['city_name'] : '').'</div>'.
+	'</table>';
+}//admin_user_info_main()
+function admin_user_info_i($r) {
+	return
+	'<table class="itab">'.
+		'<tr><td class="label r">Регистрация:<td>'.FullDataTime($r['dtime_add']).
+		'<tr><td class="label r">Приложение<td> '.($r['is_app_user'] ? '' : 'не ').'установлено'.
+		'<tr><td class="label r">В левое меню<td>'.($r['rule_menu_left'] ? '' : 'не ').'добавлено'.
+		'<tr><td class="label r">Уведомления<td>'.($r['rule_notify'] ? '' : 'не ').'разрешены'.
+	'</table>'.
+	'<div class="vkButton update" val="'.$r['viewer_id'].'"><button>Обновить данные</button></div>';
+}//admin_user_info_i()
+function admin_user_info_ob($viewer_id) {
+	$data = ob_my_spisok(array('viewer_id'=>$viewer_id,'deleted'=>1));
+	$f = $data['filter'];
+	return
+	'<script type="text/javascript">'.
+		'var OBMY={'.
+			'op:"ob_my_spisok",'.
+			'limit:'.$f['limit'].','.
+			'status:'.$f['status'].','.
+			'viewer_id:'.$f['viewer_id'].','.
+			'deleted:1'.
+		'};'.
+	'</script>'.
+	'<div class="headName">'.
+		'Объявления'.
+		($data['all'] ? '<span class="res">'.$data['all'].' объявлени'._end($data['all'], 'е', 'я', 'й').'</span>' : '').
+	'</div>'.
+	'<div id="spisok">'.$data['spisok'].'</div>';
+}//admin_user_info_ob()
 
 function admin_find_query() {
 	$data = admin_find_query_spisok();

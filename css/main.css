@@ -1,3 +1,4 @@
+.ob-spisok .left{padding:0 10px}
 .ob-spisok .tfind{
 	border-spacing:10px;
 	background-color:#f7f7f7;
@@ -17,20 +18,29 @@
 .ob-spisok .rightLink .sel b{color:#ccc}
 .ob-spisok #withfoto_check{margin-top:4px}
 .ob-spisok #nokupez_check{margin-top:15px}
-.ob-spisok ._next{margin:0 10px 10px}
+.ob-spisok ._next{margin-bottom:10px}
 .ob-spisok .ob-unit{overflow:hidden}
 .ob-spisok .stat{margin-top:40px;border-collapse:collapse}
 .ob-spisok .stat td{border:#ddd solid 1px;padding:1px 5px}
 .ob-spisok .stat td:not(.label){text-align:center}
 .ob-spisok .stat .new{font-size:10px;color:#888}
 .ob-unit{
-	width:438px;
-	margin:10px 10px 5px;
+	margin:10px 0 5px;
 	border-bottom:#ddd solid 1px;
 }
 .ob-unit .utab{width:100%;border-spacing:3px;word-wrap:break-word}
-.ob-unit .txt{font-size:12px;vertical-align:top}
+.ob-unit .txt{cursor:pointer;font-size:12px;vertical-align:top}
+.ob-unit .txt .dop{font-size:12px}
 .ob-unit .txt em{font-size:12px;background-color:#e1e7ed}
+.ob-unit .full{
+	display:block;
+	width:100px;
+	white-space:nowrap;
+	margin-top:2px;
+	color:#91A4B8;
+	font-weight:bold;
+}
+.ob-unit .full:hover{color:#45688E;text-decoration:none}
 .ob-unit .rub,.ob-unit .rubsub{font-size:12px;color:#282}
 .ob-unit u{text-decoration:none;font-size:12px;margin:0 3px}
 .ob-unit .tel {
@@ -53,7 +63,7 @@
 	padding:2px 2px 2px 7px;
 	background-color:#dfd;
 }
-.ob-unit.arc .edit{background-color:#e7e7e7}
+.ob-unit.archive .edit{background-color:#e7e7e7}
 .ob-unit .last{
 	display:inline-block;
 	margin:5px 10px 4px;
@@ -61,7 +71,9 @@
 	font-weight:bold;
 	color:#0a0;
 }
-.ob-unit.arc .last{color:#777}
+.ob-unit.archive .last{color:#777}
+.ob-unit.deleted .edit{background-color:#733;color:#aaa}
+.ob-unit.deleted .last{color:#c55}
 .ob-unit:not(:hover) .icon{display:none}
 .ob-unit .icon{
 	float:right;
@@ -109,7 +121,7 @@
 
 
 #ob-my .result._busy{background-position:582px center}
-#ob-my .left{padding-bottom:10px}
+#ob-my .left{padding:0 10px 10px}
 #ob-my #buttonCreate{margin-bottom:20px}
 
 .ob-edit-tab{border-spacing:10px}

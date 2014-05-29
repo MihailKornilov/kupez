@@ -79,18 +79,12 @@ var hashLoc,
 		$('#preview').html(html);
 	},
 
-	obMyFilter = function() {
-		return {
-			op:'ob_my_spisok',
-			menu:$('#menu').val()
-		};
-	},
-	obMySpisok = function() {
+	obMySpisok = function(v, attr_id) {
 		if($('.result').hasClass('_busy'))
 			return;
-		var send = obMyFilter();
+		OBMY[attr_id] = v;
 		$('.result').addClass('_busy');
-		$.post(AJAX_MAIN, send, function (res) {
+		$.post(AJAX_MAIN, OBMY, function (res) {
 			$('.result').removeClass('_busy');
 			if(res.success) {
 				$('.result').html(res.result);
@@ -233,21 +227,21 @@ $(document)
 				next.removeClass('busy');
 		}, 'json');
 	})
-	.on('click', '#ob-my ._next', function() {
-		var next = $(this),
-			send = obMyFilter();
-		send.page = next.attr('val');
-		if(next.hasClass('busy'))
+	.on('click', '#ob_my_next', function() {
+		var t = $(this);
+		if(t.hasClass('busy'))
 			return;
-		next.addClass('busy');
-		$.post(AJAX_MAIN, send, function(res) {
+		OBMY.page = t.attr('val');
+		t.addClass('busy');
+		$.post(AJAX_MAIN, OBMY, function(res) {
 			if(res.success)
-				next.after(res.spisok).remove();
+				t.after(res.spisok).remove();
 			else
-				next.removeClass('busy');
+				t.removeClass('busy');
 		}, 'json');
 	})
-	.on('click', '#ob-my .img_edit,.ob-spisok .img_edit', function() {
+	.on('click', '.ob-unit .img_edit', function(e) {
+		e.stopPropagation();
 		var t = $(this);
 		while(!t.hasClass('ob-unit'))
 			t = t.parent();
@@ -339,7 +333,7 @@ $(document)
 		function submit() {
 			var send = {
 					op:'ob_edit',
-					my:$('#ob-my').length,
+					my:$('.ob-spisok').length ? 0 : 1,
 					id:t.attr('val'),
 					rubric_id:$('#rubric_id').val(),
 					rubric_sub_id:$('#rubric_sub_id').val(),
@@ -376,10 +370,19 @@ $(document)
 			});
 		}
 	})
+	.on('click', '.ob-unit', function() {
+		var t = $(this),
+			full = t.find('.full');
+		if(full.length) {
+			full.next().removeClass('dn');
+			full.remove();
+			return;
+		}
+	})
 	.on('mouseenter', '.ob-unit.edited', function() {
 		$(this).removeClass('edited');
 	})
-	.on('click', '#ob-my .img_del', function() {
+	.on('click', '#ob-my .img_del,#user-info .img_del', function() {
 		var t = $(this);
 		while(!t.hasClass('ob-unit'))
 			t = t.parent();
@@ -462,7 +465,7 @@ $(document)
 				clearTimeout(timer);
 				timer = setTimeout(function() {
 					$('#filter').animate({top:(top <= 148 ? 0 : top - 148) + 'px'}, 500);
-				}, 3000);
+				}, 2000);
 			});
 		}
 		if($('#ob-create').length) {
@@ -613,7 +616,7 @@ $(document)
 			});
 		}
 		if($('#ob-my').length) {
-			$('#menu').rightLink(obMySpisok);
+			$('#status').rightLink(obMySpisok);
 		}
 	});
 

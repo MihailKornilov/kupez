@@ -44,6 +44,7 @@ switch(@$_POST['op']) {
 
 		$rubric_sub_id = _isnum($_POST['rubric_sub_id']);
 		$txt = win1251(htmlspecialchars(trim($_POST['txt'])));
+		$txt = preg_replace('/[ ]+/', ' ', $txt);
 		$telefon = win1251(htmlspecialchars(trim($_POST['telefon'])));
 		$country_id = _isnum($_POST['country_id']);
 		$country_name = win1251(htmlspecialchars(trim($_POST['country_name'])));
@@ -196,77 +197,109 @@ switch(@$_POST['op']) {
 	case 'ob_edit':
 		if(!$id = _isnum($_POST['id']))
 			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_id']) || !$_POST['rubric_id'])
-			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['rubric_sub_id']))
-			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['country_id']))
-			jsonError();
-		if(!preg_match(REGEXP_NUMERIC, $_POST['city_id']))
-			jsonError();
-		if(!preg_match(REGEXP_BOOL, $_POST['viewer_id_show']))
-			jsonError();
-		if(!preg_match(REGEXP_BOOL, $_POST['active']))
-			jsonError();
 
 		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` ".(SA ? '' : "AND `viewer_id_add`=".VIEWER_ID)." AND `id`=".$id;
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
 
+		$ob = $r;
+
+		if(!$ob['rubric_id'] = _isnum($_POST['rubric_id']))
+			jsonError();
 		$my = _isbool($_POST['my']);
-		$r['rubric_id'] = intval($_POST['rubric_id']);
-		$r['rubric_sub_id'] = intval($_POST['rubric_sub_id']);
-		$r['txt'] = win1251(htmlspecialchars(trim($_POST['txt'])));
-		$r['telefon'] = win1251(htmlspecialchars(trim($_POST['telefon'])));
-		$r['country_id'] = intval($_POST['country_id']);
-		$r['country_name'] = win1251(htmlspecialchars(trim($_POST['country_name'])));
-		$r['city_id'] = intval($_POST['city_id']);
-		$r['city_name'] = win1251(htmlspecialchars(trim($_POST['city_name'])));
-		$r['viewer_id_show'] = intval($_POST['viewer_id_show']);
-		$active = intval($_POST['active']);
+		$ob['rubric_sub_id'] = _isnum($_POST['rubric_sub_id']);
+		$ob['txt'] = win1251(htmlspecialchars(trim($_POST['txt'])));
+		$ob['txt'] = preg_replace('/[ ]+/', ' ', $ob['txt']);
+		$ob['telefon'] = win1251(htmlspecialchars(trim($_POST['telefon'])));
+		$ob['country_id'] = _isnum($_POST['country_id']);
+		$ob['country_name'] = win1251(htmlspecialchars(trim($_POST['country_name'])));
+		$ob['city_id'] = _isnum($_POST['city_id']);
+		$ob['city_name'] = win1251(htmlspecialchars(trim($_POST['city_name'])));
+		$ob['viewer_id_show'] = _isbool($_POST['viewer_id_show']);
+		$active = _isbool($_POST['active']);
 
-		if($active && $r['day_active'] == '0000-00-00')
-			$r['day_active'] = strftime('%Y-%m-%d', time() + 86400 * 30);
+		if($active && strtotime($ob['day_active']) - strtotime(strftime('%Y-%m-%d')) <= 0)
+			$ob['day_active'] = strftime('%Y-%m-%d', time() + 86400 * 30);
 
-		if(!$active && $r['day_active'] != '0000-00-00')
-			$r['day_active'] = '0000-00-00';
+		if(!$active)
+			$ob['day_active'] = '0000-00-00';
 
-		$r['image_id'] = 0;
-		$r['image_link'] = '';
-		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='ob".$r['id']."' ORDER BY `sort` LIMIT 1";
+		$ob['image_id'] = 0;
+		$ob['image_link'] = '';
+		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='ob".$ob['id']."' ORDER BY `sort` LIMIT 1";
 		if($i = mysql_fetch_assoc(query($sql))) {
-			$r['image_id'] = $i['id'];
-			$r['image_link'] = $i['path'].$i['small_name'];
+			$ob['image_id'] = $i['id'];
+			$ob['image_link'] = $i['path'].$i['small_name'];
 		}
 
 		$sql = "UPDATE `vk_ob`
-		        SET `rubric_id`=".$r['rubric_id'].",
-					`rubric_sub_id`=".$r['rubric_sub_id'].",
-					`txt`='".addslashes($r['txt'])."',
-					`telefon`='".addslashes($r['telefon'])."',
-					`country_id`=".$r['country_id'].",
-					`country_name`='".addslashes($r['country_name'])."',
-					`city_id`=".$r['city_id'].",
-					`city_name`='".addslashes($r['city_name'])."',
-					`viewer_id_show`=".$r['viewer_id_show'].",
-					`day_active`='".$r['day_active']."',
-					`image_id`=".$r['image_id'].",
-					`image_link`='".$r['image_link']."'
+		        SET `rubric_id`=".$ob['rubric_id'].",
+					`rubric_sub_id`=".$ob['rubric_sub_id'].",
+					`txt`='".addslashes($ob['txt'])."',
+					`telefon`='".addslashes($ob['telefon'])."',
+					`country_id`=".$ob['country_id'].",
+					`country_name`='".addslashes($ob['country_name'])."',
+					`city_id`=".$ob['city_id'].",
+					`city_name`='".addslashes($ob['city_name'])."',
+					`viewer_id_show`=".$ob['viewer_id_show'].",
+					`day_active`='".$ob['day_active']."',
+					`image_id`=".$ob['image_id'].",
+					`image_link`='".$ob['image_link']."'
 				WHERE `id`=".$id;
 		query($sql);
 
-		$r['edited'] = 1;
-		$send['html'] = utf8($my ? ob_my_unit($r) : ob_unit($r));
+		$changes = '';
+		if($r['rubric_id'] != $ob['rubric_id'])
+			$changes .= '<tr><th>Рубрика:<td>'._rubric($r['rubric_id']).'<td>»<td>'._rubric($ob['rubric_id']);
+		if($r['rubric_sub_id'] != $ob['rubric_sub_id'])
+			$changes .= '<tr><th>Подрубрика:<td>'._rubricsub($r['rubric_sub_id']).'<td>»<td>'._rubricsub($ob['rubric_sub_id']);
+		if($r['txt'] != $ob['txt'])
+			$changes .= '<tr><th>Текст:<td>'.nl2br($r['txt']).'<td>»<td>'.nl2br($ob['txt']);
+		if($r['telefon'] != $ob['telefon'])
+			$changes .= '<tr><th>Телефон:<td>'.$r['telefon'].'<td>»<td>'.$ob['telefon'];
+		if($r['country_id'] != $ob['country_id'] || $r['city_id'] != $ob['city_id'])
+			$changes .= '<tr><th>Регион:'.
+							'<td>'.$r['country_name'].''.($r['city_id'] ? ', '.$r['city_name'] : '').
+							'<td>»'.
+							'<td>'.$ob['country_name'].''.($ob['city_id'] ? ', '.$ob['city_name'] : '');
+		if($r['viewer_id_show'] != $ob['viewer_id_show'])
+			$changes .= '<tr><th>Показывать имя из VK:<td>'.($r['viewer_id_show'] ? 'да' : 'нет').'<td>»<td>'.($ob['viewer_id_show'] ? 'да' : 'нет');
+		if($r['image_id'] != $ob['image_id'])
+			$changes .= '<tr><th>Главная фотография:'.
+							'<td>'.($r['image_id'] ? '<img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
+							'<td>»'.
+							'<td>'.($ob['image_id'] ? '<img src="'.$ob['image_link'].'" class="_iview" val="'.$ob['image_id'].'" />' : '');
+		if($r['day_active'] != $ob['day_active'])
+			$changes .= '<tr><th>Активность:'.
+							'<td>'.($r['day_active'] == '0000-00-00' || strtotime($r['day_active']) < time() ? 'в архиве' : 'до '.FullData($r['day_active'])).
+							'<td>»'.
+							'<td>'.($ob['day_active'] == '0000-00-00' ? 'в архиве' : 'до '.FullData($ob['day_active']));
+		if($changes)
+			_historyInsert(
+				10,
+				array(
+					'ob_id' => $id,
+					'value' => '<table>'.$changes.'</table>'
+				),
+				'vk_history'
+			);
+
+		$ob['edited'] = 1;
+		$send['html'] = utf8($my ? ob_my_unit($ob) : ob_unit($ob));
 		jsonSuccess($send);
 		break;
 	case 'ob_del':
-		if(!preg_match(REGEXP_NUMERIC, $_POST['id']) || !$_POST['id'])
+		if(!$id = _isnum($_POST['id']))
 			jsonError();
-		$id = intval($_POST['id']);
+
 		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `viewer_id_add`=".VIEWER_ID." AND `id`=".$id;
 		if(!$r = mysql_fetch_assoc(query($sql)))
 			jsonError();
+
 		query("UPDATE `vk_ob` SET `deleted`=1 WHERE`id`=".$id);
+
+		_historyInsert(11, array('ob_id'=>$id), 'vk_history');
+
 		jsonSuccess();
 		break;
 	case 'ob_my_spisok':
