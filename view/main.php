@@ -525,18 +525,7 @@ function ob_unit($r) {
 				'<span class="dop dn">'.$hidden.'</span>';
 
 	return
-	'<div class="ob-unit'.(isset($r['edited']) ? ' edited' : '').'"'.(SA ? ' val="'.$r['id'].'"' : '').'>'.
-	(SA ?
-		'<div class="sa-edit">'.
-			'<span class="dt">'.FullDataTime($r['dtime_add']).'</span>'.
-			($r['viewer_id_add'] ? '<a href="'.URL.'&p=admin&d=user&id='.$r['viewer_id_add'].'">'._viewer($r['viewer_id_add'], 'name').'</a>' : '').
-			($r['gazeta_id'] ? 'КупецЪ' : '').
-			'<div class="ed">'.
-				'<a class="to-arch">в архив</a>'.
-				'<div class="img_edit"></div>'.
-			'</div>'.
-		'</div>'
-	: '').
+	'<div class="ob-unit show'.(isset($r['edited']) ? ' edited' : '').'" id="ob'.$r['id'].'">'.
 		'<table class="utab">'.
 			'<tr><td class="txt">'.
 					'<a class="rub" val="'.$r['rubric_id'].'">'._rubric($r['rubric_id']).'</a><u>»</u>'.
@@ -695,7 +684,11 @@ function ob_my_unit($r) {
 	$dayTime = !$r['deleted'] ? strtotime($r['day_active']) - strtotime(strftime('%Y-%m-%d')) + 86400 : 0;
 	$dayLast = $dayTime > 0 ? floor($dayTime / 86400) : 0;
 	return
-	'<div class="ob-unit'.($r['deleted'] || $dayLast ? '' : ' archive').(isset($r['edited']) ? ' edited' : '').($r['deleted'] ? ' deleted' : '').'" val="'.$r['id'].'">'.
+	'<div class="ob-unit'.
+			($r['deleted'] || $dayLast ? '' : ' archive').
+			(isset($r['edited']) ? ' edited' : '').
+			($r['deleted'] ? ' deleted' : '').'"'.
+			' id="ob'.$r['id'].'">'.
 		'<div class="edit">'.
 			FullData($r['dtime_add'], 0, 1).
 			'<span class="last">'.
@@ -706,8 +699,8 @@ function ob_my_unit($r) {
 			'</span>'.
 		(!$r['deleted'] ?
 			'<div class="icon">'.
-				'<div class="img_edit'._tooltip('Редактировать', -50).'</div>'.
-				(!SA || $r['viewer_id_add'] == VIEWER_ID ? '<div class="img_del'._tooltip('Удалить', -29).'</div>' : '').
+				'<div val="'.$r['id'].'" class="img_edit ob-edit'._tooltip('Редактировать', -50).'</div>'.
+				(!SA || $r['viewer_id_add'] == VIEWER_ID ? '<div val="'.$r['id'].'" class="img_del'._tooltip('Удалить', -29).'</div>' : '').
 			'</div>'
 		: '').
 		'</div>'.

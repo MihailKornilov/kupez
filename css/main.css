@@ -19,7 +19,6 @@
 .ob-spisok #withfoto_check{margin-top:4px}
 .ob-spisok #nokupez_check{margin-top:15px}
 .ob-spisok ._next{margin-bottom:10px}
-.ob-spisok .ob-unit{overflow:hidden}
 .ob-spisok .stat{margin-top:40px;border-collapse:collapse}
 .ob-spisok .stat td{border:#ddd solid 1px;padding:1px 5px}
 .ob-spisok .stat td:not(.label){text-align:center}
@@ -28,10 +27,11 @@
 	margin:10px 0 5px;
 	border-bottom:#ddd solid 1px;
 }
-.ob-unit .utab{width:100%;border-spacing:3px;word-wrap:break-word}
-.ob-unit .txt{cursor:pointer;font-size:12px;vertical-align:top}
+.ob-unit .utab{width:100%;border-spacing:3px}
+.ob-unit .txt{font-size:12px;vertical-align:top}
 .ob-unit .txt .dop{font-size:12px}
 .ob-unit .txt em{font-size:12px;background-color:#e1e7ed}
+.ob-unit.show .txt{cursor:pointer}
 .ob-unit .full{
 	display:block;
 	width:100px;
@@ -43,7 +43,7 @@
 .ob-unit .full:hover{color:#45688E;text-decoration:none}
 .ob-unit .rub,.ob-unit .rubsub{font-size:12px;color:#282}
 .ob-unit u{text-decoration:none;font-size:12px;margin:0 3px}
-.ob-unit .tel {
+.ob-unit .tel,#_post .tel{
 	background-image:url("data:image/gif;base64,R0lGODlhEwALAOYAAAAAAP///66Ym6igpJ2Um/Tz9J+co8XBy66rs7q5vMTDxsnIzLu5wnx7hGhncmlpdGVlb2lpcoODjIyMlbm5vrW1udra3c7O0O7u7+jo6dfX2GxteGhpcmprc3d4gKyttLO0u66vtb/AxYaIkKGjrJyeps/Q1MbHy8XGytbX22xudZqco5+hqJ6gp6mrsoCDi4mLkZ+hp6qsssjJzL2+wbO0t9fY25mboKSmq2lsc5ufqK+yucnLz7e4uqipq7/AwpOYoaqtsr7Aw9TW2Z6hpaGlqpedo7G2u8PFx+Pk5eLj5N/g4d3e387P0MnKy6OorNDT1dTX2dPW2KyxtNHa3snMzcLHyLS4uLS3t6+yssjLy+/x8fP09O7v7+zt7fH08vD08fL08u/x7+zt7Ojp5dDHwtapme7u7s3NzcnJyf///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAGoALAAAAAATAAsAAAdQgGqCTIRphodphEyCglJSiJCIjmqPiIqXkJWGhZGckEyIGaKWh2qbhxlpqamnaYyChqujrK+Moaq4pbU0oaOHNLVqWDS8kcRYwcJYy8zNr4EAOw==");
 	background-color:transparent;
 	background-repeat:no-repeat;
@@ -83,19 +83,6 @@
 	border:#ddd solid 1px
 }
 .ob-unit.edited{background-color:#ffffe2}
-.ob-unit:not(:hover) .sa-edit{display:none}
-.ob-unit .sa-edit{
-	position:absolute;
-	width:426px;
-	border:#ccc solid 1px;
-	padding:3px 5px;
-	background-color:#def;
-	box-shadow: 0 0 5px rgba(0,0,0,0.3);
-}
-.ob-unit .sa-edit .dt{font-size:10px;color:#777;margin-right:15px}
-.ob-unit .sa-edit .ed{float:right}
-.ob-unit .sa-edit .ed a{position:relative;top:-1px;left:-10px;color:#888}
-.ob-unit .sa-edit .img_edit{margin-bottom:-2px}
 
 /* Создание нового объявления */
 #ob-create{background-color:#f7f7f7;padding-bottom:80px}
@@ -143,3 +130,60 @@
 #obSpisok .podrub { font:bold 17px Times New Roman; margin:5px 0 0 30px; }
 #obSpisok .enter { color:#B33; float:right; margin-right:10px; }
 */
+
+
+
+
+#_post{
+	position:absolute;
+	z-index:300;
+	top:100px;
+	left:40px;
+	width:540px;
+	box-shadow:0 0 40px rgba(0,0,0,0.6);
+}
+#_post .head{background-color:#eee;padding:0 5px;}
+#_post .head table{
+	width:100%;
+	border-spacing:12px;
+}
+#_post .head td{vertical-align:top}
+#_post .im{width:50px;padding-left:5px}
+#_post .uname{
+	display:inline-block;
+	margin:5px 0;
+	font-size:14px;
+	font-weight:bold;
+	color:#000;
+}
+#_post .dtime{font-size:12px;color:#777}
+#_post .close{float:right}
+#_post .psa{padding:5px 14px 5px 18px;background-color:#ffd}
+#_post .psa .ed{float:right}
+#_post .psa .ed a{position:relative;top:-1px;left:-10px;color:#888}
+#_post .psa .img_edit{margin-bottom:-2px}
+
+#_post .cont{
+	background-color:#fff;
+	padding:18px 18px 5px;
+	font:16px georgia;
+}
+#_post .rub{
+	font-size:14px;
+	font-weight:bold;
+	color:#282;
+	margin-bottom:7px;
+}
+#_post .rub em{font-size:14px;color:#444;margin:0 7px}
+#_post .tel{margin-top:10px}
+#_post .city{color:#bbb;padding-top:2px}
+
+#_post .meter{
+	padding:5px 18px 15px;
+	background-color:#fff;
+}
+
+#_post .foot{
+	background-color:#EEF0F2;
+	padding:18px;
+}

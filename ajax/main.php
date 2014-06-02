@@ -19,7 +19,8 @@ switch(@$_POST['op']) {
 
 	case 'ob_spisok':
 		$data = ob_spisok($_POST);
-		$send['result'] = utf8($data['result']);
+		if($data['filter']['page'] == 1)
+			$send['result'] = utf8($data['result']);
 		$send['spisok'] = utf8($data['spisok']);
 		jsonSuccess($send);
 		break;
@@ -293,7 +294,7 @@ switch(@$_POST['op']) {
 			jsonError();
 
 		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `viewer_id_add`=".VIEWER_ID." AND `id`=".$id;
-		if(!$r = mysql_fetch_assoc(query($sql)))
+		if(!$r = query_assoc($sql))
 			jsonError();
 
 		query("UPDATE `vk_ob` SET `deleted`=1 WHERE`id`=".$id);
@@ -302,9 +303,71 @@ switch(@$_POST['op']) {
 
 		jsonSuccess();
 		break;
+	case 'ob_post':
+		if(!$id = _isnum($_POST['id']))
+			jsonError();
+
+		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `id`=".$id;
+		if(!$r = query_assoc($sql))
+			jsonError();
+
+		//просмотры
+		$view = 0;
+		if(!SA && $r['viewer_id_add'] != VIEWER_ID) {
+			$sql = "SELECT COUNT(*)
+					FROM `vk_ob_view`
+					WHERE `ob_id`=".$id."
+					  AND `viewer_id`=".VIEWER_ID."
+					  AND `day`='".strftime('%Y-%m-%d')."'";
+			if(!$view = query_value($sql)) {
+				$sql = "INSERT INTO `vk_ob_view` (
+							`ob_id`,
+							`viewer_id`,
+							`day`
+						) VALUES (
+							".$id.",
+							".VIEWER_ID.",
+							CURRENT_TIMESTAMP
+						)";
+				query($sql);
+				$view = 1;
+			}
+		}
+
+		$txt =  '<div class="rub">'.
+					_rubric($r['rubric_id']).
+					($r['rubric_sub_id'] ? '<em>»</em>'._rubricsub($r['rubric_sub_id']) : '').
+				':</div>'.
+				nl2br($r['txt']).
+				($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
+				($r['city_name'] ? '<div class="city">'.$r['country_name'].', '.$r['city_name'].'</div>'  : '');
+		$send['o'] = array(
+			'id' => $r['id'],
+			'dtime' => utf8(FullDataTime($r['dtime_add'])),
+			'cont' => utf8($txt),
+			'view' => $view
+		);
+		if($r['viewer_id_show'] && $r['viewer_id_add'])
+			$send['o'] += array(
+				'viewer_id' => intval($r['viewer_id_add']),
+				'photo' => utf8(_viewer($r['viewer_id_add'], 'photo')),
+				'name' => utf8(_viewer($r['viewer_id_add'], 'name'))
+			);
+		if(SA)
+			$send['o'] += array(
+				'sa' => 1,
+				'sa_viewer_id' => intval($r['viewer_id_add']),
+				'sa_name' => $r['viewer_id_add'] ? utf8(_viewer($r['viewer_id_add'], 'name')) : '',
+				'sa_gazeta_id' => intval($r['gazeta_id'])
+
+			);
+
+		jsonSuccess($send);
+		break;
 	case 'ob_my_spisok':
 		$data = ob_my_spisok($_POST);
-		$send['result'] = utf8($data['result']);
+		if($data['filter']['page'] == 1)
+			$send['result'] = utf8($data['result']);
 		$send['spisok'] = utf8($data['spisok']);
 		jsonSuccess($send);
 		break;

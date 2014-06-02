@@ -58,6 +58,13 @@ var hashLoc,
 	obPreview = function() {
 		if(!$('#ob-create').length)
 			return;
+		var img_id = 0,
+			img_url = '',
+			iview = $('._image-spisok ._iview');
+		if(iview.length) {
+			img_id = iview.eq(0).attr('val');
+			img_url = iview.eq(0).find('img').attr('src');
+		}
 		var txt = $('#txt').val().replace(/\n/g, '<br />'),
 			rubric_id = $('#rubric_id').val() * 1,
 			rubric_sub_id = $('#rubric_sub_id').val() * 1,
@@ -69,7 +76,7 @@ var hashLoc,
 		   (rubric_sub_id ? '<span class="rubsub">' + RUBRIC_SUB_ASS[rubric_sub_id] + '</span><u>»</u>' : '') +
 							txt +
 	 ($('#telefon').val() ? '<div class="tel">' + $('#telefon').val() + '</div>' : '') +
-			//($foto ? '<td class="foto"><img src="'.$foto.'" />' : '').
+			  (img_id ? '<td class="foto"><img src="' + img_url + '" class="_iview" val="' + img_id + '" />' : '') +
 					'<tr><td class="adres" colspan="2">' +
 						($('#country_id').val() > 0 ? $('#country_id')._select('title') : '') +
 						($('#city_id').val() > 0 ? ', ' + $('#city_id')._select('title') : '') +
@@ -182,26 +189,76 @@ var hashLoc,
 			else
 				location.href = URL + '&p=ob&wallpost=0&insert_id=' + o.insert_id;
 		});
+	},
+	_post = function(o) {
+		o = $.extend({
+			viewer_id:0,
+			photo:'',
+			name:'',
+			dtime:'Дата и время',
+			cont:'Содержание',
+			sa_gazeta_id:0,
+			sa_viewer_id:0,
+			sa_name:''
+		}, o);
+
+		var html =
+			'<div id="_post">' +
+				'<div class="head">' +
+					'<table>' +
+						'<tr>' +
+			 (o.viewer_id ? '<td class="im"><a href="//vk.com/id' + o.viewer_id + '" target="_blank">' + o.photo + '</a>' : '') +
+							'<td>' +
+								'<a class="close">Закрыть</a>' +
+				 (o.viewer_id ? '<a class="uname" href="//vk.com/id' + o.viewer_id + '" target="_blank">' + o.name + '</a>' : '') +
+								'<div class="dtime">' + o.dtime + '</div>' +
+					'</table>' +
+				'</div>' +
+			(o.sa ?
+				'<div class="psa">' +
+					(o.sa_gazeta_id ? 'КупецЪ' : '') +
+					(o.sa_viewer_id ? '<a href="' + URL + '&p=admin&id=' + o.sa_viewer_id + '">' + o.sa_name + '</a>' : '') +
+					'<div class="ed">' +
+						'<a class="to-arch" val="' + o.id + '">в архив</a>' +
+						'<div class="img_edit ob-edit" val="' + o.id + '"></div>' +
+					'</div>' +
+				'</div>'
+			: '') +
+				'<div class="cont">' + o.cont + '</div>' +
+				'<div class="meter">Просмотры: ' + o.view + '</div>' +
+				'<div class="foot">Отправить сообщение</div>' +
+			'</div>';
+
+		if($('#_post').length)
+			close();
+
+		var post = $('body').append(html).find('#_post');
+		_backfon(post);
+		post.css('top', $(this).scrollTop() + 100 + VK_SCROLL);
+		post.find('.close,.ob-edit').click(close);
+		post.find('.to-arch').click(function() {
+			var t = $(this),
+				id = t.attr('val');
+			var send = {
+				op:'ob_archive',
+				id:id
+			};
+			t.hide();
+			$.post(AJAX_MAIN, send, function(res) {
+				if(res.success) {
+					close();
+					$('#ob' + id).remove();
+				} else
+					t.fadeIn(700);
+			}, 'json');
+		});
+		function close() {
+			$('#_post').remove();
+			_backfon(false);
+		}
 	};
 
 $(document)
-	.on('click', '.ob-spisok .to-arch', function() {
-		var t = $(this),
-			ob = t;
-		while(!ob.hasClass('ob-unit'))
-			ob = ob.parent();
-		var send = {
-			op:'ob_archive',
-			id:ob.attr('val')
-		};
-		t.hide();
-		$.post(AJAX_MAIN, send, function(res) {
-			if(res.success)
-				ob.remove();
-			else
-				t.fadeIn(700);
-		}, 'json');
-	})
 	.on('click', 'a.rub', function() {
 		$('#rub').rightLink($(this).attr('val'));
 		$('#rubsub').val(0);
@@ -240,23 +297,41 @@ $(document)
 				t.removeClass('busy');
 		}, 'json');
 	})
-	.on('click', '.ob-unit .img_edit', function(e) {
-		e.stopPropagation();
-		var t = $(this);
-		while(!t.hasClass('ob-unit'))
-			t = t.parent();
-		var dialog = _dialog({
-			top:20,
-			width:550,
-			head:'Редактирование объявления',
-			load:1,
-			butSubmit:'Сохранить',
-			submit:submit
-		});
+	.on('click', '.ob-unit.show', function() {
+		var t = $(this),
+			full = t.find('.full');
+		if(full.length) {
+			full.next().removeClass('dn');
+			full.remove();
+			return;
+		}
 		var send = {
-			op:'ob_load',
-			id:t.attr('val')
+			op:'ob_post',
+			id:t.attr('id').split('ob')[1]
 		};
+		_wait();
+		$.post(AJAX_MAIN, send, function(res) {
+			_wait(false);
+			if(res.success)
+				_post(res.o);
+		}, 'json');
+	})
+	.on('click', '.ob-edit', function(e) {
+		e.stopPropagation();
+		var t = $(this),
+			id = t.attr('val'),
+			dialog = _dialog({
+				top:20,
+				width:550,
+				head:'Редактирование объявления',
+				load:1,
+				butSubmit:'Сохранить',
+				submit:submit
+			}),
+			send = {
+				op:'ob_load',
+				id:id
+			};
 		$.post(AJAX_MAIN, send, function(res) {
 			if(res.success) {
 				var html =
@@ -334,7 +409,7 @@ $(document)
 			var send = {
 					op:'ob_edit',
 					my:$('.ob-spisok').length ? 0 : 1,
-					id:t.attr('val'),
+					id:id,
 					rubric_id:$('#rubric_id').val(),
 					rubric_sub_id:$('#rubric_sub_id').val(),
 					txt:$.trim($('#txt').val()),
@@ -351,7 +426,7 @@ $(document)
 				dialog.process();
 				$.post(AJAX_MAIN, send, function(res) {
 					if(res.success) {
-						t.after(res.html).remove();
+						$('#ob' + id).after(res.html).remove();
 						dialog.close();
 						_msg('Объявление изменено');
 					} else
@@ -370,46 +445,36 @@ $(document)
 			});
 		}
 	})
-	.on('click', '.ob-unit', function() {
-		var t = $(this),
-			full = t.find('.full');
-		if(full.length) {
-			full.next().removeClass('dn');
-			full.remove();
-			return;
-		}
-	})
 	.on('mouseenter', '.ob-unit.edited', function() {
 		$(this).removeClass('edited');
 	})
-	.on('click', '#ob-my .img_del,#user-info .img_del', function() {
-		var t = $(this);
-		while(!t.hasClass('ob-unit'))
-			t = t.parent();
-		var dialog = _dialog({
-			top:90,
-			width:260,
-			head:'Удаление объявления',
-			content:'<center>' +
-						'После удаления<br />' +
-						'объявление восстановить<br />' +
-						'будет невозможно.<br /><br />' +
-						'<b>Подтвердите удаление.</b>' +
-					'</center>',
-			butSubmit:'Удалить',
-			submit:submit
-		});
+	.on('click', '.ob-unit .img_del', function(e) {
+		e.stopPropagation();
+		var id = $(this).attr('val'),
+			dialog = _dialog({
+				top:90,
+				width:260,
+				head:'Удаление объявления',
+				content:'<center>' +
+							'После удаления<br />' +
+							'объявление восстановить<br />' +
+							'будет невозможно.<br /><br />' +
+							'<b>Подтвердите удаление.</b>' +
+						'</center>',
+				butSubmit:'Удалить',
+				submit:submit
+			});
 		function submit() {
 			var send = {
 				op:'ob_del',
-				id:t.attr('val')
+				id:id
 			};
 			dialog.process();
 			$.post(AJAX_MAIN, send, function(res) {
 				if(res.success) {
 					dialog.close();
 					_msg('Объявление удалено');
-					t.remove();
+					$('#ob' + id).remove();
 				} else
 					dialog.abort();
 			}, 'json');
