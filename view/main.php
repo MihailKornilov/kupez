@@ -102,19 +102,19 @@ function _header() {
 		'</script>'.
 
 		//Подключение api VK. Стили VK должны стоять до основных стилей сайта
-		'<link href="http://nyandoma'.(LOCAL ? '' : '.ru').'/vk'.(defined('TEST') ? 'test' : '').'/vk'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
+		'<link href="//nyandoma'.(LOCAL ? '' : '.ru').'/vk'.(defined('TEST') ? 'test' : '').'/vk'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
 		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/vk'.(defined('TEST') ? 'test' : '').'/vk'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
-		'<script type="text/javascript" src="'.SITE.'/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
+		'<script type="text/javascript" src="/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
 
-		'<link href="'.SITE.'/css/main'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
-		'<script type="text/javascript" src="'.SITE.'/js/main'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
+		'<link href="/css/main'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
+		'<script type="text/javascript" src="/js/main'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
-		($_GET['p'] == 'gazeta' ? '<link href="'.SITE.'/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />' : '').
-		($_GET['p'] == 'gazeta' ? '<script type="text/javascript" src="'.SITE.'/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
+		($_GET['p'] == 'gazeta' ? '<link rel="stylesheet" type="text/css" href="/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />' : '').
+		($_GET['p'] == 'gazeta' ? '<script type="text/javascript" src="/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
 
-		($_GET['p'] == 'admin' ? '<link href="'.SITE.'/css/admin'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />' : '').
-		($_GET['p'] == 'admin' ? '<script type="text/javascript" src="'.SITE.'/js/admin'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
+		($_GET['p'] == 'admin' ? '<link rel="stylesheet" type="text/css" href="/css/admin'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />' : '').
+		($_GET['p'] == 'admin' ? '<script type="text/javascript" src="/js/admin'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
 
 		'</head>'.
 		'<body>'.
@@ -528,13 +528,11 @@ function ob_unit($r) {
 	'<div class="ob-unit show'.(isset($r['edited']) ? ' edited' : '').'" id="ob'.$r['id'].'">'.
 		'<table class="utab">'.
 			'<tr><td class="txt">'.
+  ($r['image_id'] ? '<img src="'.$r['image_link'].'" />': '').
 					'<a class="rub" val="'.$r['rubric_id'].'">'._rubric($r['rubric_id']).'</a><u>»</u>'.
 					($r['rubric_sub_id'] ? '<a class="rubsub" val="'.$r['rubric_id'].'_'.$r['rubric_sub_id'].'">'._rubricsub($r['rubric_sub_id']).'</a><u>»</u>' : '').
 					$txt.
 					($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
-		($r['image_id'] ?
-				'<td class="foto"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />'
-		: '').
 			'<tr><td class="adres" colspan="2">'.
 				($r['city_name'] ? $r['country_name'].', '.$r['city_name']  : '').
 				($r['viewer_id_show'] ? _viewer($r['viewer_id_add'], 'link')  : '').

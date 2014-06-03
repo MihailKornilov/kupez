@@ -308,12 +308,12 @@ switch(@$_POST['op']) {
 			jsonError();
 
 		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `id`=".$id;
-		if(!$r = query_assoc($sql))
+		if(!$ob = query_assoc($sql))
 			jsonError();
 
 		//просмотры
 		$view = 0;
-		if(!SA && $r['viewer_id_add'] != VIEWER_ID) {
+		if(!SA && $ob['viewer_id_add'] != VIEWER_ID) {
 			$sql = "SELECT COUNT(*)
 					FROM `vk_ob_view`
 					WHERE `ob_id`=".$id."
@@ -334,31 +334,83 @@ switch(@$_POST['op']) {
 			}
 		}
 
-		$txt =  '<div class="rub">'.
-					_rubric($r['rubric_id']).
-					($r['rubric_sub_id'] ? '<em>»</em>'._rubricsub($r['rubric_sub_id']) : '').
-				':</div>'.
-				nl2br($r['txt']).
-				($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
-				($r['city_name'] ? '<div class="city">'.$r['country_name'].', '.$r['city_name'].'</div>'  : '');
+		//изображения
+		$img = array();
+		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='ob".$ob['id']."' ORDER BY `sort`";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q))
+			$img[] = $r;
+
+		$images = '';
+		switch(count($img)) {
+			case 1: $images = obImgBuild($img, 1); break;
+			case 2: $images = obImgBuild($img, 2); break;
+			case 3: $images = obImgBuild($img, 3); break;
+			case 4: $images = obImgBuild($img, 4); break;
+			case 5:
+				$images = obImgBuild($img, 3);
+				array_shift($img);
+				array_shift($img);
+				array_shift($img);
+				$images .= obImgBuild($img, 2);
+				break;
+			case 6:
+				$images = obImgBuild($img, 3);
+				array_shift($img);
+				array_shift($img);
+				array_shift($img);
+				$images .= obImgBuild($img, 3);
+				break;
+			case 7:
+				$images = obImgBuild($img, 4);
+				array_shift($img);
+				array_shift($img);
+				array_shift($img);
+				array_shift($img);
+				$images .= obImgBuild($img, 3);
+				break;
+			case 8:
+				$images = obImgBuild($img, 3);
+				array_shift($img);
+				array_shift($img);
+				array_shift($img);
+				$images .= obImgBuild($img, 2);
+				array_shift($img);
+				array_shift($img);
+				$images .= obImgBuild($img, 3);
+				break;
+		}
+
 		$send['o'] = array(
-			'id' => $r['id'],
-			'dtime' => utf8(FullDataTime($r['dtime_add'])),
-			'cont' => utf8($txt),
+			'id' => $ob['id'],
+			'dtime' => utf8(FullDataTime($ob['dtime_add'])),
+			'rub' => utf8(_rubric($ob['rubric_id']).($ob['rubric_sub_id'] ? '<em>»</em>'._rubricsub($ob['rubric_sub_id']) : '').':'),
+			'txt' => utf8(nl2br($ob['txt'])),
 			'view' => $view
 		);
-		if($r['viewer_id_show'] && $r['viewer_id_add'])
+
+		if($ob['viewer_id_show'] && $ob['viewer_id_add'])
 			$send['o'] += array(
-				'viewer_id' => intval($r['viewer_id_add']),
-				'photo' => utf8(_viewer($r['viewer_id_add'], 'photo')),
-				'name' => utf8(_viewer($r['viewer_id_add'], 'name'))
+				'viewer_id' => intval($ob['viewer_id_add']),
+				'photo' => utf8(_viewer($ob['viewer_id_add'], 'photo')),
+				'name' => utf8(_viewer($ob['viewer_id_add'], 'name'))
 			);
+
+		if($images)
+			$send['o']['images'] = $images;
+
+		if($ob['telefon'])
+			$send['o']['tel'] = utf8($ob['telefon']);
+
+		if($ob['city_name'])
+			$send['o']['city'] = utf8($ob['country_name'].', '.$ob['city_name']);
+
 		if(SA)
 			$send['o'] += array(
 				'sa' => 1,
-				'sa_viewer_id' => intval($r['viewer_id_add']),
-				'sa_name' => $r['viewer_id_add'] ? utf8(_viewer($r['viewer_id_add'], 'name')) : '',
-				'sa_gazeta_id' => intval($r['gazeta_id'])
+				'sa_viewer_id' => intval($ob['viewer_id_add']),
+				'sa_name' => $ob['viewer_id_add'] ? utf8(_viewer($ob['viewer_id_add'], 'name')) : '',
+				'sa_gazeta_id' => intval($ob['gazeta_id'])
 
 			);
 
@@ -373,3 +425,47 @@ switch(@$_POST['op']) {
 		break;
 }
 jsonError();
+
+
+function obImgBuild($img, $count) {
+	$sizes = array(
+		1 => 498,
+		2 => 246,
+		3 => 162,
+		4 => 120
+	);
+	$size = $sizes[$count];
+	$h = 0;
+	for($k = 0; $k < $count; $k++) {
+		$s = _imageResize($img[$k]['big_x'], $img[$k]['big_y'], $size, $count > 1 ? $size + 100 : $size);
+		$h += $s['y'];
+	}
+	$h = floor($h / $count);
+
+	$w = 0;
+	for($k = 0; $k < $count; $k++) {
+		$s = _imageResize($img[$k]['big_x'], $img[$k]['big_y'], 504, $h);
+		$img[$k]['x'] = $s['x'];
+		$img[$k]['y'] = $s['y'];
+		$w += $s['x'];
+	}
+
+	if($w + $count * 6 > 504) {
+		$diff = ceil(($w + $count * 6 - 504) / $count);
+		$h = 0;
+		for($k = 0; $k < $count; $k++) {
+			$s = _imageResize($img[$k]['big_x'], $img[$k]['big_y'], $img[$k]['x'] - $diff, $img[$k]['y']);
+			$img[$k]['x'] = $s['x'];
+			$h += $s['y'];
+		}
+		$h = floor($h / $count);
+	}
+
+	$send = '';
+	for($k = 0; $k < $count; $k++) {
+		$i = $img[$k];
+		$send .= '<img src="'.$i['path'].$i['big_name'].'" width="'.$i['x'].'" height="'.$h.'" class="_iview" val="'.$i['id'].'" />';
+	}
+
+	return $send;
+}

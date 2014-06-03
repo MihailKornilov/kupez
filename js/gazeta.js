@@ -1,4 +1,4 @@
-var AJAX_GAZ = 'http://' + DOMAIN + '/ajax/gazeta.php?' + VALUES,
+var AJAX_GAZ = '/ajax/gazeta.php?' + VALUES,
 	clientAdd = function(callback) {
 		var html = '<table class="client-add">' +
 			'<tr><td class="label">Категория:<td><input type="hidden" id="cperson">' +

@@ -224,17 +224,30 @@ var hashLoc,
 					'</div>' +
 				'</div>'
 			: '') +
-				'<div class="cont">' + o.cont + '</div>' +
-				'<div class="meter">Просмотры: ' + o.view + '</div>' +
-				'<div class="foot">Отправить сообщение</div>' +
+				'<div class="cont">' +
+					'<div class="rub">' + o.rub + '</div>' +
+					'<div class="txt">' + o.txt + '</div>' +
+		(o.images ? '<div class="images">' + o.images + '</div>' : '') +
+		   (o.tel ? '<div class="tel">' + o.tel + '</div>' : '') +
+		  (o.city ? '<div class="city">' + o.city + '</div>' : '') +
+					'<div class="meter">Просмотры: ' + o.view + '</div>' +
+				'</div>' +
+				'<div class="foot">Отправка сообщения автору в разработке.</div>' +
 			'</div>';
 
 		if($('#_post').length)
 			close();
 
-		var post = $('body').append(html).find('#_post');
+		var post = $('body').append(html).find('#_post'),
+			h;
 		_backfon(post);
-		post.css('top', $(this).scrollTop() + 100 + VK_SCROLL);
+		if(o.images)
+			h = 10;
+		else {
+			h = 540 - post.height();
+			h = Math.round(h < 0 ? 10 : h / 2);
+		}
+		post.css('top', $(this).scrollTop() + (VK_SCROLL > 60 ? VK_SCROLL - 60 : 0) + h);
 		post.find('.close,.ob-edit').click(close);
 		post.find('.to-arch').click(function() {
 			var t = $(this),
@@ -259,12 +272,14 @@ var hashLoc,
 	};
 
 $(document)
-	.on('click', 'a.rub', function() {
+	.on('click', 'a.rub', function(e) {
+		e.stopPropagation();
 		$('#rub').rightLink($(this).attr('val'));
 		$('#rubsub').val(0);
 		obSpisok();
 	})
-	.on('click', 'a.rubsub', function() {
+	.on('click', 'a.rubsub', function(e) {
+		e.stopPropagation();
 		var v = $(this).attr('val').split('_');
 		$('#rub').rightLink(v[0]);
 		$('#rubsub').val(v[1]);
@@ -684,4 +699,3 @@ $(document)
 			$('#status').rightLink(obMySpisok);
 		}
 	});
-
