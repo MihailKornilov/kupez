@@ -392,7 +392,7 @@ switch(@$_POST['op']) {
 		if($ob['viewer_id_show'] && $ob['viewer_id_add'])
 			$send['o'] += array(
 				'viewer_id' => intval($ob['viewer_id_add']),
-				'photo' => utf8(_viewer($ob['viewer_id_add'], 'photo')),
+				'photo' => _viewer($ob['viewer_id_add'], 'photo'),
 				'name' => utf8(_viewer($ob['viewer_id_add'], 'name'))
 			);
 
@@ -405,14 +405,63 @@ switch(@$_POST['op']) {
 		if($ob['city_name'])
 			$send['o']['city'] = utf8($ob['country_name'].', '.$ob['city_name']);
 
+
+		//сообщения
+		$msg = '';
+		$sql = "SELECT * FROM `vk_ob_msg` WHERE `ob_id`=".$id." AND (!`only_author` OR `only_author` AND `viewer_id_add`=".VIEWER_ID.") ORDER BY `id`";
+		$q = query($sql);
+		while($r = mysql_fetch_assoc($q))
+			$msg .= ob_post_msg_unit($r);
+		if($msg)
+			$send['o']['msg'] = utf8($msg);
+
 		if(SA)
 			$send['o'] += array(
 				'sa' => 1,
 				'sa_viewer_id' => intval($ob['viewer_id_add']),
 				'sa_name' => $ob['viewer_id_add'] ? utf8(_viewer($ob['viewer_id_add'], 'name')) : '',
 				'sa_gazeta_id' => intval($ob['gazeta_id'])
-
 			);
+
+		jsonSuccess($send);
+		break;
+	case 'ob_post_msg':
+		if(!$id = _isnum($_POST['id']))
+			jsonError();
+
+		$txt = win1251(htmlspecialchars(trim($_POST['txt'])));
+		$anon = _isbool($_POST['anon']);
+		$only_author = _isbool($_POST['only_author']);
+
+		$sql = "SELECT * FROM `vk_ob` WHERE !`deleted` AND `id`=".$id;
+		if(!$ob = query_assoc($sql))
+			jsonError();
+
+		$sql = "INSERT INTO `vk_ob_msg` (
+					`ob_id`,
+					`txt`,
+					`anon`,
+					`only_author`,
+					`viewer_id_add`
+				) VALUES (
+					".$id.",
+					'".addslashes($txt)."',
+					".$anon.",
+					".$only_author.",
+					".VIEWER_ID."
+				)";
+		query($sql);
+
+		$r = array(
+			'id' => mysql_insert_id(),
+			'ob_id' => $id,
+			'txt' => $txt,
+			'anon' => $anon,
+			'viewer_id_add' => VIEWER_ID,
+			'dtime_add' => curTime()
+		);
+
+		$send['msg'] = utf8(ob_post_msg_unit($r));
 
 		jsonSuccess($send);
 		break;
@@ -468,4 +517,18 @@ function obImgBuild($img, $count) {
 	}
 
 	return $send;
-}
+}//obImgBuild()
+function ob_post_msg_unit($r) {
+	return
+	'<div class="msg-un">'.
+		'<table>'.
+			'<tr><td class="ms-photo">'.
+					(!$r['anon'] ? _viewer($r['viewer_id_add'], 'photo_link') : '').
+				'<td>'.
+					(!$r['anon'] ? '<div class="ms-user">'._viewer($r['viewer_id_add'], 'link').'</div>' : '').
+					'<div>'.nl2br($r['txt']).'</div>'.
+					'<div class="dt">'.FullDataTime($r['dtime_add']).'</div>'.
+		'</table>'.
+	'</div>';
+
+}//ob_post_msg_unit()

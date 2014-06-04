@@ -362,7 +362,10 @@ function ob() {//Главная страница с объявлениями
 	return
 	'<script type="text/javascript">'.
 		'var COUNTRIES='._selJson($country).','.
-			'CITIES={'.implode(',', $city).'};'.
+			'CITIES={'.implode(',', $city).'},'.
+			'U={'.
+				'photo:"'.addslashes(_viewer(VIEWER_ID, 'photo')).'"'.
+			'};'.
 	'</script>'.
 	'<div class="ob-spisok">'.
 		'<table class="tfind">'.
@@ -704,11 +707,11 @@ function ob_my_unit($r) {
 		'</div>'.
 		'<table class="utab">'.
 			'<tr><td class="txt">'.
+					($r['image_id'] ? '<img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
 					'<span class="rub">'._rubric($r['rubric_id']).'</span><u>»</u>'.
 					($r['rubric_sub_id'] ? '<span class="rubsub">'._rubricsub($r['rubric_sub_id']).'</span><u>»</u>' : '').
 					nl2br($r['txt']).
 					($r['telefon'] ? '<div class="tel">'.$r['telefon'].'</div>' : '').
-					($r['image_id'] ? '<td class="foto"><img src="'.$r['image_link'].'" class="_iview" val="'.$r['image_id'].'" />' : '').
 			'<tr><td class="adres" colspan="2">'.
 				($r['city_name'] ? $r['country_name'].', '.$r['city_name']  : '').
 				($r['viewer_id_show'] ? _viewer($r['viewer_id_add'], 'link')  : '').

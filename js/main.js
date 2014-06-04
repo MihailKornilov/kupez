@@ -45,7 +45,7 @@ var hashLoc,
 		if($('.region').hasClass('_busy'))
 			return;
 		$('.region').addClass('_busy');
-		$.post(AJAX_MAIN, obFilter(attr_id == 'find'), function (res) {
+		$.post(AJAX_MAIN, obFilter(attr_id == 'find'), function(res) {
 			$('.region').removeClass('_busy');
 			if(res.success) {
 				$('.result').html(res.result);
@@ -72,11 +72,11 @@ var hashLoc,
 				'<div class="ob-unit">' +
 					'<table class="utab">' +
 						'<tr><td class="txt">' +
+				  (img_id ? '<img src="' + img_url + '" class="_iview" val="' + img_id + '" />' : '') +
 			   (rubric_id ? '<span class="rub">' + RUBRIC_ASS[rubric_id] + '</span><u>»</u>' : '') +
 		   (rubric_sub_id ? '<span class="rubsub">' + RUBRIC_SUB_ASS[rubric_sub_id] + '</span><u>»</u>' : '') +
 							txt +
 	 ($('#telefon').val() ? '<div class="tel">' + $('#telefon').val() + '</div>' : '') +
-			  (img_id ? '<td class="foto"><img src="' + img_url + '" class="_iview" val="' + img_id + '" />' : '') +
 					'<tr><td class="adres" colspan="2">' +
 						($('#country_id').val() > 0 ? $('#country_id')._select('title') : '') +
 						($('#city_id').val() > 0 ? ', ' + $('#city_id')._select('title') : '') +
@@ -91,7 +91,7 @@ var hashLoc,
 			return;
 		OBMY[attr_id] = v;
 		$('.result').addClass('_busy');
-		$.post(AJAX_MAIN, OBMY, function (res) {
+		$.post(AJAX_MAIN, OBMY, function(res) {
 			$('.result').removeClass('_busy');
 			if(res.success) {
 				$('.result').html(res.result);
@@ -224,7 +224,7 @@ var hashLoc,
 					'</div>' +
 				'</div>'
 			: '') +
-				'<div class="cont">' +
+				'<div class="pcont">' +
 					'<div class="rub">' + o.rub + '</div>' +
 					'<div class="txt">' + o.txt + '</div>' +
 		(o.images ? '<div class="images">' + o.images + '</div>' : '') +
@@ -232,14 +232,26 @@ var hashLoc,
 		  (o.city ? '<div class="city">' + o.city + '</div>' : '') +
 					'<div class="meter">Просмотры: ' + o.view + '</div>' +
 				'</div>' +
-				'<div class="foot">Отправка сообщения автору в разработке.</div>' +
+				'<div class="foot">' +
+					'<div class="msg">' + (o.msg ? o.msg : '') + '</div>' +
+					'<input type="text" id="inp" placeholder="Отправить сообщение автору объявления.." />' +
+					'<table class="dn">' +
+						'<tr><td class="photo"><a href="http://vk.com/id' + VIEWER_ID + '" target="_blank">' + U.photo + '</a>' +
+							'<td><textarea></textarea>' +
+						'<tr><td class="photo">' +
+							'<td class="send"><div class="vkButton"><button>Отправить</button></div>' +
+								'<input type="hidden" id="anon" />' +
+								'<input type="hidden" id="only_author" />' +
+					'</table>' +
+				'</div>' +
 			'</div>';
 
 		if($('#_post').length)
 			close();
 
 		var post = $('body').append(html).find('#_post'),
-			h;
+			h,
+			area = post.find('textarea');
 		_backfon(post);
 		if(o.images)
 			h = 10;
@@ -264,6 +276,46 @@ var hashLoc,
 				} else
 					t.fadeIn(700);
 			}, 'json');
+		});
+		post.find('#inp').focus(function() {
+			$(this).addClass('dn');
+			post.find('.foot table').removeClass('dn');
+			area.focus().autosize();
+			$('#anon')._check({
+				name:'Анонимно',
+				func:function(v) {
+					post.find('.photo')[(v ? 'add' : 'remove') + 'Class']('dn');
+					area.width(v ? 496 : 436).focus();
+				}
+			});
+			$('#only_author')._check({
+				name:'Только для получателя'
+			});
+			$('#only_author_check').vkHint({
+				msg:'Если галочка установлена,<br />то сообщение будет видно<br />только автору объявления.',
+				top:-103,
+				left:108
+			});
+			post.find('.foot .vkButton').click(function() {
+				var t = $(this),
+					send = {
+						op:'ob_post_msg',
+						id:o.id,
+						txt:$.trim(area.val()),
+						anon:$('#anon').val(),
+						only_author:$('#only_author').val()
+					};
+				if(!send.txt || t.hasClass('_busy'))
+					return;
+				t.addClass('_busy');
+				$.post(AJAX_MAIN, send, function(res) {
+					t.removeClass('_busy');
+					if(res.success) {
+						area.val('');
+						post.find('.msg').append(res.msg);
+					}
+				}, 'json');
+			});
 		});
 		function close() {
 			$('#_post').remove();
@@ -387,7 +439,7 @@ $(document)
 						cityShow();
 						if(id) {
 							$('#city_id')._select(0)._select('process');
-							VK.api('places.getCities',{country:id}, function (data) {
+							VK.api('places.getCities',{country:id}, function(data) {
 								var d = data.response;
 								for(n = 0; n < d.length; n++)
 									d[n].uid = d[n].cid;
@@ -564,7 +616,7 @@ $(document)
 				} else
 					location.href = URL + '&p=ob';
 			});
-			$('._info a').click(function () {
+			$('._info a').click(function() {
 				var html =
 					'<div id="ob-create-rules">' +
 						'<div class="headName">Рекомендации при создании объявления:</div>' +
@@ -633,7 +685,7 @@ $(document)
 					cityShow();
 					if(id) {
 						$('#city_id')._select(0)._select('process');
-						VK.api('places.getCities',{country:id}, function (data) {
+						VK.api('places.getCities',{country:id}, function(data) {
 							var d = data.response;
 							for(n = 0; n < d.length; n++)
 								d[n].uid = d[n].cid;

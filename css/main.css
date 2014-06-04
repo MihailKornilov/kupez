@@ -156,7 +156,7 @@
 #_post .psa .ed a{position:relative;top:-1px;left:-10px;color:#888}
 #_post .psa .img_edit{margin-bottom:-2px}
 
-#_post .cont{background-color:#fff;padding:14px 18px}
+#_post .pcont{background-color:#fff;padding:14px 18px}
 #_post .txt{font:16px georgia;text-align:justify}
 #_post .images{margin-top:7px;text-align:center}
 #_post .images img{margin:3px}
@@ -166,7 +166,19 @@
 #_post .city{color:#bbb;margin-top:2px}
 #_post .meter{margin-top:10px;padding-top:5px;border-top:#eee solid 1px}
 
-#_post .foot{
-	background-color:#EEF0F2;
-	padding:18px;
+#_post .foot{background-color:#eef0f2;padding:18px}
+#_post #inp{padding:5px;width:492px}
+#_post .foot td{vertical-align:top}
+#_post .photo{padding-right:10px}
+#_post textarea{width:436px;height:41px}
+#_post .send{padding-top:10px}
+#_post .foot ._check{margin-left:15px}
+#_post .msg-un{
+	margin-bottom:7px;
+	padding-bottom:7px;
+	border-bottom:#F6F8FA solid 1px
 }
+#_post .msg .dt{color:#999;margin-top:4px}
+#_post .ms-photo{width:40px}
+#_post .ms-photo img{width:30px}
+#_post .ms-user{margin-bottom:3px}
