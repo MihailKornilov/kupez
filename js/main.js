@@ -155,41 +155,6 @@ var hashLoc,
 			indent:15
 		});
 	},
-	wallTest = function(o) {
-		VK.api('account.getAppPermissions', {}, function(data) {
-			if(typeof data.response == 'number') {
-				if(data.response & 8192)
-					wallPost(o);
-				else {
-					VK.addCallback('onSettingsChanged', function(data) {
-						if(data & 8192) {
-							VK.removeCallback('onWindowFocus');
-							wallPost(o);
-						}
-					});
-					VK.addCallback('onWindowFocus', function() {
-						location.href = URL + '&p=ob';
-					});
-					VK.callMethod('showSettingsBox', 8192);
-				}
-			} else
-				location.href = URL + '&p=ob';
-		});
-	},
-	wallPost = function(o) {
-		var send = {
-			message:o.msg,
-			attachments:(o.photo ? o.photo + ',' : '') + 'http://vk.com/kupezz'
-		};
-		VK.api('wall.post', send, function(data) {
-			if(data.response)
-				_msg('Объявление размещено на стене Вашей страницы.', function() {
-					location.href = URL + '&p=ob&wallpost=1&insert_id=' + o.insert_id;
-				});
-			else
-				location.href = URL + '&p=ob&wallpost=0&insert_id=' + o.insert_id;
-		});
-	},
 	_post = function(o) {
 		o = $.extend({
 			viewer_id:0,
@@ -601,21 +566,6 @@ $(document)
 			});
 		}
 		if($('#ob-create').length) {
-			VK.api('account.getAppPermissions', {}, function(data) {
-				if(typeof data.response == 'number') {
-					if(!(data.response & 8192) || !(data.response & 4)) {
-						VK.addCallback('onSettingsChanged', function(data) {
-							if((data & 8192) && (data & 4))
-								VK.removeCallback('onWindowFocus');
-						});
-						VK.addCallback('onWindowFocus', function() {
-							location.href = URL + '&p=ob';
-						});
-						VK.callMethod('showSettingsBox', 8192 + 4);
-					}
-				} else
-					location.href = URL + '&p=ob';
-			});
 			$('._info a').click(function() {
 				var html =
 					'<div id="ob-create-rules">' +
@@ -676,7 +626,7 @@ $(document)
 			if(!COUNTRY_ASS[$('#country_id').val()]) // проверка наличия страны в списке
 				$('#country_id').val(0); //если нет, страна сбрасывается
 			cityShow();
-			cityGet();
+			cityGet('', CITY_ID, CITY_NAME);
 			$('#country_id')._select({
 				width:180,
 				title0:'Страна не указана',
@@ -707,6 +657,8 @@ $(document)
 			});
 			$('.vkButton').click(function() {
 				var t = $(this),
+					photos = 0,
+					wall = 0,
 					send = {
 						op:'ob_create',
 						rubric_id:$('#rubric_id').val(),
@@ -718,22 +670,41 @@ $(document)
 						city_id:$('#city_id').val(),
 						city_name:$('#city_id')._select('title'),
 						viewer_id_show:$('#viewer_id_show').val(),
-						dop:$('#dop').val()
-//					order_id:create.order.id,
-//					order_votes:create.order.votes
-					};
+						dop:$('#dop').val(),
+						upload_url:'',
+						group_id:72078602, //Группа КупецЪ
+						album_id:195528889, //Основной альбом
+						rule:0
+					},
+					message =
+						$('#rubric_id')._select('title') +
+						(send.rubric_sub_id > 0 ? ' » ' + $('#rubric_sub_id')._select('title') : '') +
+						":\n" +
+						(send.txt.length > 150 ? send.txt.slice(0, 150) + '..' : send.txt) +
+						(send.telefon ? "\n&#128222; " + send.telefon : '') +//&#9742;
+						"\nЧитайте полностью на vk.com/kupezz";
 				if(send.rubric_id == 0) err('Не выбрана рубрика');
 				else if(!send.txt) { err('Введите текст объявления'); $('#txt').focus(); }
 				else {
 					if(t.hasClass('busy'))
 						return;
 					t.addClass('busy');
-					$.post(AJAX_MAIN, send, function(res) {
-						if(res.success)
-							wallTest(res);
-						else
-							t.removeClass('busy');
-					}, 'json');
+					vkRulesTest(function(rule) {
+						send.rule = rule;
+						if(photos) {
+							var v = {
+								v:5.21,
+								group_id:send.group_id,
+								album_id:send.album_id
+							};
+							VK.api('photos.getUploadServer', v, function(data) {
+								if(data.response)
+									send.upload_url = data.response.upload_url;
+								obSend();
+							});
+						} else
+							obSend();
+					});
 				}
 				function err(msg) {
 					t.vkHint({
@@ -743,6 +714,78 @@ $(document)
 						indent:50,
 						show:1,
 						remove:1
+					});
+				}
+				function vkRulesTest(func) {
+					VK.api('account.getAppPermissions', {}, function(data) {
+						if(typeof data.response == 'number') {
+							photos = data.response & 4;
+							wall = data.response & 8192;
+							if(!photos || !wall) {
+								VK.callMethod('showSettingsBox', 8192 + 4);
+								VK.addCallback('onWindowFocus', function() {
+									VK.removeCallback('onWindowFocus');
+									func(13); // пользователь закрыл окно
+								});
+								VK.addCallback('onSettingsChanged', function(data) {
+									VK.removeCallback('onWindowFocus');
+									photos = data & 4;
+									wall = data & 8192;
+									if(photos && wall)
+										func(12);// пользователь установил обе галочки
+									else
+										func(14);// одна из галочек не была установлена
+								});
+							} else
+								func(0); // права разрешены
+						} else
+							func(15); // ошибка запроса прав
+					});
+				}
+				function obSend() {
+					$.post(AJAX_MAIN, send, function(res) {
+						if(res.success) {
+							if(res.server) {
+								var v = {
+									v:5.21,
+									album_id:send.album_id,
+									group_id:send.group_id,
+									server:res.server,
+									photos_list:res.photos_list,
+									hash:res.hash,
+									caption:message
+								};
+								VK.api('photos.save', v, function(data) {
+									var attach = '';
+									if(data.response) {
+										var r = data.response[0];
+										attach = 'photo' + r.owner_id + '_' + r.id;
+									}
+									wallPost(res.insert_id, attach);
+								});
+							} else
+								wallPost(res.insert_id, '');
+						} else
+							t.removeClass('busy');
+					}, 'json');
+				}
+				function wallPost(insert_id, attach) {
+					var href = URL + '&p=ob&insert_id=' + insert_id;
+					if(!wall) {
+						location.href = href;
+						return;
+					}
+					var v = {
+						message:message,
+						attachments:attach
+					};
+					VK.api('wall.post', v, function(data) {
+						if(data.response)
+							_msg('Объявление размещено на стене Вашей страницы.', function() {
+								location.href = href + '&wallpost=1';
+							});
+						else
+							location.href = href;
 					});
 				}
 			});

@@ -52,6 +52,10 @@ switch(@$_POST['op']) {
 		$city_id = _isnum($_POST['city_id']);
 		$city_name = win1251(htmlspecialchars(trim($_POST['city_name'])));
 		$viewer_id_show = _isbool($_POST['viewer_id_show']);
+		$upload_url = trim($_POST['upload_url']);
+		$album_id = _isnum($_POST['album_id']);
+		$group_id = _isnum($_POST['group_id']);
+		$rule = _isnum($_POST['rule']);
 
 		if(empty($txt))
 			jsonError();
@@ -96,14 +100,6 @@ switch(@$_POST['op']) {
 		$insert_id = mysql_insert_id();
 
 		$send['insert_id'] = $insert_id;
-		$send['msg'] = utf8(htmlspecialchars_decode(
-			_rubric($rubric_id).
-			($rubric_sub_id ? ' » '._rubricsub($rubric_sub_id) : '').': '.
-			trim(substr($txt, 0, 100))."...".
-			($telefon ? "\n".'&#9742; '.$telefon : '').//&#128222;
-			//($viewer_id_show ? ' @id'.VIEWER_ID.'('._viewer(VIEWER_ID, 'name').')' : '').
-			"\n".'Читайте полностью на vk.com/kupezz'
-		));
 
 		//сохранение изображений
 		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='".VIEWER_ID."' ORDER BY `sort`";
@@ -128,16 +124,8 @@ switch(@$_POST['op']) {
 			}
 			query("UPDATE `vk_ob` SET `image_id`=".$image_id.",`image_link`='".$image_link."' WHERE `id`=".$insert_id);
 
-			$group_id = 72078602;   //Группа КупецЪ
-			$album_id = 195528889;  //Основной альбом
-			$res = _vkapi('photos.getUploadServer', array(
-				'v' => 5.21,
-				'album_id' => $album_id,
-				'group_id' => $group_id
-			));
-			if(!empty($res['response'])) {
-				$upload_url = $res['response']['upload_url'];
-
+			//получение изображения для прикрепления к посту на стену
+			if(!empty($upload_url)) {
 				$img = file_get_contents($image_post_url);
 				$name = PATH.'files/'.VIEWER_ID.time().'.jpg';
 				$f = fopen($name, 'w');
@@ -153,25 +141,19 @@ switch(@$_POST['op']) {
 				curl_close($curl);
 				unlink($name);
 
-				$server = $out['server'];
-				$photos_list = $out['photos_list'];
-				$hash = $out['hash'];
-
-				$res = _vkapi('photos.save', array(
-					'v' => 5.21,
-					'album_id' => $album_id,
-					'group_id' => $group_id,
-					'server' => $server,
-					'photos_list' => $photos_list,
-					'hash' => $hash,
-					'caption' => addslashes($send['msg'])
-				));
-				if(!empty($res['response'])) {
-					$r = $res['response'][0];
-					$send['photo'] = 'photo'.$r['owner_id'].'_'.$r['id'];
-				}
+				$send['server'] = $out['server'];
+				$send['photos_list'] = $out['photos_list'];
+				$send['hash'] = $out['hash'];
 			}
 		}
+
+		if($rule)
+			_historyInsert(
+				$rule,
+				array('ob_id' => $insert_id),
+				'vk_history'
+			);
+
 		jsonSuccess($send);
 		break;
 	case 'ob_load':

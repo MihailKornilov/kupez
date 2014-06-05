@@ -63,12 +63,15 @@ function admin_user() {
 		2 => 'Добавлено в левое меню<span>'.$menu_left.'</span>',
 		3 => 'Разрешены уведомления<span>'.$notify.'</span>'
 	);
+
+	$cron = query_value("SELECT `cron_viewer_start` FROM `setup_global`");
 	return
 	'<div class="admin-user">'.
 		'<div class="result">'.$data['result'].'</div>'.
 		'<table class="tabLR">'.
 			'<tr><td class="left">'.$data['spisok'].
 				'<td class="right">'.
+					'<div>cron: '.$cron.'</div><br />'.
 					'<div id="find"></div>'.
 					'<div class="findHead">Объявления</div>'.
 					_radio('ob_write', $ob_write, 0, 1).

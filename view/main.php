@@ -274,26 +274,23 @@ function viewerSettingsHistory($old, $u) {
 
 
 function ob() {//Главная страница с объявлениями
-	if($insert_id = _isnum(@$_GET['insert_id'])) {
-		$wallpost = _isbool(@$_GET['wallpost']);
+	if($insert_id = _isnum(@$_GET['insert_id']))
 		_historyInsert(
-			$wallpost ? 8 : 9,
+			_isnum(@$_GET['wallpost']) ? 8 : 9,
 			array('ob_id' => $insert_id),
 			'vk_history'
 		);
-	}
 
-	$sql =
-		"SELECT
-			`country_id`,
-			`country_name`
-		FROM `vk_ob`
-		WHERE !`deleted`
-		  AND `country_id`
-		  AND `country_name`!=''
-		  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
-		GROUP BY `country_id`
-		ORDER BY `country_name`";
+	$sql = "SELECT
+				`country_id`,
+				`country_name`
+			FROM `vk_ob`
+			WHERE !`deleted`
+			  AND `country_id`
+			  AND `country_name`!=''
+			  AND `day_active`>=DATE_FORMAT(NOW(), '%Y-%m-%d')
+			GROUP BY `country_id`
+			ORDER BY `country_name`";
 	$country = query_ass($sql);
 
 	$sql = "SELECT
@@ -387,6 +384,9 @@ function ob() {//Главная страница с объявлениями
 							'<div class="findHead">Дополнительно</div>'.
 							_check('withfoto', 'Только с фото').
 					  (SA ? _check('nokupez', 'Не КупецЪ') : '').
+
+	//'<br /><br /><a onclick="VK.callMethod(\'showSettingsBox\');">права</a>'.
+
 							$counts.
 						'</div>'.
 					'</div>'.
@@ -556,7 +556,11 @@ function ob_create() {
 		default: $back = '';
 	}
 	return
-	'<script type="text/javascript">var VIEWER_LINK="'.addslashes(_viewer(VIEWER_ID, 'link')).'";</script>'.
+	'<script type="text/javascript">'.
+		'var VIEWER_LINK="'.addslashes(_viewer(VIEWER_ID, 'link')).'",'.
+			'CITY_ID='._viewer(VIEWER_ID, 'city_id').','.
+			'CITY_NAME="'.addslashes(_viewer(VIEWER_ID, 'city_name')).'";'.
+	'</script>'.
 	'<div id="ob-create">'.
 		'<div class="headName">Создание нового объявления</div>'.
 		'<div class="_info">'.
@@ -720,7 +724,7 @@ function ob_my_unit($r) {
 }//ob_my_unit()
 
 function ob_history() {
-	$data = ob_history_data();
+	$data = vk_history();
 	return
 		'<table class="tabLR">'.
 			'<tr><td class="left">'.$data['spisok'].
@@ -754,10 +758,15 @@ function ob_history_types($v) {
 						'<div class="changes">'.$v['value'].'</div>';
 		case 11: return 'Удалил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' объявление '.$v['ob_id'].'.';
 
+		case 12: return 'Разрешил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' настройки <u>photos</u> и <u>wall</u> при создании объявления '.$v['ob_id'].'.';
+		case 13: return 'Закрыл'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' окно с настройками <u>photos</u> и <u>wall</u> при создании объявления '.$v['ob_id'].'.';
+		case 14: return 'Одна из галочек <u>photos</u> или <u>wall</u> не была установлена при создании объявления '.$v['ob_id'].'.';
+		case 15: return 'Ошибка окна с настройками <u>photos</u> и <u>wall</u> при создании объявления '.$v['ob_id'].'.';
+
 		default: return $v['type'];
 	}
 }//ob_history_types()
-function ob_history_data($v=array()) {
+function vk_history($v=array()) {
 	return _history(
 		'ob_history_types',
 		array(),
@@ -766,7 +775,7 @@ function ob_history_data($v=array()) {
 			'table' => 'vk_history'
 		)
 	);
-}//history()
+}//vk_history()
 
 
 

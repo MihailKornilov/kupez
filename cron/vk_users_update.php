@@ -7,14 +7,14 @@ function toMailSend() {
 	}
 }
 
-set_time_limit(180);
+set_time_limit(1000);
 ob_start();
 register_shutdown_function('toMailSend');
 
 define('CRON', true);
 require_once dirname(dirname(__FILE__)).'/config.php';
 
-$count = 2;
+$count = 100;
 $g = query_assoc("SELECT * FROM `setup_global`");
 $start = $g['cron_viewer_start'];
 
@@ -22,7 +22,7 @@ if(empty($g['access_token']))
 	for($n = 0; $n < 10; $n++) {
 		$sql = "SELECT * FROM `vk_user` WHERE LENGTH(`access_token`) ORDER BY `enter_last` DESC LIMIT 1";
 		$r = query_assoc($sql);
-		echo $n.'. Get token in '.$r['viewer_id'].': '.$r['access_token']."\n";
+		echo $n.'. Get token in '.$r['viewer_id'].': '.$r['access_token']."\n<br />";
 		$_GET['access_token'] = $r['access_token'];
 		$app = _vkapi('users.isAppUser', array('user_id'=>982006));
 		if(isset($app['response'])) {
@@ -60,14 +60,14 @@ $res = _vkapi('users.get', array(
 if(!empty($res['response'])) {
 	$uarr = array();
 	foreach($res['response'] as $u) {
-		usleep(800000);
+		sleep(1);
 		$app = _vkapi('users.isAppUser', array('user_id'=>$u['id']));
 		if(!isset($app['response'])) {
 			print_r($app);
 			exit;
 		}
 
-		usleep(800000);
+		sleep(1);
 		$rule = _vkapi('account.getAppPermissions', array('user_id'=>$u['id']));
 		if(!isset($rule['response'])) {
 			print_r($rule);
