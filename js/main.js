@@ -520,7 +520,7 @@ $(document)
 				width:300,
 				focus:1,
 				enter:1,
-				txt:'ѕоиск объ€влений: кто ищет, тот найдЄт!',
+				txt:'Ѕыстрый поиск объ€влений',
 				func:obSpisok
 			});
 			$('.vkButton').click(function() {
@@ -560,6 +560,10 @@ $(document)
 			var timer = 0;
 			window._onScroll.push(function(top) {
 				clearTimeout(timer);
+				if(top < 148) {
+					$('#filter').css('top', 0 + 'px');
+					return;
+				}
 				timer = setTimeout(function() {
 					$('#filter').animate({top:(top <= 148 ? 0 : top - 148) + 'px'}, 500);
 				}, 2000);
