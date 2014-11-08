@@ -99,26 +99,64 @@ var AJAX_GAZ = '/ajax/gazeta.php?' + VALUES,
 		}, 'json');
 	},
 
-	zayavFilter = function() {
+	zayavFilter = function(v, id) {
 		var v = {
-			op:'zayav_spisok',
-			find:$('#fz-find').val(),
-			client_id:$('#fz-client_id').val(),
-			cat:$('#fz-cat').val(),
-			gnyear:$('#fz-gnyear').val(),
-			nomer:$('#fz-nomer').val(),
-			nopublic:$('#fz-nopublic').val()
-		};
+				op:'zayav_spisok',
+				find:$('#find')._search('val'),
+				cat:$('#cat').val(),
+				nopublic:$('#nopublic').val(),
+				gnyear:$('#gnyear').val(),
+				nomer:parseInt($('#nomer').val()),
+				polosa:parseInt($('#polosa').val()),
+				polosa_color:$('#polosa_color').val()
+			},
+			loc = '';
+
+		if(id == 'gnyear') {
+			$('#nomer')._select(0)._select('process');
+			v.nomer = 0;
+		}
+		if(id == 'nomer' || !v.nomer) {
+			zayavPolosa();
+			$('#polosa')._select(0);
+			v.polosa = 0;
+			$('#polosa_color_filter').hide();
+			$('#polosa_color')._radio(0);
+			v.polosa_color = 0;
+		}
+		if(id == 'polosa') {
+			$('#polosa_color')._radio(0);
+			v.polosa_color = 0;
+		}
+
+		if(v.find) loc += '.find=' + escape(v.find);
+		else {
+			if(v.cat > 0) loc += '.cat=' + v.cat;
+			if(v.nopublic > 0) loc += '.nopublic=' + v.nopublic;
+			else {
+				loc += '.gnyear=' + v.gnyear;
+				if(v.nomer) loc += '.nomer=' + v.nomer;
+				if(v.polosa) loc += '.polosa=' + v.polosa;
+				if(v.polosa_color > 0) loc += '.polosa_color=' + v.polosa_color;
+			}
+		}
+
+		_cookie('zayav_find', escape(v.find));
+		_cookie('zayav_cat', v.cat);
+		_cookie('zayav_nopublic', v.nopublic);
+		_cookie('zayav_gnyear', v.gnyear);
+		_cookie('zayav_nomer', v.nomer);
+		_cookie('zayav_polosa', v.polosa);
+		_cookie('zayav_polosa_color', v.polosa_color);
+
+		$('.filter')[v.find ? 'hide' : 'show']();
+		$('#polosa_filter')[v.nomer ? 'show' : 'hide']();
+		$('#polosa_color_filter')[v.nomer && v.polosa > 1 && v.polosa < GN[v.nomer].pc ? 'show' : 'hide']();
+
 		return v;
 	},
 	zayavSpisok = function(v, id) {
-		var send = zayavFilter();
-		send[id] = v;
-		if(id == 'gnyear') {
-			$('#nomer')._select(0)._select('process');
-			send.nomer = 0;
-		}
-		$('.filter')[send.find ? 'hide' : 'show']();
+		var send = zayavFilter(v, id);
 		if($('#mainLinks').hasClass('busy'))
 			return;
 		$('#mainLinks').addClass('busy');
@@ -133,12 +171,28 @@ var AJAX_GAZ = '/ajax/gazeta.php?' + VALUES,
 			}
 		}, 'json');
 	},
+	zayavPolosa = function() {
+		if($('#nomer').val() == 0)
+			return;
+		var pc = [{uid:1,title:'ѕерва€'}];
+		for(var n = 2; n < GN[$('#nomer').val()].pc; n++)
+			pc.push({uid:n,title:n + '-€'});
+		pc.push({uid:n,title:'ѕоследн€€ ' + n + '-€'});
+		pc.push({uid:103,title:'¬нутренн€€ чЄрно-бела€'});
+		pc.push({uid:104,title:'¬нутренн€€ цветна€'});
+		pc.push({uid:105,title:'¬нутренн€€ (полоса не указана)'});
+		$('#polosa')._select({
+			title0:'Ћюба€ полоса',
+			spisok:pc,
+			func:zayavSpisok
+		});
+	},
 	zayavPub = function() {
 		var p = $('.topub');
 		if(!p.length)
 			return;
 		var pc = [];
-		for(n = 2; n < GN[$('#fz-nomer').val()].pc; n++)
+		for(n = 2; n < GN[$('#nomer').val()].pc; n++)
 			pc.push({uid:n,title:n + '-€'});
 		for(var n = 0; n < p.length; n++) {
 			var sp = p.eq(n),
@@ -801,7 +855,7 @@ $(document)
 		}, 'json');
 	})
 
-	.on('click', '.zayav_next', function() {
+	.on('click', '#zayav ._next', function() {
 		var next = $(this),
 			send = zayavFilter();
 		send.page = next.attr('val');
@@ -815,6 +869,15 @@ $(document)
 			} else
 				next.removeClass('busy');
 		}, 'json');
+	})
+	.on('click', '#zayav .clear', function() {
+		$('#find')._search('clear');
+		$('#cat').rightLink(0);
+		$('#nopublic')._check(0);
+		$('#nomer')._select(GN_FIRST_ACTIVE);
+		$('#polosa')._select(0);
+		$('#polosa_color')._check(0);
+		zayavSpisok();
 	})
 
 	.on('click', '.income-add', function() {
@@ -1269,7 +1332,8 @@ $(document)
 					enter:1,
 					txt:'Ѕыстрый поиск..',
 					func:zayavSpisok
-				});
+				})
+				.inp(Z.find);
 			$('#cat').rightLink(zayavSpisok);
 			$('.img_word')
 				.click(function() {
@@ -1321,6 +1385,8 @@ $(document)
 				spisok:GN_SEL,
 				func:zayavSpisok
 			});
+			zayavPolosa();
+			$('#polosa_color')._radio(zayavSpisok);
 			zayavPub();
 		}
 		if($('#zayav-add').length) {

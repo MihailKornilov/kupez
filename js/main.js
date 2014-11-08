@@ -513,6 +513,7 @@ $(document)
 		}
 	});
 
+
 $(document)
 	.ready(function() {
 		if($('.ob-spisok').length) {

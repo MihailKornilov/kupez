@@ -31,7 +31,7 @@ if(empty($g['access_token']))
 			break;
 		}
 		query("UPDATE `vk_user` SET `access_token`='' WHERE `viewer_id`=".$r['viewer_id']);
-		usleep(500000);
+		sleep(1);
 	}
 $_GET['access_token'] = $g['access_token'];
 

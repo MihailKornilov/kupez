@@ -61,7 +61,22 @@ switch($_GET['p']) {
 					case 'info': $html .= zayav_info(intval(@$_GET['id'])); break;
 					case 'edit': $html .= zayav_edit(intval(@$_GET['id'])); break;
 					default:
-						$html .= zayav_list();
+						$v = array();
+						if(HASH_VALUES) {
+							$ex = explode('.', HASH_VALUES);
+							foreach($ex as $r) {
+								$arr = explode('=', $r);
+								$v[$arr[0]] = $arr[1];
+							}
+						} else {
+							foreach($_COOKIE as $k => $val) {
+								$arr = explode('zayav_', $k);
+								if(isset($arr[1]))
+									$v[$arr[1]] = $val;
+							}
+						}
+						$v['find'] = unescape(@$v['find']);
+						$html .= zayav_list($v);
 				}
 				break;
 			case 'report': $html .= report(); break;
