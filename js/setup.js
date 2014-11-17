@@ -203,6 +203,34 @@ $(document)
 			});
 		}
 	})
+	.on('click', '#setup_gn #gn-clear', function() {
+		var t = $(this),
+			year = t.attr('val'),
+			dialog = _dialog({
+				top:90,
+				width:300,
+				head:'Очищение списка номеров газеты',
+				content:'<center>Подтвердите удаление списка номеров газеты<br />за ' + year + ' год.</center>',
+				butSubmit:'Очистить',
+				submit:submit
+			});
+		function submit() {
+			var send = {
+				op:'setup_gn_clear',
+				year:year
+			};
+			dialog.process();
+			$.post(AJAX_GAZ, send, function(res) {
+				if(res.success) {
+					$('#dopLinks').html(res.year);
+					$('#spisok').html(res.html);
+					dialog.close();
+					_msg('Список очищен.');
+				} else
+					dialog.abort();
+			}, 'json');
+		}
+	})
 	.on('click', '#setup_gn .add', function() {
 		var t = $(this),
 			html = '<table class="setup-gn-tab">' +

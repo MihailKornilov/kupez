@@ -1110,6 +1110,28 @@ switch(@$_POST['op']) {
 		$send['html'] = utf8(setup_gn_spisok($year));
 		jsonSuccess($send);
 		break;
+	case 'setup_gn_clear':
+		if(!$year = _isnum($_POST['year']))
+			jsonError();
+
+		$sql = "DELETE FROM `gazeta_nomer`
+				WHERE `day_print` LIKE '".$year."-%'
+				   OR `day_public` LIKE '".$year."-%'";
+		query($sql);
+
+		xcache_unset(CACHE_PREFIX.'gn');
+		GvaluesCreate();
+
+		_historyInsert(
+			1035,
+			array('value' => $year),
+			'gazeta_history'
+		);
+
+		$send['year'] = utf8(setup_gn_year($year));
+		$send['html'] = utf8(setup_gn_spisok($year));
+		jsonSuccess($send);
+		break;
 	case 'setup_gn_add':
 		if(!$week_nomer = _isnum($_POST['week_nomer']))
 			jsonError('Некорректно указан номер недели выпуска');

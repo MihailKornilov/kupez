@@ -1342,6 +1342,7 @@ function gazeta_history_types($v, $filter) {
 		case 1032: return 'В настройках изменены данные '.$v['value'].'-го номера газеты:<div class="changes">'.$v['value1'].'</div>';
 		case 1033: return 'В настройках удалён '.$v['value'].'-й номер газеты.';
 		case 1034: return 'В настройках создан список номеров газет на '.$v['value'].' год.';
+		case 1035: return 'В настройках очищен список номеров газет на '.$v['value'].' год.';
 
 		case 1041: return 'В настройках добавлено новое название полосы <u>'.$v['value'].'</u>.';
         case 1042: return 'В настройках изменены данные полосы <u>'.$v['value'].'</u>:<div class="changes">'.$v['value1'].'</div>';
@@ -2368,6 +2369,7 @@ function setup_gn_spisok($y=CURRENT_YEAR, $gnedit=0) {
 		return 'Номера газет, которые будут выходить в '.$y.' году, не определены.'.
 			'<div class="vkButton"><button>Создать список</button></div>';
 	$send =
+		'<a id="gn-clear" val="'.$y.'">Очистить список за '.$y.' год</a>'.
 		'<table class="_spisok">'.
 			'<tr><th>Номер<br />выпуска'.
 				'<th>День отправки<br />в печать'.
