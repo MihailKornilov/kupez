@@ -1,4 +1,4 @@
-var AJAX_ADMIN = '/ajax/admin.php?' + VALUES,
+var AJAX_ADMIN = APP_PATH + '/ajax/admin.php?' + VALUES,
 	userFilter = function() {
 		return {
 			op:'user_spisok',

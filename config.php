@@ -1,12 +1,10 @@
 <?php
 define('DOCUMENT_ROOT', dirname(__FILE__));
 define('NAMES', 'cp1251');
-define('DOMAIN', $_SERVER["SERVER_NAME"]);
-define('LOCAL', DOMAIN == 'kupez');
 
 $SA[166424274] = 1;
 require_once(DOCUMENT_ROOT.'/syncro.php');
-require_once(VKPATH.'/vk.php');
+require_once(API_PATH.'/vk.php');
 _appAuth();
 require_once(DOCUMENT_ROOT.'/view/main.php');
 
@@ -59,13 +57,16 @@ function _getVkUser() {//Получение данных о пользователе
 		$sql = "INSERT INTO `vk_visit` (
 				`id`,
 				`viewer_id`,
-				`day`
+				`day`,
+				`is_secure`
 			 ) VALUES (
 				".($id === false ? 0 : $id).",
 				".VIEWER_ID.",
-				'".$day."'
+				'".$day."',
+				"._isbool($_GET['is_secure'])."
 			 ) ON DUPLICATE KEY UPDATE
-				`count_day`=`count_day`+1";
+				`count_day`=`count_day`+1,
+				`is_secure`="._isbool($_GET['is_secure']);
 		query($sql);
 		query("UPDATE `vk_user` SET `count_day`=".($id === false ? 1 : "`count_day`+1")." WHERE `viewer_id`=".VIEWER_ID);
 	}

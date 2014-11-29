@@ -161,7 +161,8 @@ function admin_user_spisok($v=array()) {
 				0 AS `ob`,
 				0 AS `act`,
 				0 AS `arc`,
-				0 AS `del`
+				0 AS `del`,
+				0 AS `sec`
 			FROM `vk_user` `u`
 				".($filter['ob_write'] ? ",`vk_ob` `ob`" : '')."
 			WHERE ".$cond."
@@ -229,6 +230,18 @@ function admin_user_spisok($v=array()) {
 	while($r = mysql_fetch_assoc($q))
 		$user[$r['viewer_id_add']]['del'] = $r['c'];
 
+	//выделение пользователей, поторые зашли по https
+	$sql = "SELECT `u`.`viewer_id`
+			FROM `vk_user` `u`,
+				 `vk_visit` `v`
+			WHERE `u`.`viewer_id` IN (".implode(',', array_keys($user)).")
+			  AND `v`.`is_secure`
+			  AND `u`.`viewer_id`=`v`.`viewer_id`
+			  AND SUBSTR(`u`.`enter_last`, 1, 10)=`v`.`day`";
+	$q = query($sql);
+	while($r = mysql_fetch_assoc($q))
+		$user[$r['viewer_id']]['sec'] = 1;
+
 	foreach($user as $r)
 		$send['spisok'] .= admin_user_unit($r);
 
@@ -255,6 +268,7 @@ function admin_user_unit($r) {
 							FullDataTime($r['enter_last'])
 						).
 						(substr($r['dtime_add'], 0, 10) == CURDAY ? '<br /><span class="ob new">Новый</span>' : '').
+						($r['sec'] ? '<br /><span class="ob sec">https</span>' : '').
 					'</div>'.
 					'<a href="'.URL.'&p=admin&id='.$r['viewer_id'].'"><b>'.$r['name'].'</b></a>'.
 					'<div class="city">'.$r['country_name'].($r['city_name'] ? ', '.$r['city_name'] : '').'</div>'.
@@ -462,4 +476,3 @@ function admin_find_query_spisok($v=array()) {
 		$send['spisok'] .= '</table>';
 	return $send;
 }//admin_find_query_spisok()
-

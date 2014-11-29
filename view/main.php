@@ -79,42 +79,31 @@ function _header() {
 		'<meta http-equiv="content-type" content="text/html; charset=windows-1251" />'.
 		'<title>КупецЪ - Приложение '.API_ID.'</title>'.
 
-		//Отслеживание ошибок в скриптах
-		(SA ? '<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/js/errors.js?'.VERSION.'"></script>' : '').
+		_api_scripts().
 
-		//Стороние скрипты
-		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/js/jquery-2.0.3.min.js"></script>'.
-		'<script type="text/javascript" src="//'.(LOCAL ? 'nyandoma/vk' : 'vk.com/js/api').'/xd_connection.js?20"></script>'.
+		($_GET['p'] == 'gazeta' ?
+			'<script type="text/javascript">'.
+				'var GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.','.
+					'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.','.
+					'ADMIN='.VIEWER_ADMIN.';'.
+			'</script>'
+		: '').
 
-		//Установка начального значения таймера.
-		(SA ? '<script type="text/javascript">var TIME=(new Date()).getTime();</script>' : '').
 
-		'<script type="text/javascript">'.
-			(LOCAL ? 'for(var i in VK)if(typeof VK[i]=="function")VK[i]=function(){return false};' : '').
-			'var DOMAIN="'.DOMAIN.'",'.
-				'VALUES="'.VALUES.'",'.
-			($_GET['p'] == 'gazeta' ?
-				'GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.','.
-				'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.','.
-				'ADMIN='.VIEWER_ADMIN.','
-			: '').
-				'VIEWER_ID='.VIEWER_ID.';'.
-		'</script>'.
+		'<script type="text/javascript" src="'.APP_PATH.'/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
 
-		//Подключение api VK. Стили VK должны стоять до основных стилей сайта
-		'<link href="//nyandoma'.(LOCAL ? '' : '.ru').'/vk'.(defined('TEST') ? 'test' : '').'/vk'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
-		'<script type="text/javascript" src="//nyandoma'.(LOCAL ? '' : '.ru').'/vk'.(defined('TEST') ? 'test' : '').'/vk'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
+		'<link rel="stylesheet" type="text/css" href="'.APP_PATH.'/css/main'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
+		'<script type="text/javascript" src="'.APP_PATH.'/js/main'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
-		'<script type="text/javascript" src="/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
+		($_GET['p'] == 'gazeta' ?
+			'<link rel="stylesheet" type="text/css" href="'.APP_PATH.'/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
+			'<script type="text/javascript" src="'.APP_PATH.'/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
+		: '').
 
-		'<link href="/css/main'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" rel="stylesheet" type="text/css" />'.
-		'<script type="text/javascript" src="/js/main'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
-
-		($_GET['p'] == 'gazeta' ? '<link rel="stylesheet" type="text/css" href="/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />' : '').
-		($_GET['p'] == 'gazeta' ? '<script type="text/javascript" src="/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
-
-		($_GET['p'] == 'admin' ? '<link rel="stylesheet" type="text/css" href="/css/admin'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />' : '').
-		($_GET['p'] == 'admin' ? '<script type="text/javascript" src="/js/admin'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>' : '').
+		($_GET['p'] == 'admin' ?
+			'<link rel="stylesheet" type="text/css" href="'.APP_PATH.'/css/admin'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
+			'<script type="text/javascript" src="'.APP_PATH.'/js/admin'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
+		: '').
 
 		'</head>'.
 		'<body>'.
@@ -751,7 +740,7 @@ function ob_history_types($v) {
 						'апретил'.(_viewer($v['viewer_id'], 'sex') == 1 ? 'a' : '').' приложению отправлять уведомления.';
 
 		case 8: return 'Разместил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' объявление '.$v['ob_id'].' на стене '.
-						'<a href="http://vk.com/id'.$v['viewer_id_add'].'" target="_blank">своей страницы</a>.';
+						'<a href="//vk.com/id'.$v['viewer_id_add'].'" target="_blank">своей страницы</a>.';
 		case 9: return 'Отклонил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' размещение объявления '.$v['ob_id'].' на стене своей страницы.';
 
 		case 10: return 'Изменил'.(_viewer($v['viewer_id_add'], 'sex') == 1 ? 'a' : '').' данные объявления '.$v['ob_id'].':'.
