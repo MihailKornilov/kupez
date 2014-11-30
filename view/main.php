@@ -90,19 +90,19 @@ function _header() {
 		: '').
 
 
-		'<script type="text/javascript" src="'.APP_PATH.'/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
+		'<script type="text/javascript" src="'.APP_HTML.'/js/G_values.js?'.G_VALUES_VERSION.'"></script>'.
 
-		'<link rel="stylesheet" type="text/css" href="'.APP_PATH.'/css/main'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
-		'<script type="text/javascript" src="'.APP_PATH.'/js/main'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
+		'<link rel="stylesheet" type="text/css" href="'.APP_HTML.'/css/main'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
+		'<script type="text/javascript" src="'.APP_HTML.'/js/main'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
 		($_GET['p'] == 'gazeta' ?
-			'<link rel="stylesheet" type="text/css" href="'.APP_PATH.'/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
-			'<script type="text/javascript" src="'.APP_PATH.'/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
+			'<link rel="stylesheet" type="text/css" href="'.APP_HTML.'/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
+			'<script type="text/javascript" src="'.APP_HTML.'/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
 		: '').
 
 		($_GET['p'] == 'admin' ?
-			'<link rel="stylesheet" type="text/css" href="'.APP_PATH.'/css/admin'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
-			'<script type="text/javascript" src="'.APP_PATH.'/js/admin'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
+			'<link rel="stylesheet" type="text/css" href="'.APP_HTML.'/css/admin'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
+			'<script type="text/javascript" src="'.APP_HTML.'/js/admin'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
 		: '').
 
 		'</head>'.
@@ -190,7 +190,7 @@ function GvaluesCreate() {// составление файла G_values.js
 
 	$save .= "\n".'GN={'.implode(',', $gn).'};';
 
-	$fp = fopen(PATH.'/js/G_values.js', 'w+');
+	$fp = fopen(APP_PATH.'/js/G_values.js', 'w+');
 	fwrite($fp, $save);
 	fclose($fp);
 
@@ -772,7 +772,7 @@ function vk_history($v=array()) {
 /*
 function to_new_images() {//Перенос картинок в новый формат
 	define('IMLINK', 'http://'.DOMAIN.'/files/images/');
-	define('IMPATH', PATH.'files/images/');
+	define('IMPATH', APP_PATH.'/files/images/');
 	$sql = "SELECT * FROM `vk_ob` WHERE LENGTH(file) LIMIT 300";
 	$q = query($sql);
 	while($r = mysql_fetch_assoc($q)) {
@@ -790,7 +790,7 @@ function to_new_images() {//Перенос картинок в новый формат
 			rename($name_small, IMPATH.$name_small_new);
 
 			$name_big = IMPATH.$name.'b.jpg';
-			$im = imagecreatefromjpeg(PATH.'files/images/'.$name.'b.jpg');
+			$im = imagecreatefromjpeg(APP_PATH.'/files/images/'.$name.'b.jpg');
 			$x_big = imagesx($im);
 			$y_big = imagesy($im);
 			$name_big_new = 'ob'.$r['id'].'-'.$name.($name[strlen($name) - 1] != '-' ? '-' : '').'b.jpg';

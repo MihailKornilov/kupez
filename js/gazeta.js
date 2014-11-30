@@ -1,4 +1,4 @@
-var AJAX_GAZ = APP_PATH + '/ajax/gazeta.php?' + VALUES,
+var AJAX_GAZ = APP_HTML + '/ajax/gazeta.php?' + VALUES,
 	clientAdd = function(callback) {
 		var html = '<table class="client-add">' +
 			'<tr><td class="label">Категория:<td><input type="hidden" id="cperson">' +
@@ -1350,7 +1350,7 @@ $(document)
 							remove:1
 						});
 					else
-						location.href = APP_PATH + '/view/ob-word.php?' + VALUES + "&gn=" + gn;
+						location.href = APP_HTML + '/view/ob-word.php?' + VALUES + "&gn=" + gn;
 					return false;
 				})
 				.vkHint({

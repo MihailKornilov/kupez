@@ -402,8 +402,8 @@ switch(@$_POST['op']) {
 			while($r = mysql_fetch_assoc($q)) {
 				$small_name = str_replace(VIEWER_ID.'-', 'zayav'.$send['id'].'-', $r['small_name']);
 				$big_name = str_replace(VIEWER_ID.'-', 'zayav'.$send['id'].'-', $r['big_name']);
-				rename(PATH.'files/images/'.$r['small_name'], PATH.'files/images/'.$small_name);
-				rename(PATH.'files/images/'.$r['big_name'], PATH.'files/images/'.$big_name);
+				rename(APP_PATH.'/files/images/'.$r['small_name'], APP_PATH.'/files/images/'.$small_name);
+				rename(APP_PATH.'/files/images/'.$r['big_name'], APP_PATH.'/files/images/'.$big_name);
 				query("UPDATE `images` SET `small_name`='".$small_name."',`big_name`='".$big_name."' WHERE `id`=".$r['id']);
 				if(!$n) {
 					$image_id = $r['id'];

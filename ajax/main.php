@@ -112,8 +112,8 @@ switch(@$_POST['op']) {
 			while($r = mysql_fetch_assoc($q)) {
 				$small_name = str_replace(VIEWER_ID.'-', 'ob'.$insert_id.'-', $r['small_name']);
 				$big_name = str_replace(VIEWER_ID.'-', 'ob'.$insert_id.'-', $r['big_name']);
-				rename(PATH.'files/images/'.$r['small_name'], PATH.'files/images/'.$small_name);
-				rename(PATH.'files/images/'.$r['big_name'], PATH.'files/images/'.$big_name);
+				rename(APP_PATH.'/files/images/'.$r['small_name'], APP_PATH.'/files/images/'.$small_name);
+				rename(APP_PATH.'/files/images/'.$r['big_name'], APP_PATH.'/files/images/'.$big_name);
 				query("UPDATE `images` SET `small_name`='".$small_name."',`big_name`='".$big_name."' WHERE `id`=".$r['id']);
 				if(!$n) {
 					$image_id = $r['id'];
@@ -127,7 +127,7 @@ switch(@$_POST['op']) {
 			//получение изображения для прикрепления к посту на стену
 			if(!empty($upload_url)) {
 				$img = file_get_contents($image_post_url);
-				$name = PATH.'files/'.VIEWER_ID.time().'.jpg';
+				$name = APP_PATH.'/files/'.VIEWER_ID.time().'.jpg';
 				$f = fopen($name, 'w');
 				fwrite($f, $img);
 				fclose($f);
