@@ -406,7 +406,7 @@ $(document)
 							$('#city_id')._select(0)._select('process');
 							VK.api('places.getCities',{country:id}, function(data) {
 								var d = data.response;
-								for(n = 0; n < d.length; n++)
+								for(var n = 0; n < d.length; n++)
 									d[n].uid = d[n].cid;
 								d[0].content = '<b>' + d[0].title + '</b>';
 								$('#city_id')._select(d);
@@ -512,6 +512,7 @@ $(document)
 			}, 'json');
 		}
 	});
+
 
 $(document)
 	.ready(function() {

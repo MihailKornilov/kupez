@@ -8,8 +8,12 @@ $mysql = array(
 );
 
 define('API_ID', 2881875);
-define('PATH', 'c:/www/kupez/');
-define('VKPATH', 'c:/www/nyandoma/vk/');
 define('CACHE_PREFIX', 'kupez_');
+
+define('API_HTML', '/.vkapp/.api');
+define('API_PATH', 'c:/www/nyandoma'.API_HTML);
+
+define('APP_HTML', '/.vkapp/kupez');
+define('APP_PATH', 'c:/www/nyandoma'.APP_HTML);
 
 $_GET['viewer_id'] = 982006;

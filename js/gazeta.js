@@ -574,7 +574,7 @@ $.fn.gnGet = function(o) {
 				break;
 			var sp = GN[n];
 			if(!sp) { // если номер пропущен, тогда не выводится
-				end++;
+				//end++;
 				continue;
 			}
 			html +=

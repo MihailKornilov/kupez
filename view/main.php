@@ -81,7 +81,7 @@ function _header() {
 
 		_api_scripts().
 
-		($_GET['p'] == 'gazeta' ?
+		(@$_GET['p'] == 'gazeta' ?
 			'<script type="text/javascript">'.
 				'var GN_FIRST_ACTIVE='.GN_FIRST_ACTIVE.','.
 					'GN_LAST_ACTIVE='.GN_LAST_ACTIVE.','.
@@ -95,12 +95,16 @@ function _header() {
 		'<link rel="stylesheet" type="text/css" href="'.APP_HTML.'/css/main'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
 		'<script type="text/javascript" src="'.APP_HTML.'/js/main'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
 
-		($_GET['p'] == 'gazeta' ?
+		(@$_GET['p'] == 'gazeta' ?
 			'<link rel="stylesheet" type="text/css" href="'.APP_HTML.'/css/gazeta'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
-			'<script type="text/javascript" src="'.APP_HTML.'/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
+			'<script type="text/javascript" src="'.APP_HTML.'/js/gazeta'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'.
+			(@$_GET['d'] == 'setup' ?
+				'<script type="text/javascript" src="'.APP_HTML.'/js/setup'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
+			: '')
 		: '').
 
-		($_GET['p'] == 'admin' ?
+
+		(@$_GET['p'] == 'admin' ?
 			'<link rel="stylesheet" type="text/css" href="'.APP_HTML.'/css/admin'.(DEBUG ? '' : '.min').'.css?'.VERSION.'" />'.
 			'<script type="text/javascript" src="'.APP_HTML.'/js/admin'.(DEBUG ? '' : '.min').'.js?'.VERSION.'"></script>'
 		: '').

@@ -29,7 +29,6 @@ switch(@$_POST['op']) {
 						'city'
 		));
 		$send['user'] = $res['response'][0];
-		$send['url'] = $res['url'];
 
 		$res = _vkapi('account.getAppPermissions', array('user_id' => $viewer_id));
 		$send['menu_left'] = $res;

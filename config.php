@@ -35,7 +35,7 @@ function _getSetupGlobal() {//Получение глобальных данных
 		$gn = query_assoc($sql);
 		xcache_set($key, $gn, 86400);
 	}
-	define('GN_FIRST_ACTIVE', $gn['first']);
+	define('GN_FIRST_ACTIVE', $gn['first'] - 1);
 	define('GN_LAST_ACTIVE',  $gn['max']);
 }//end of _getSetupGlobal()
 function _getVkUser() {//Получение данных о пользователе
