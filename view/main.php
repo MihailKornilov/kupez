@@ -130,7 +130,6 @@ function GvaluesCreate() {// составление файла G_values.js
 		"\n".'PERSON_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_person` ORDER BY `sort`").','.
 		"\n".'RUBRIC_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_rubric` ORDER BY `sort`").','.
 		"\n".'RUBRIC_ASS=_toAss(RUBRIC_SPISOK),'.
-		"\n".'INCOME_SPISOK='.query_selJson("SELECT `id`,`name` FROM `setup_income` ORDER BY `sort`").','.
 		"\n".'SKIDKA_SPISOK='.query_selJson("SELECT `razmer`,CONCAT(`razmer`,'%') FROM `setup_skidka` ORDER BY `razmer`").','.
 		"\n".'TXT_LEN_FIRST='.$g['txt_len_first'].','.
 		"\n".'TXT_CENA_FIRST='.$g['txt_cena_first'].','.

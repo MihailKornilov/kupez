@@ -331,7 +331,7 @@ var AJAX_GAZ = APP_HTML + '/ajax/gazeta.php?' + VALUES,
 		var send = {
 			op:'income_spisok',
 			day:$('.selected').val(),
-			income_id:$('#income_id').val(),
+			invoice_id:$('#invoice_id').val(),
 			worker_id:$('#worker_id').val()
 		};
 		$('.inc-path').addClass('_busy');
@@ -885,8 +885,8 @@ $(document)
 			'<table class="income-add-tab">' +
 				(OPL.client_fio ? '<tr><td class="label">Клиент:<td>' + OPL.client_fio : '') +
 				(OPL.zayav_name ? '<tr><td class="label">Заявка:<td><b>' + OPL.zayav_name + '</b>' : '') +
-				'<tr><td class="label">Вид платежа:<td><input type="hidden" id="income_id_add">' +
-					'<a href="' + URL + '&p=gazeta&d=setup&d1=money" class="img_edit' + _tooltip('Настройка видов платежей', -85) + '</a>' +
+				'<tr><td class="label">На счёт:<td><input type="hidden" id="invoice_id_add">' +
+					'<a href="' + URL + '&p=gazeta&d=setup&d1=invoice" class="img_edit' + _tooltip('Настройка счетов', -57) + '</a>' +
 				'<tr><td class="label">Сумма:<td><input type="text" id="sum" class="money" maxlength="11"> руб.' +
 				'<tr><td class="label">Комментарий:<td><input type="text" id="prim" maxlength="100">' +
 			'</table>',
@@ -898,10 +898,10 @@ $(document)
 			});
 		$('#sum').focus();
 		$('#sum,#prim').keyEnter(submit);
-		$('#income_id_add')._select({
+		$('#invoice_id_add')._select({
 			width:180,
 			title0:'Не указан',
-			spisok:INCOME_SPISOK,
+			spisok:INVOICE_SPISOK,
 			func:function(uid) {
 				$('#sum').focus();
 			}
@@ -910,13 +910,13 @@ $(document)
 			var send = {
 				op:'income_add',
 				from:OPL.from,
-				income_id:$('#income_id_add').val(),
+				invoice_id:$('#invoice_id_add').val(),
 				sum:$('#sum').val(),
 				zayav_id:OPL.zayav_id || 0,
 				client_id:OPL.client_id || 0,
 				prim:$.trim($('#prim').val())
 			};
-			if(send.income_id == 0) err('Не указан вид платежа');
+			if(send.invoice_id == 0) err('Не указан счёт');
 			else if(!REGEXP_CENA.test(send.sum) || send.sum == 0) {
 				err('Некорректно указана сумма.');
 				$('#sum').focus();
@@ -993,7 +993,7 @@ $(document)
 				client_id:$('#money_client_id').val(),
 				zayav_id:$('#money_zayav_id').val(),
 				deleted:$('#money_deleted').val(),
-				income_id:$('#money_income_id').val(),
+				invoice_id:$('#money_invoice_id').val(),
 				worker_id:$('#money_worker_id').val(),
 				day:$('.selected').val() || ''
 			};
@@ -1698,10 +1698,10 @@ $(document)
 
 		if($('#report.income').length) {
 			window._calendarFilter = incomeSpisok;
-			$('#income_id')._select({
+			$('#invoice_id')._select({
 				width:160,
-				title0:'Любые платежи',
-				spisok:INCOME_SPISOK,
+				title0:'Любой счёт',
+				spisok:INVOICE_SPISOK,
 				func:incomeSpisok
 			});
 			if(window.WORKERS)
@@ -1889,5 +1889,37 @@ $(document)
 					});
 				}
 			});
+		}
+		if($('#report.zayav').length) {
+			$('#gnyear').years({
+				func:rz_nomer
+			});
+			$('#nomer')._select({
+				width:160,
+				spisok:GN_SEL,
+				func:rz_nomer
+			});
+			function rz_nomer(v, id) {
+				if($('#mainLinks').hasClass('busy'))
+					return;
+				var send = {
+					op:'report_zayav_nomer',
+					nomer:$('#nomer').val(),
+					year:id == 'gnyear' ? v : 0
+				};
+				$('#mainLinks').addClass('busy');
+				$.post(AJAX_GAZ, send, function(res) {
+					$('#mainLinks').removeClass('busy');
+					if(res.success) {
+						$('#spisok').html(res.spisok);
+						if(res.gn_sel) {
+							$('#nomer')._select(res.gn_sel);
+							$('#nomer')._select(res.gn_first);
+						}
+						zayavPub();
+					}
+				}, 'json');
+
+			}
 		}
 	});
