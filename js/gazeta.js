@@ -78,7 +78,9 @@ var AJAX_GAZ = APP_HTML + '/ajax/gazeta.php?' + VALUES,
 			person:$('#person').val(),
 			order:$('#order').val(),
 			skidka:$('#skidka').val(),
-			dolg:$('#dolg').val()
+			dolg:$('#dolg').val(),
+			gnyear:$('#gnyear').val(),
+			nomer:$('#nomer').val()
 		};
 		$('.filter')[v.fast ? 'hide' : 'show']();
 		return v;
@@ -368,6 +370,28 @@ var AJAX_GAZ = APP_HTML + '/ajax/gazeta.php?' + VALUES,
 				$('#monthList').html(res.mon);
 			}
 		}, 'json');
+	},
+
+	rz_nomer = function(v, id) {
+		if($('#mainLinks').hasClass('busy'))
+			return;
+		var send = {
+			op:'report_zayav_nomer',
+			nomer:$('#nomer').val(),
+			year:id == 'gnyear' ? v : 0
+		};
+		$('#mainLinks').addClass('busy');
+		$.post(AJAX_GAZ, send, function(res) {
+			$('#mainLinks').removeClass('busy');
+			if(res.success) {
+				$('#spisok').html(res.spisok);
+				if(res.gn_sel) {
+					$('#nomer')._select(res.gn_sel);
+					$('#nomer')._select(res.gn_first);
+				}
+			}
+		}, 'json');
+
 	};
 
 
@@ -1189,6 +1213,32 @@ $(document)
 				delayShow:1000,
 				correct:0
 			});
+			$('#gnyear')._select({
+				title0:'Год не указан',
+				spisok:GN_YEAR,
+				func:function(v) {
+					$('#nomer').val(0);
+					if(!v)
+						$('#nomer')._select('remove');
+					else {
+						$('#nomer')._select({
+							title0: 'Номер не указан',
+							spisok:[],
+							func: clientSpisokLoad
+						});
+						$('#nomer')._select('process');
+						var send = {
+							op:'gn_spisok_load',
+							year:v
+						};
+						$.post(AJAX_GAZ, send, function (res) {
+							if(res.success)
+								$('#nomer')._select(res.gn_sel);
+						}, 'json');
+					}
+					clientSpisokLoad();
+				}
+			});
 		}
 		if($('#clientInfo').length) {
 			$('.cedit').click(function() {
@@ -1899,27 +1949,5 @@ $(document)
 				spisok:GN_SEL,
 				func:rz_nomer
 			});
-			function rz_nomer(v, id) {
-				if($('#mainLinks').hasClass('busy'))
-					return;
-				var send = {
-					op:'report_zayav_nomer',
-					nomer:$('#nomer').val(),
-					year:id == 'gnyear' ? v : 0
-				};
-				$('#mainLinks').addClass('busy');
-				$.post(AJAX_GAZ, send, function(res) {
-					$('#mainLinks').removeClass('busy');
-					if(res.success) {
-						$('#spisok').html(res.spisok);
-						if(res.gn_sel) {
-							$('#nomer')._select(res.gn_sel);
-							$('#nomer')._select(res.gn_first);
-						}
-						zayavPub();
-					}
-				}, 'json');
-
-			}
 		}
 	});

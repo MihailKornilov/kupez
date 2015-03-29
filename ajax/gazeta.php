@@ -213,18 +213,29 @@ switch(@$_POST['op']) {
 		jsonSuccess();
 		break;
 	case 'client_spisok':
-		$data = client_data(1, clientFilter($_POST));
+		$filter = clientFilter($_POST);
+		$data = client_data($filter);
 		$send['result'] = utf8($data['result']);
 		$send['spisok'] = utf8($data['spisok']);
+		if(!$data['filter']['nomer'] && $data['filter']['page'] == 1)
+			$send['gn_sel'] = gnJson($data['filter']['gnyear'], 1);
 		jsonSuccess($send);
 		break;
 	case 'client_next':
 		if(!preg_match(REGEXP_NUMERIC, $_POST['page']))
 			jsonError();
-		$data = client_data(intval($_POST['page']), clientFilter($_POST));
+		$data = client_data(clientFilter($_POST));
 		$send['spisok'] = utf8($data['spisok']);
 		jsonSuccess($send);
 		break;
+
+	case 'gn_spisok_load':
+		if(!$year = _isnum($_POST['year']))
+			jsonError();
+		$send['gn_sel'] = gnJson($year, 1);
+		jsonSuccess($send);
+		break;
+
 
 	case 'zayav_spisok':
 		$data = zayav_data($_POST);
@@ -686,6 +697,31 @@ switch(@$_POST['op']) {
 				),
 				'gazeta_history'
 			);
+
+		//»зменение объ€влени€ в общем доступе
+		if($z['category'] == 1) {
+			$sql = "SELECT * FROM `vk_ob` WHERE `gazeta_id`=".$zayav_id." LIMIT 1";
+			if($r = query_assoc($sql)) {
+				$sql = "UPDATE `vk_ob`
+				        SET `rubric_id`=".$rubric_id.",
+							`rubric_sub_id`=".$rubric_sub_id.",
+							`txt`='".addslashes($txt)."',
+							`telefon`='".addslashes($telefon)."'
+						WHERE `id`=".$r['id'];
+				query($sql);
+				//ќбновление даты выхода объ€влени€
+				$sql = "SELECT IFNULL(MAX(`general_nomer`),0)
+						FROM `gazeta_nomer_pub`
+						WHERE `zayav_id`=".$zayav_id;
+				if($max = query_value($sql)) {
+					$sql = "UPDATE `vk_ob`
+				            SET `day_active`=DATE_ADD('"._gn($max, 'day_public')."',INTERVAL 30 DAY)
+							WHERE `id`=".$r['id'];
+					query($sql);
+				}
+			}
+		}
+
 		jsonSuccess();
 		break;
 	case 'zayav_del':

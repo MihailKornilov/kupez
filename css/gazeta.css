@@ -10,6 +10,7 @@
 #client #person_select{margin-top:5px}
 #client #skidka_select{margin-top:5px}
 #client #dolg_check{margin-top:20px}
+#client #nomer_select{margin-top:5px}
 #client .unit{margin-top:8px;border-bottom:#dae1e8 solid 1px;padding:5px}
 #client .unit em{background-color:#FFC; border-bottom:#FE2 solid 1px}
 #client .cltab{border-spacing:3px}
@@ -19,6 +20,7 @@
 #client .balans{float:right;width:110px;color:#888}
 #client .balans b{float:right;color:#090}
 #client b.minus{color:#a00}
+#client ._empty{margin-top:10px}
 
 /* Окно внесения нового клиента */
 .client-add{border-spacing:8px}
@@ -53,6 +55,7 @@
 #zayav #find{margin-top:10px}
 #zayav .img_word{float:right;position:relative;top:-1px;left:10px}
 #zayav #nopublic_check{margin-top:20px}
+#zayav ._empty{margin:10px}
 #nomer_select .selun b{display:inline-block;width:14px;text-align:right;margin-right:2px}
 #nomer_select .selun span{display:inline;color:#555}
 #nomer_select .selun.ov span{color:#ddd}

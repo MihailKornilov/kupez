@@ -215,19 +215,15 @@ function viewerAdded($viewer_id) {//Вывод сотрудника, который вносил запись с уч
 // ---===! client !===--- Секция клиентов
 
 function clientFilter($v=array()) {
-	if(empty($v['fast']) || !preg_match(REGEXP_WORDFIND, win1251($v['fast'])))
-		$v['fast'] = '';
-	if(empty($v['person']) || !preg_match(REGEXP_NUMERIC, $v['person']))
-		$v['person'] = 0;
-	if(empty($v['skidka']) || !preg_match(REGEXP_NUMERIC, $v['skidka']))
-		$v['skidka'] = 0;
-	if(empty($v['dolg']) || !preg_match(REGEXP_BOOL, $v['dolg']))
-		$v['dolg'] = 0;
 	$filter = array(
-		'fast' => win1251(htmlspecialchars(trim($v['fast']))),
-		'person' => intval($v['person']),
-		'skidka' => intval($v['skidka']),
-		'dolg' => intval($v['dolg'])
+		'page' => _isnum(@$v['page']) ? $v['page'] : 1,
+		'limit' => _isnum(@$v['limit']) ? $v['limit'] : 20,
+		'fast' => win1251(htmlspecialchars(trim(@$v['fast']))),
+		'person' => _isnum(@$v['person']),
+		'skidka' => _isnum(@$v['skidka']),
+		'dolg' => _isbool(@$v['dolg']),
+		'gnyear' => _isnum(@$v['gnyear']),
+		'nomer' => _isnum(@$v['nomer'])
 	);
 	switch(intval(@$v['order'])) {
 		default:
@@ -242,7 +238,9 @@ function clientFilter($v=array()) {
 
 	return $filter;
 }//clientFilter()
-function client_data($page=1, $filter=array()) {
+function client_data($v=array()) {
+	$filter = clientFilter($v);
+
 	$cond = "!`deleted`";
 	$reg = '';
 	$regEngRus = '';
@@ -269,28 +267,41 @@ function client_data($page=1, $filter=array()) {
 		if($engRus)
 			$regEngRus = '/('.$engRus.')/i';
 	} else {
-		if(!empty($filter['person']))
+		if($filter['person'])
 			$cond .= " AND `person`=".$filter['person'];
-		if(!empty($filter['skidka']))
+		if($filter['skidka'])
 			$cond .= " AND `skidka`=".$filter['skidka'];
-		if(isset($filter['dolg']) && $filter['dolg'] == 1)
+		if($filter['dolg'])
 			$cond .= " AND `balans`<0";
+		if($filter['gnyear']) {
+			if($filter['nomer']) {
+				$sql = "SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer'];
+				$ids = query_ids($sql);
+				$sql = "SELECT `client_id` FROM `gazeta_zayav` WHERE `id` IN (".$ids.")";
+				$ids = query_ids($sql);
+				$cond .= " AND `id` IN (".$ids.")";
+			}
+		}
+
 	}
 	$all = query_value("SELECT COUNT(`id`) AS `all` FROM `gazeta_client` WHERE ".$cond." LIMIT 1");
 	if($all == 0)
 		return array(
 			'all' => 0,
 			'result' => 'Клиентов не найдено',
-			'spisok' => '<div class="_empty">Клиентов не найдено.</div>'
+			'spisok' => '<div class="_empty">Клиентов не найдено.</div>',
+			'filter' => $filter
 		);
 
 	$send['all'] = $all;
-	$dolg = empty($filter['dolg']) ? 0 : abs(query_value("SELECT SUM(`balans`) FROM `gazeta_client` WHERE `deleted`=0 AND `balans`<0 LIMIT 1"));
+	$send['filter'] = $filter;
+	$dolg = empty($filter['dolg']) ? 0 : abs(query_value("SELECT SUM(`balans`) FROM `gazeta_client` WHERE ".$cond." LIMIT 1"));
 	$send['result'] =
 		'Найден'._end($all, ' ', 'о ').$all.' клиент'._end($all, '', 'а', 'ов').
 		($dolg ? '<span class="dolg">(Общая сумма долга = '.$dolg.' руб.)</span>' : '');
 
-	$limit = 20;
+	$page = $filter['page'];
+	$limit = $filter['limit'];
 	$start = ($page - 1) * $limit;
 	$spisok = array();
 	$sql = "SELECT *
@@ -346,7 +357,7 @@ function client_data($page=1, $filter=array()) {
 				`client_id` AS `id`,
 				COUNT(`id`) AS `count`
 			FROM `gazeta_zayav`
-			WHERE `deleted`=0
+			WHERE !`deleted`
 			  AND `client_id` IN (".implode(',', array_keys($spisok)).")
 			GROUP BY `client_id`";
 	$q = query($sql);
@@ -381,8 +392,17 @@ function client_data($page=1, $filter=array()) {
 	return $send;
 }//client_data()
 function client_list() {
-	$data = client_data(1, clientFilter());
+	$data = client_data();
+
+	$sql = "SELECT `day_print` FROM `gazeta_nomer` ORDER BY `day_public` LIMIT 1";
+	$years = array();
+	for($y = substr(query_value($sql), 0, 4); $y <= strftime('%Y'); $y++)
+		$years[$y] = $y;
+
 	return
+	'<script type="text/javascript">'.
+		'var GN_YEAR='._selJson($years).';'.
+	'</script>'.
 	'<div id="client">'.
 		'<div id="find"></div>'.
 		'<div class="result">'.$data['result'].'</div>'.
@@ -390,11 +410,17 @@ function client_list() {
 				'<tr><td class="left">'.$data['spisok'].
 					'<td class="right">'.
 						'<div id="buttonCreate"><a>Новый клиент</a></div>'.
-						'<div class="findHead">Сортировка<div><input type="hidden" id="order" value="1">'.
+						'<div class="findHead">Сортировка</div>'.
+						'<input type="hidden" id="order" value="1" />'.
 						'<div class="filter">'.
-							'<div class="findHead">Категория<div><input type="hidden" id="person">'.
-                            '<div class="findHead">Скидка<div><input type="hidden" id="skidka">'.
+							'<div class="findHead">Категория</div>'.
+							'<input type="hidden" id="person" />'.
+                            '<div class="findHead">Скидка</div>'.
+							'<input type="hidden" id="skidka" />'.
 							_check('dolg', 'Должники').
+							'<div class="findHead">Номер газеты</div>'.
+							'<input type="hidden" id="gnyear" />'.
+							'<input type="hidden" id="nomer" />'.
 						'</div>'.
 			'</table>'.
 	'</div>';
