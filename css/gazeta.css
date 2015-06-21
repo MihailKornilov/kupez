@@ -54,6 +54,7 @@
 #zayav .clear{float:right}
 #zayav #find{margin-top:10px}
 #zayav .img_word{float:right;position:relative;top:-1px;left:10px}
+#zayav #onpay_check{margin:15px 0 10px;color:red}
 #zayav #nopublic_check{margin-top:20px}
 #zayav ._empty{margin:10px}
 #nomer_select .selun b{display:inline-block;width:14px;text-align:right;margin-right:2px}

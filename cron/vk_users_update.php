@@ -8,6 +8,9 @@ function toMailSend() {
 }
 
 set_time_limit(1000);
+error_reporting(E_ALL);
+ini_set('display_errors', true);
+ini_set('display_startup_errors', true);
 ob_start();
 register_shutdown_function('toMailSend');
 

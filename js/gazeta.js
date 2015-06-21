@@ -74,7 +74,7 @@ var AJAX_GAZ = APP_HTML + '/ajax/gazeta.php?' + VALUES,
 	},
 	clientFilter = function() {
 		var v = {
-			fast:cFind.inp(),
+			fast:$('#find')._search('val'),
 			person:$('#person').val(),
 			order:$('#order').val(),
 			skidka:$('#skidka').val(),
@@ -106,7 +106,8 @@ var AJAX_GAZ = APP_HTML + '/ajax/gazeta.php?' + VALUES,
 				op:'zayav_spisok',
 				find:$('#find')._search('val'),
 				cat:$('#cat').val(),
-				nopublic:$('#nopublic').val(),
+				onpay:_num($('#onpay').val()),
+				nopublic:_num($('#nopublic').val()),
 				gnyear:$('#gnyear').val(),
 				nomer:parseInt($('#nomer').val()),
 				polosa:parseInt($('#polosa').val()),
@@ -133,17 +134,21 @@ var AJAX_GAZ = APP_HTML + '/ajax/gazeta.php?' + VALUES,
 
 		if(v.find) loc += '.find=' + escape(v.find);
 		else {
-			if(v.cat > 0) loc += '.cat=' + v.cat;
-			if(v.nopublic > 0) loc += '.nopublic=' + v.nopublic;
+			if(v.onpay) loc += '.onpay=1';
 			else {
-				loc += '.gnyear=' + v.gnyear;
-				if(v.nomer) loc += '.nomer=' + v.nomer;
-				if(v.polosa) loc += '.polosa=' + v.polosa;
-				if(v.polosa_color > 0) loc += '.polosa_color=' + v.polosa_color;
+				if(v.cat > 0) loc += '.cat=' + v.cat;
+				if(v.nopublic) loc += '.nopublic=1';
+				else {
+					loc += '.gnyear=' + v.gnyear;
+					if(v.nomer) loc += '.nomer=' + v.nomer;
+					if(v.polosa) loc += '.polosa=' + v.polosa;
+					if(v.polosa_color > 0) loc += '.polosa_color=' + v.polosa_color;
+				}
 			}
 		}
 
 		_cookie('zayav_find', escape(v.find));
+		_cookie('zayav_onpay', v.onpay);
 		_cookie('zayav_cat', v.cat);
 		_cookie('zayav_nopublic', v.nopublic);
 		_cookie('zayav_gnyear', v.gnyear);
@@ -152,6 +157,8 @@ var AJAX_GAZ = APP_HTML + '/ajax/gazeta.php?' + VALUES,
 		_cookie('zayav_polosa_color', v.polosa_color);
 
 		$('.filter')[v.find ? 'hide' : 'show']();
+		$('.filter_nomer')[v.nopublic ? 'hide' : 'show']();
+		$('.filter_onpay')[v.onpay ? 'hide' : 'show']();
 		$('#polosa_filter')[v.nomer ? 'show' : 'hide']();
 		$('#polosa_color_filter')[v.nomer && v.polosa > 1 && v.polosa < GN[v.nomer].pc ? 'show' : 'hide']();
 
@@ -897,6 +904,7 @@ $(document)
 	.on('click', '#zayav .clear', function() {
 		$('#find')._search('clear');
 		$('#cat').rightLink(0);
+		$('#onpay')._check(0);
 		$('#nopublic')._check(0);
 		$('#nomer')._select(GN_FIRST_ACTIVE);
 		$('#polosa')._select(0);
@@ -1161,7 +1169,7 @@ $(document)
 
 	.ready(function() {
 		if($('#client').length) {
-			window.cFind = $('#find')._search({
+			$('#find')._search({
 				width:602,
 				focus:1,
 				enter:1,
@@ -1384,6 +1392,7 @@ $(document)
 					func:zayavSpisok
 				})
 				.inp(Z.find);
+			$('#onpay')._check(zayavSpisok);
 			$('#cat').rightLink(zayavSpisok);
 			$('.img_word')
 				.click(function() {
@@ -1415,10 +1424,7 @@ $(document)
 					top:-30,
 					left:-193
 				});
-			$('#nopublic')._check(function(v, id) {
-				$('.filter_nomer').toggle();
-				zayavSpisok(v, id);
-			});
+			$('#nopublic')._check(zayavSpisok);
 			$('#nopublic_check').vkHint({
 				width:145,
 				msg:'Заявки, которые не публиковались ни в одном номере газеты.',
@@ -1625,6 +1631,37 @@ $(document)
 					}, 'json');
 				}
 			});
+			$('#onpay-checked').click(function() {
+				var html =
+						'<div>' +
+							'Прежде чем разрешить публикацию объявления, проверьте следующие параметры:<br /><br />' +
+							'1. Объявление не должно содержать ошибок.<br />' +
+							'2. Объявление должно выполнять условия размещения.<br />' +
+							'3. Должен быть зачислен платёж от Onpay.' +
+							'' +
+						'</div>',
+					dialog = _dialog({
+						head:'Проверка интернет-объявления',
+						content:html,
+						butSubmit:'Разрешить',
+						submit:submit
+					});
+				function submit() {
+					var send = {
+						op:'zayav_onpay_checked',
+						id:OPL.zayav_id
+					};
+					dialog.process();
+					$.post(AJAX_GAZ, send, function(res) {
+						if(res.success) {
+							dialog.close();
+							_msg('Объявление проверено');
+							location.reload();
+						} else
+							dialog.abort();
+					}, 'json');
+				}
+			});
 			$('#lost-count').click(function() {
 				$(this).parent().find('.lost').show()
 				$(this).remove();
@@ -1639,6 +1676,7 @@ $(document)
 				$(this).addClass('sel');
 				$('#zayav-info').addClass('h');
 			});
+
 		}
 		if($('#zayav-edit').length) {
 			if($('#client_id').val() == 0)

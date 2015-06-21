@@ -15,12 +15,12 @@ POLOSA_COUNT=[{uid:4,title:4},{uid:6,title:6},{uid:8,title:8},{uid:10,title:10},
 POLOSA_SPISOK=[{uid:1,title:"Первая"},{uid:3,title:"Внутренняя чёрно-белая"},{uid:4,title:"Внутренняя цветная"},{uid:2,title:"Последняя"}],
 POLOSA_CENA_ASS={1:24,2:20,3:16,4:18},
 POLOSA_NUM={3:1,4:1},
-INVOICE_SPISOK=[{uid:1,title:"Наличные"},{uid:2,title:"Банк"},{uid:3,title:"Взаимозачёт"},{uid:4,title:"На телефон Юре"},{uid:5,title:"На телефон Маше"},{uid:6,title:"Миханько"},{uid:7,title:"Юра"}],
+INVOICE_SPISOK=[{uid:1,title:"Наличные"},{uid:2,title:"Банк"},{uid:3,title:"Взаимозачёт"},{uid:4,title:"На телефон Юре"},{uid:5,title:"На телефон Маше"},{uid:6,title:"Миханько"},{uid:7,title:"Юра"},{uid:8,title:"Тир (свет)"}],
 EXPENSE_SPISOK=[{uid:3,title:"Зарплата работникам"},{uid:7,title:"Отправка документов почтой"},{uid:5,title:"Канц. товары"},{uid:1,title:"Электричество"},{uid:4,title:"Ростелеком"},{uid:6,title:"Т/В программа"},{uid:8,title:"Хоз. товары"},{uid:9,title:"Интернет"},{uid:10,title:"Курьеры"},{uid:11,title:"Уборщица"},{uid:12,title:"Федотов Павел"},{uid:13,title:"Кредит Юра"},{uid:14,title:"Вымпелком"},{uid:15,title:"Типография"},{uid:16,title:"Налоги"},{uid:17,title:"Емельянова М."},{uid:18,title:"Доверие"},{uid:19,title:"Вымпелком"},{uid:20,title:"НТК"},{uid:21,title:"Архангельская сбытовая компания"},{uid:22,title:"Судаков Саша"},{uid:23,title:"Прочие"},{uid:24,title:"ИП Соколов О.А."}],
 EXPENSE_WORKER={3:1},
 COUNTRY_SPISOK=[{uid:1,title:"Россия"},{uid:2,title:"Украина"},{uid:3,title:"Беларусь"},{uid:4,title:"Казахстан"},{uid:5,title:"Азербайджан"},{uid:6,title:"Армения"},{uid:7,title:"Грузия"},{uid:8,title:"Израиль"},{uid:11,title:"Кыргызстан"},{uid:12,title:"Латвия"},{uid:13,title:"Литва"},{uid:14,title:"Эстония"},{uid:15,title:"Молдова"},{uid:16,title:"Таджикистан"},{uid:17,title:"Туркмения"},{uid:18,title:"Узбекистан"}],
 COUNTRY_ASS=_toAss(COUNTRY_SPISOK),
-RUBRIC_SUB_SPISOK={1:[{uid:4,title:"Техника"},{uid:1,title:"Недвижимость"},{uid:9,title:"Земля"},{uid:3,title:"Бытовая и оргтехника"},{uid:6,title:"Мебель"},{uid:7,title:"Одежда"},{uid:12,title:"Спорт-Отдых"},{uid:10,title:"Детям"},{uid:11,title:"Разное"},{uid:2,title:"Стройматериалы"},{uid:8,title:"Пиломатериалы"},{uid:5,title:"Животные"}]},
+RUBRIC_SUB_SPISOK={1:[{uid:4,title:"Техника"},{uid:1,title:"Недвижимость"},{uid:9,title:"Земля"},{uid:3,title:"Бытовая и оргтехника"},{uid:6,title:"Мебель"},{uid:7,title:"Одежда"},{uid:12,title:"Спорт-Отдых"},{uid:10,title:"Детям"},{uid:2,title:"Стройматериалы"},{uid:8,title:"Пиломатериалы"},{uid:5,title:"Животные"},{uid:11,title:"Разное"}]},
 RUBRIC_SUB_ASS={0:""};
 for(k in RUBRIC_SUB_SPISOK){for(n=0;n<RUBRIC_SUB_SPISOK[k].length;n++){var sp=RUBRIC_SUB_SPISOK[k][n];RUBRIC_SUB_ASS[sp.uid]=sp.title;}}
 GN={

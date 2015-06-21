@@ -1,6 +1,7 @@
 <?php
 define('DOCUMENT_ROOT', dirname(__FILE__));
 define('NAMES', 'cp1251');
+define('VIEWER_ONPAY', 2147000001);
 
 $SA[166424274] = 1;
 require_once(DOCUMENT_ROOT.'/syncro.php');

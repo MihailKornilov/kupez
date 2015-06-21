@@ -1,6 +1,15 @@
 <?php
 function _mainLinks() {
 	global $html;
+
+	//получение количества непроверенных интернет-объявлений
+	$sql = "SELECT COUNT(*)
+			FROM `gazeta_zayav`
+			WHERE !`deleted`
+			  AND `viewer_id_add`=".VIEWER_ONPAY."
+			  AND !`onpay_checked`";
+	define('ONPAY_ZAYAV', query_value($sql));
+
 	$links = array(
 		array(
 			'name' => 'Клиенты',
@@ -8,7 +17,7 @@ function _mainLinks() {
 			'show' => 1
 		),
 		array(
-			'name' => 'Заявки',
+			'name' => 'Заявки'.(ONPAY_ZAYAV ? ' <b>+'.ONPAY_ZAYAV.'</b>' : ''),
 			'page' => 'zayav',
 			'show' => 1
 		),
@@ -218,7 +227,7 @@ function clientFilter($v=array()) {
 	$filter = array(
 		'page' => _isnum(@$v['page']) ? $v['page'] : 1,
 		'limit' => _isnum(@$v['limit']) ? $v['limit'] : 20,
-		'fast' => win1251(htmlspecialchars(trim(@$v['fast']))),
+		'fast' => trim(@$v['fast']),
 		'person' => _isnum(@$v['person']),
 		'skidka' => _isnum(@$v['skidka']),
 		'dolg' => _isbool(@$v['dolg']),
@@ -739,6 +748,7 @@ function zayavFilter($v=array()) {
 		'limit' => 20,
 		'client_id' => 0,
 		'find' => '',
+		'onpay' => 0,
 		'cat' => 0,
 		'nopublic' => 0,
 		'gnyear' => strftime('%Y'),
@@ -747,16 +757,17 @@ function zayavFilter($v=array()) {
 		'polosa_color' => 0
 	);
 	$filter = array(
-		'page' => _isnum(@$v['page']) ? $v['page'] : 1,
-		'limit' => _isnum(@$v['limit']) ? $v['limit'] : 20,
-		'client_id' => _isnum(@$v['client_id']),
+		'page' => _num(@$v['page']) ? $v['page'] : 1,
+		'limit' => _num(@$v['limit']) ? $v['limit'] : 20,
+		'client_id' => _num(@$v['client_id']),
 		'find' => trim(@$v['find']),
-		'cat' => _isnum(@$v['cat']),
+		'onpay' => _bool(@$v['onpay']),
+		'cat' => _num(@$v['cat']),
 		'gnyear' => isset($v['gnyear']) && preg_match(REGEXP_YEAR, $v['gnyear']) ? intval($v['gnyear']) : $default['gnyear'],
 		'nomer' => isset($v['nomer']) && preg_match(REGEXP_NUMERIC, $v['nomer']) ? intval($v['nomer']) : $default['nomer'],
-		'nopublic' => _isbool(@$v['nopublic']),
-		'polosa' => _isnum(@$v['polosa']),
-		'polosa_color' => _isnum(@$v['polosa_color']),
+		'nopublic' => _bool(@$v['nopublic']),
+		'polosa' => _num(@$v['polosa']),
+		'polosa_color' => _num(@$v['polosa_color']),
 		'clear' => ''
 	);
 	if(!$filter['client_id'])
@@ -790,53 +801,57 @@ function zayav_data($v=array()) {
 		if($page == 1)
 			$find_id = _isnum($filter['find']);
 	} else {
-		if($filter['cat'])
-			$cond .= " AND `category`=".$filter['cat'];
-		if($filter['client_id'])
-			$cond .= " AND `client_id`=".$filter['client_id'];
-		elseif($filter['nopublic'])
-			$cond .= " AND !`gn_count`";
+		if($filter['onpay'])
+			$cond .= " AND !`onpay_checked` AND `viewer_id_add`=".VIEWER_ONPAY;
 		else {
-			if($filter['nomer']) {
-				$ids = array();
-				$polosa = '';
-				if($filter['polosa']) {
-					if($filter['polosa'] == 1) {
-						$idsPolosa = query_ids("SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']." AND `dop`=1");
-						$zayavRek = query_ids("SELECT `id` FROM `gazeta_zayav` WHERE !`deleted` AND `category`=2 AND `id` IN (".$idsPolosa.")");
-						$polosa = " AND `zayav_id` IN (".$zayavRek.")";
-					} elseif($filter['polosa'] == _gn($filter['nomer'], 'pc')) {
-						$idsPolosa = query_ids("SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']." AND `dop`=2");
-						$zayavRek = query_ids("SELECT `id` FROM `gazeta_zayav` WHERE !`deleted` AND `category`=2 AND `id` IN (".$idsPolosa.")");
-						$polosa = " AND `zayav_id` IN (".$zayavRek.")";
-					} elseif($filter['polosa'] > 1 && $filter['polosa'] < _gn($filter['nomer'], 'pc')) {
-						$polosa = " AND `polosa`=" . $filter['polosa'];
-						if($filter['polosa_color'])
-							$polosa .= " AND `dop`=" . $filter['polosa_color'];
-					} elseif($filter['polosa'] == 105) {
-						$idsPolosa = query_ids("SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']." AND `dop` IN (3,4) AND !`polosa`");
-						$zayavRek = query_ids("SELECT `id` FROM `gazeta_zayav` WHERE !`deleted` AND `category`=2 AND `id` IN (".$idsPolosa.")");
-						$polosa = " AND `zayav_id` IN (".$zayavRek.")";
-					} else {
-						$idsPolosa = query_ids("SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']." AND `dop`=".($filter['polosa'] - 100));
-						$zayavRek = query_ids("SELECT `id` FROM `gazeta_zayav` WHERE !`deleted` AND `category`=2 AND `id` IN (".$idsPolosa.")");
-						$polosa = " AND `zayav_id` IN (".$zayavRek.")";
+			if($filter['cat'])
+				$cond .= " AND `category`=".$filter['cat'];
+			if($filter['client_id'])
+				$cond .= " AND `client_id`=".$filter['client_id'];
+			elseif($filter['nopublic'])
+				$cond .= " AND !`gn_count`";
+			else {
+				if($filter['nomer']) {
+					$ids = array();
+					$polosa = '';
+					if($filter['polosa']) {
+						if($filter['polosa'] == 1) {
+							$idsPolosa = query_ids("SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']." AND `dop`=1");
+							$zayavRek = query_ids("SELECT `id` FROM `gazeta_zayav` WHERE !`deleted` AND `category`=2 AND `id` IN (".$idsPolosa.")");
+							$polosa = " AND `zayav_id` IN (".$zayavRek.")";
+						} elseif($filter['polosa'] == _gn($filter['nomer'], 'pc')) {
+							$idsPolosa = query_ids("SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']." AND `dop`=2");
+							$zayavRek = query_ids("SELECT `id` FROM `gazeta_zayav` WHERE !`deleted` AND `category`=2 AND `id` IN (".$idsPolosa.")");
+							$polosa = " AND `zayav_id` IN (".$zayavRek.")";
+						} elseif($filter['polosa'] > 1 && $filter['polosa'] < _gn($filter['nomer'], 'pc')) {
+							$polosa = " AND `polosa`=".$filter['polosa'];
+							if($filter['polosa_color'])
+								$polosa .= " AND `dop`=".$filter['polosa_color'];
+						} elseif($filter['polosa'] == 105) {
+							$idsPolosa = query_ids("SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']." AND `dop` IN (3,4) AND !`polosa`");
+							$zayavRek = query_ids("SELECT `id` FROM `gazeta_zayav` WHERE !`deleted` AND `category`=2 AND `id` IN (".$idsPolosa.")");
+							$polosa = " AND `zayav_id` IN (".$zayavRek.")";
+						} else {
+							$idsPolosa = query_ids("SELECT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer`=".$filter['nomer']." AND `dop`=".($filter['polosa'] - 100));
+							$zayavRek = query_ids("SELECT `id` FROM `gazeta_zayav` WHERE !`deleted` AND `category`=2 AND `id` IN (".$idsPolosa.")");
+							$polosa = " AND `zayav_id` IN (".$zayavRek.")";
+						}
 					}
-				}
-				$sql = "SELECT *
+					$sql = "SELECT *
 						FROM `gazeta_nomer_pub`
 						WHERE `general_nomer`=".$filter['nomer'].$polosa;
-				$q = query($sql);
-				while($r = mysql_fetch_assoc($q)) {
-					$ids[] = $r['zayav_id'];
-					$pub[$r['zayav_id']] = $r;
+					$q = query($sql);
+					while ($r = mysql_fetch_assoc($q)) {
+						$ids[] = $r['zayav_id'];
+						$pub[$r['zayav_id']] = $r;
+					}
+					$ids = empty($ids) ? 0 : implode(',', $ids);
+				} else {
+					$ids = query_ids("SELECT `general_nomer` FROM `gazeta_nomer` WHERE SUBSTR(`day_public`,1,4)=".$filter['gnyear']);
+					$ids = query_ids('SELECT DISTINCT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer` IN ('.$ids.')');
 				}
-				$ids = empty($ids) ? 0 : implode(',', $ids);
-			} else {
-				$ids = query_ids("SELECT `general_nomer` FROM `gazeta_nomer` WHERE SUBSTR(`day_public`,1,4)=".$filter['gnyear']);
-				$ids = query_ids('SELECT DISTINCT `zayav_id` FROM `gazeta_nomer_pub` WHERE `general_nomer` IN ('.$ids.')');
+				$cond .= " AND `id` IN (".$ids.")";
 			}
-			$cond .= " AND `id` IN (".$ids.")";
 		}
 	}
 
@@ -977,22 +992,30 @@ function zayav_list($v) {
 				'<td class="right">'.
 					'<div id="buttonCreate"><a HREF="'.URL.'&p=gazeta&d=zayav&d1=add&back=zayav">Новая заявка</a></div>'.
 					'<div id="find"></div>'.
+
 					'<div class="filter'.(!empty($v['find']) ? ' dn' : '').'">'.
-						'<div class="findHead">Категория</div>'.
-						_rightLink('cat', $cat, $v['cat']).
-						_check('nopublic', 'Невыходившие заявки', $v['nopublic']).
-						'<div class="filter_nomer'.($v['nopublic'] ? ' dn' : '').'">'.
-							'<div class="findHead">Номер газеты</div>'.
-							'<input type="hidden" id="gnyear" />'.
-							'<input type="hidden" id="nomer" value="'.$v['nomer'].'" />'.
-							'<div id="polosa_filter"'.($v['nomer'] ? '' : ' class="dn"').'>'.
-								'<div class="findHead">Полоса</div>'.
-								'<input type="hidden" id="polosa" value="'.$v['polosa'].'" />'.
-								'<div id="polosa_color_filter"'.($v['nomer'] && $v['polosa'] > 1 && $v['polosa'] < _gn($v['nomer'], 'pc') ? '' : ' class="dn"').'>'.
-									$polosa_color.
+		 (ONPAY_ZAYAV ? _check('onpay', 'Новые интернет-объявления <b>+'.ONPAY_ZAYAV.'</b>', $v['onpay']) : '').
+
+						'<div class="filter_onpay'.($v['onpay'] ? ' dn' : '').'">'.
+							'<div class="findHead">Категория</div>'.
+							_rightLink('cat', $cat, $v['cat']).
+							_check('nopublic', 'Невыходившие заявки', $v['nopublic']).
+
+							'<div class="filter_nomer'.($v['nopublic'] ? ' dn' : '').'">'.
+								'<div class="findHead">Номер газеты</div>'.
+								'<input type="hidden" id="gnyear" />'.
+								'<input type="hidden" id="nomer" value="'.$v['nomer'].'" />'.
+								'<div id="polosa_filter"'.($v['nomer'] ? '' : ' class="dn"').'>'.
+									'<div class="findHead">Полоса</div>'.
+									'<input type="hidden" id="polosa" value="'.$v['polosa'].'" />'.
+									'<div id="polosa_color_filter"'.($v['nomer'] && $v['polosa'] > 1 && $v['polosa'] < _gn($v['nomer'], 'pc') ? '' : ' class="dn"').'>'.
+										$polosa_color.
+									'</div>'.
 								'</div>'.
 							'</div>'.
+
 						'</div>'.
+
 					'</div>'.
 		'</table>'.
 		'<script type="text/javascript">'.
@@ -1101,6 +1124,14 @@ function zayav_info($zayav_id) {
 				(!$z['client_id'] ? '<tr><td class="label">Оплачено:<td>'.round(query_value("SELECT SUM(`sum`) FROM `gazeta_money` WHERE `zayav_id`=".$zayav_id), 2).' руб.' : '').
 				($public ? '<tr><td class="label top">Номера выпуска:<td>'.$public : '').
 			'</table>'.
+	(!$z['deleted'] && !$z['onpay_checked'] && $z['viewer_id_add'] == VIEWER_ONPAY ?
+			'<div class="_info">'.
+				'Данное объявление будет публиковаться в печатном формате только после проверки.'.
+				'<br />'.
+				'<br />'.
+				'<div class="vkButton" id="onpay-checked"><button>Разрешить публикацию</button></div>'.
+			'</div>'
+	: '').
 			'<div class="added">'.
 				'Заявку '.viewerAdded($z['viewer_id_add']).' '.FullDataTime($z['dtime_add']).
 				($z['deleted'] ?
@@ -1315,6 +1346,7 @@ function gazeta_history_types($v, $filter) {
 		case 53: return 'Удаление клиента '.$v['client_link'].'.';
 
 		case 61: return 'Удаление заявки '.$v['zayav_link'].' - <u>'.$v['zayav_type'].'</u>.';
+		case 62: return 'Разрешена публикация объявления '.$v['zayav_link'].'.';
 
 		case 81: return 'Внесение расхода: '.
 			($v['value1'] ? '<span class="oplata">'._expense($v['value1']).'</span> ' : '').

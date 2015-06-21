@@ -213,6 +213,7 @@ switch(@$_POST['op']) {
 		jsonSuccess();
 		break;
 	case 'client_spisok':
+		$_POST['fast'] = win1251($_POST['fast']);
 		$filter = clientFilter($_POST);
 		$data = client_data($filter);
 		$send['result'] = utf8($data['result']);
@@ -238,6 +239,7 @@ switch(@$_POST['op']) {
 
 
 	case 'zayav_spisok':
+		$_POST['find'] = win1251($_POST['find']);
 		$data = zayav_data($_POST);
 		$send['result'] = utf8($data['result']);
 		$send['spisok'] = utf8($data['spisok']);
@@ -400,7 +402,6 @@ switch(@$_POST['op']) {
 					`cena`,
 					`polosa`
 			   ) VALUES ".str_replace('{zayav_id}', $send['id'], $gns['insert']));
-
 
 		//сохранение изображений
 		$sql = "SELECT * FROM `images` WHERE !`deleted` AND `owner`='".VIEWER_ID."' ORDER BY `sort`";
@@ -754,6 +755,31 @@ switch(@$_POST['op']) {
 
 		_historyInsert(
 			61,
+			array(
+				'client_id' => $z['client_id'],
+				'zayav_id' => $zayav_id
+			),
+			'gazeta_history'
+		);
+		jsonSuccess();
+		break;
+	case 'zayav_onpay_checked':
+		if(!$zayav_id = _num($_POST['id']))
+			jsonError();
+
+		$sql = "SELECT *
+				FROM `gazeta_zayav`
+				WHERE !`deleted`
+				  AND !`onpay_checked`
+				  AND `viewer_id_add`=".VIEWER_ONPAY."
+				  AND `id`=".$zayav_id;
+		if(!$z = mysql_fetch_assoc(query($sql)))
+			jsonError();
+
+		query("UPDATE `gazeta_zayav` SET `onpay_checked`=1 WHERE `id`=".$zayav_id);
+
+		_historyInsert(
+			62,
 			array(
 				'client_id' => $z['client_id'],
 				'zayav_id' => $zayav_id

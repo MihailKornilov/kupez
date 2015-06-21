@@ -9,10 +9,12 @@ $gn = intval($_GET['gn']);
 $sql = "SELECT
 		  `rub`.`name` AS `rub`,
 		  IFNULL(`sub`.`name`,'') AS `sub`,
-		  `z`.`txt` AS `txt`,
-		  `z`.`telefon` AS `telefon`,
-		  `z`.`adres` AS `adres`,
-		  IFNULL(`dop`.`name`,'') AS `dop`
+		  `z`.`txt`,
+		  `z`.`telefon`,
+		  `z`.`adres`,
+		  IFNULL(`dop`.`name`,'') AS `dop`,
+		  `z`.`viewer_id_add`,
+		  `z`.`onpay_checked`
 		FROM `gazeta_nomer_pub` AS `pub`
 			LEFT JOIN `gazeta_zayav` AS `z` ON `pub`.`zayav_id`=`z`.`id`
 			LEFT JOIN `setup_rubric` AS `rub` ON `z`.`rubric_id`=`rub`.`id`
@@ -32,6 +34,10 @@ $word = 'Список объявлений для номера '.$gn.':';  // Составление объявлений для 
 $rub = '';   // Контроль рубрик
 $sub = '';// Контроль подрубрик
 while($r = mysql_fetch_assoc($q)) {
+	// Проверка, оплачено ли интернет-объявление
+	if($r['viewer_id_add'] == VIEWER_ONPAY && !$r['onpay_checked'])
+		continue;
+
 	// Если рубрика изменилась, то печать
 	if ($rub != $r['rub']) {
 		$rub = $r['rub'];
